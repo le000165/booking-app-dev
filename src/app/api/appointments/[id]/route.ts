@@ -166,10 +166,7 @@ export async function PATCH(
     if (customer_email) updates.customer_email = customer_email;
     if (customer_phone !== undefined) updates.customer_phone = customer_phone;
 
-    // console.log("[appointments PATCH] updating appointment:", {
-      id: id,
-      status: status
-    });
+
 
     const { data: updatedData, error: updateError } = await supabase
       .from('appointments')
