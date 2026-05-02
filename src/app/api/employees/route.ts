@@ -33,9 +33,17 @@ export async function GET(request: Request) {
     if (mappingError) {
       console.error('[employees] service_team_members query error:', mappingError.message);
     } else {
+      // Type-safe mapping for Supabase query
+      type ServiceTeamMemberMapping = {
+        team_member_id: string;
+        service_id: string;
+      };
+
+      const mappingsTyped = (mappings || []) as ServiceTeamMemberMapping[];
+
       // Build a map: team_member_id → count of matched services
       const countMap: Record<string, number> = {};
-      for (const m of (mappings || [])) {
+      for (const m of mappingsTyped) {
         countMap[m.team_member_id] = (countMap[m.team_member_id] || 0) + 1;
       }
       // Only staff who match ALL requested services
