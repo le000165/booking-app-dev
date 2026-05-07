@@ -10,7 +10,7 @@ export type Database = {
         Row: {
           id: string;
           name: string;
-          slug: string | null;
+          slug: string;
           owner_id: string | null;
           email: string | null;
           phone: string | null;
@@ -34,7 +34,7 @@ export type Database = {
       team_members: {
         Row: {
           id: string;
-          user_id: string;
+          user_id: string | null;
           business_id: string;
           role: string;
           is_active: boolean;
@@ -42,17 +42,50 @@ export type Database = {
           first_name?: string;
           last_name?: string;
           email?: string;
+          phone?: string;
         };
         Insert: {
-          user_id: string;
+          user_id?: string | null;
           business_id: string;
           role: string;
           is_active?: boolean;
           first_name?: string;
           last_name?: string;
           email?: string;
+          phone?: string;
         };
         Update: Partial<Database['public']['Tables']['team_members']['Insert']>;
+      };
+      // profiles: 1:1 with auth.users — stores SaaS login user display info
+      profiles: {
+        Row: {
+          user_id: string;
+          full_name: string | null;
+          email: string | null;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          full_name?: string | null;
+          email?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
+      };
+      // business_members: SaaS access layer — who can log in and manage a business
+      business_members: {
+        Row: {
+          id: string;
+          business_id: string;
+          user_id: string;
+          role: 'owner' | 'admin' | 'staff';
+          created_at: string;
+        };
+        Insert: {
+          business_id: string;
+          user_id: string;
+          role: 'owner' | 'admin' | 'staff';
+        };
+        Update: Partial<Database['public']['Tables']['business_members']['Insert']>;
       };
       staff: {
         Row: {
@@ -206,6 +239,10 @@ export type TeamMember = Database['public']['Tables']['team_members']['Row'];
 export type Service = Database['public']['Tables']['services']['Row'];
 export type Availability = Database['public']['Tables']['availability']['Row'];
 export type Appointment = Database['public']['Tables']['appointments']['Row'];
+export type Profile = Database['public']['Tables']['profiles']['Row'];
+export type BusinessMember = Database['public']['Tables']['business_members']['Row'];
 
 export type BookingStatus = Database['public']['Enums']['booking_status'];
 export type TeamRole = Database['public']['Enums']['team_role'];
+export type BusinessMemberRole = Database['public']['Tables']['business_members']['Row']['role'];
+
