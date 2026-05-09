@@ -114,11 +114,6 @@ function formatStaffName(staff: Appointment['staff']) {
   return staff ? `${staff.first_name} ${staff.last_name}`.trim() : 'Unassigned';
 }
 
-function formatStaffShort(staff: Appointment['staff']) {
-  if (!staff) return 'Unassigned';
-  return staff.first_name || `${staff.first_name} ${staff.last_name}`.trim();
-}
-
 function formatStaffInitials(staff: Appointment['staff']) {
   if (!staff) return 'UN';
   const first = staff.first_name?.[0] ?? '';
@@ -133,22 +128,15 @@ function renderTimedAppointmentCard(
   onAppointmentClick: (appt: Appointment) => void
 ) {
   const services = appt.appointment_services.map(s => s.service.name).join(', ');
-  const staffName = formatStaffName(appt.staff);
-  const staffShort = formatStaffShort(appt.staff);
-  const staffInitials = formatStaffInitials(appt.staff);
   const startLabel = new Date(appt.start_time).toLocaleTimeString('en-US', {
     hour: 'numeric', minute: '2-digit', hour12: true,
   });
   const endLabel = new Date(appt.end_time).toLocaleTimeString('en-US', {
     hour: 'numeric', minute: '2-digit', hour12: true,
   });
-  const displayMode = height >= 84 ? 'large' : height >= 58 ? 'medium' : 'small';
   const tone = getStaffTone(appt.staff?.id ?? appt.assigned_employee_id);
-  const tooltip = `${appt.customer_name} • ${services || 'No services'} • ${staffName} • ${startLabel} - ${endLabel}`;
+  const tooltip = `${appt.customer_name} • ${services || 'No services'} • ${startLabel} - ${endLabel}`;
   const statusTone = appt.status === 'cancelled' || appt.status === 'no_show' ? 'opacity-65' : '';
-  const compactLabel = displayMode === 'small'
-    ? (height < 48 ? staffShort : `${startLabel} ${staffShort}`)
-    : null;
 
   return (
     <button
@@ -166,52 +154,19 @@ function renderTimedAppointmentCard(
         boxShadow: `inset 3px 0 0 ${tone.accent}`,
       }}
     >
-      {displayMode === 'small' ? (
-        <div className="flex h-full items-center gap-1.5 overflow-hidden">
-          <span
-            className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold"
-            style={{ backgroundColor: tone.accent, color: '#fff' }}
-          >
-            {staffInitials}
-          </span>
-          <p className="truncate whitespace-nowrap text-[11px] font-semibold leading-tight">
-            {compactLabel}
+      <div className="flex h-full min-h-0 flex-col justify-center gap-0.5 overflow-hidden">
+        <p className="truncate whitespace-nowrap text-[12px] font-semibold leading-tight">
+          {appt.customer_name}
+        </p>
+        <p className="truncate whitespace-nowrap text-[11px] font-medium leading-tight opacity-95">
+          {startLabel} – {endLabel}
+        </p>
+        {services && (
+          <p className="truncate whitespace-nowrap text-[10px] leading-tight opacity-85">
+            {services}
           </p>
+        )}
         </div>
-      ) : (
-        <div className="flex h-full min-h-0 flex-col justify-center gap-0.5 overflow-hidden">
-          <div className="flex items-center gap-1.5 overflow-hidden">
-            <span
-              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold"
-              style={{ backgroundColor: tone.accent, color: '#fff' }}
-            >
-              {staffInitials}
-            </span>
-            <p className="truncate whitespace-nowrap text-[11px] font-semibold leading-tight">
-              {startLabel}
-            </p>
-          </div>
-          <p className="truncate whitespace-nowrap text-[12px] font-semibold leading-tight">
-            {appt.customer_name}
-          </p>
-          {displayMode === 'medium' ? (
-            <p className="truncate whitespace-nowrap text-[10px] leading-tight opacity-80">
-              {staffName}
-            </p>
-          ) : (
-            <>
-              {services && (
-                <p className="truncate whitespace-nowrap text-[10px] leading-tight opacity-85">
-                  {services}
-                </p>
-              )}
-              <p className="truncate whitespace-nowrap text-[10px] leading-tight opacity-80">
-                {staffName}
-              </p>
-            </>
-          )}
-        </div>
-      )}
     </button>
   );
 }
@@ -363,14 +318,14 @@ export default function WeekCalendar({
               className={`flex min-w-[64px] flex-col items-center rounded-md border px-3 py-1 text-center transition-colors ${
                 isSelected
                   ? 'border-gray-900 bg-gray-900 text-white'
-                  : 'border-[#d8dde3] bg-white text-gray-600 hover:bg-gray-50'
+                  : 'border-[#d8dde3] bg-white text-slate-700 hover:bg-gray-50'
               }`}
               aria-pressed={isSelected}
             >
-              <span className={`text-[11px] font-medium uppercase tracking-[0.08em] ${isSelected ? 'text-white/70' : 'text-gray-500'}`}>
+              <span className={`text-[11px] font-medium uppercase tracking-[0.08em] ${isSelected ? 'text-white/70' : 'text-slate-600'}`}>
                 {DAY_NAMES[date.getDay()]}
               </span>
-              <span className="mt-0.5 text-[16px] font-semibold leading-none">
+              <span className="mt-0.5 text-[17px] font-semibold leading-none">
                 {date.getDate()}
               </span>
               {isToday && (
@@ -398,21 +353,21 @@ export default function WeekCalendar({
                 <section key={dayIdx} className={isToday ? 'bg-blue-50/50' : undefined}>
                   <div className="flex items-center justify-between px-4 py-3">
                     <div>
-                      <p className={`text-[12px] font-semibold uppercase tracking-wide ${isToday ? 'text-blue-600' : 'text-gray-500'}`}>
+                      <p className={`text-[12px] font-semibold uppercase tracking-wide ${isToday ? 'text-blue-600' : 'text-slate-600'}`}>
                         {DAY_NAMES[day.getDay()]}
                       </p>
-                      <p className="text-[15px] font-semibold text-gray-900">
+                      <p className="text-[16px] font-semibold text-gray-900">
                         {day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </p>
                     </div>
-                    <span className="rounded-full bg-white px-2 py-1 text-[11px] font-medium text-gray-500 ring-1 ring-gray-200">
+                    <span className="rounded-full bg-white px-2 py-1 text-[11px] font-medium text-slate-600 ring-1 ring-gray-200">
                       {dayAppts.length} {dayAppts.length === 1 ? 'booking' : 'bookings'}
                     </span>
                   </div>
 
                   <div className="space-y-2 px-4 pb-4">
                     {dayAppts.length === 0 ? (
-                      <p className="rounded-lg border border-dashed border-gray-200 bg-white px-3 py-4 text-center text-[13px] text-gray-400">
+                      <p className="rounded-lg border border-dashed border-gray-200 bg-white px-3 py-4 text-center text-[13px] text-slate-500">
                         No appointments
                       </p>
                     ) : dayAppts.map(appt => {
@@ -441,7 +396,7 @@ export default function WeekCalendar({
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <p className="truncate text-[14px] font-semibold">{appt.customer_name}</p>
+                              <p className="truncate text-[15px] font-semibold">{appt.customer_name}</p>
                               <p className="mt-1 text-[12px] font-medium opacity-80">{timeRange}</p>
                             </div>
                             <span
@@ -452,7 +407,6 @@ export default function WeekCalendar({
                             </span>
                           </div>
                           {services && <p className="mt-2 truncate text-[13px] opacity-85">{services}</p>}
-                          <p className="mt-1 truncate text-[12px] opacity-80">{staff}</p>
                         </button>
                       );
                     })}
@@ -468,7 +422,7 @@ export default function WeekCalendar({
                 <div className="flex h-full items-center justify-center px-6 py-20 text-center">
                   <div className="max-w-sm">
                     <p className="text-[16px] font-semibold text-gray-900">No staff members found</p>
-                    <p className="mt-1 text-[13px] text-gray-500">Add staff members to use the side-by-side schedule view.</p>
+                    <p className="mt-1 text-[13px] text-slate-600">Add staff members to use the side-by-side schedule view.</p>
                   </div>
                 </div>
               ) : (
@@ -483,10 +437,10 @@ export default function WeekCalendar({
                             key={i}
                             className={`flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-2 text-center ${isToday ? 'bg-gray-50' : ''}`}
                           >
-                            <p className={`text-[10px] font-medium uppercase tracking-[0.1em] ${isToday ? 'text-gray-900' : 'text-gray-500'}`}>
+                            <p className={`text-[12px] font-medium uppercase tracking-[0.08em] ${isToday ? 'text-gray-900' : 'text-slate-600'}`}>
                               {DAY_NAMES[day.getDay()]}
                             </p>
-                            <p className={`mt-1 text-[15px] font-semibold leading-none ${isToday ? 'text-gray-900' : 'text-gray-900'}`}>
+                            <p className="mt-1 text-[17px] font-semibold leading-none text-gray-900">
                               {day.getDate()}
                             </p>
                           </div>
@@ -505,7 +459,7 @@ export default function WeekCalendar({
                             className="absolute left-0 right-0 flex items-start justify-end border-t pr-2.5"
                             style={{ top: sideBySideLaneHeight + (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET - 8, height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
                           >
-                            <span className="text-[10px] font-normal leading-none text-[#7d8794]">
+                            <span className="text-[12px] font-medium leading-none text-[#5f6b7a]">
                               {formatHour(h)}
                             </span>
                           </div>
@@ -527,7 +481,7 @@ export default function WeekCalendar({
                               style={{ gridTemplateColumns: `repeat(${sideBySideLanes.length}, minmax(0, 1fr))`, borderColor: GRID_BORDER }}
                             >
                               {sideBySideLanes.map(lane => (
-                                <div key={lane.id} className="min-w-0 px-3 py-2 text-[11px] font-semibold text-[#313842]">
+                                <div key={lane.id} className="min-w-0 px-3 py-2 text-[13px] font-semibold text-[#313842]">
                                   <p className="truncate whitespace-nowrap">
                                     {lane.id === '__unassigned__' ? 'Unassigned' : `${lane.first_name} ${lane.last_name}`}
                                   </p>
@@ -593,9 +547,9 @@ export default function WeekCalendar({
                           key={i}
                           className={`flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-2 text-center ${isToday ? 'bg-gray-50' : ''}`}
                         >
-                          <p className={`text-[10px] font-medium uppercase tracking-[0.1em] ${isToday ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {DAY_NAMES[day.getDay()]} {String(day.getMonth() + 1).padStart(2, '0')}/{String(day.getDate()).padStart(2, '0')}
-                          </p>
+                            <p className={`text-[11px] font-medium uppercase tracking-[0.1em] ${isToday ? 'text-gray-900' : 'text-slate-600'}`}>
+                              {DAY_NAMES[day.getDay()]} {String(day.getMonth() + 1).padStart(2, '0')}/{String(day.getDate()).padStart(2, '0')}
+                            </p>
                         </div>
                       );
                     })}
@@ -612,10 +566,10 @@ export default function WeekCalendar({
                           key={i}
                           className={`flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-2 text-center ${isToday ? 'bg-gray-50' : ''}`}
                         >
-                          <p className={`text-[10px] font-medium uppercase tracking-[0.1em] ${isToday ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {DAY_NAMES[day.getDay()]}
-                          </p>
-                          <p className="mt-1 text-[14px] font-semibold leading-none text-gray-900">
+                            <p className={`text-[12px] font-medium uppercase tracking-[0.08em] ${isToday ? 'text-gray-900' : 'text-slate-600'}`}>
+                              {DAY_NAMES[day.getDay()]}
+                            </p>
+                          <p className="mt-1 text-[16px] font-semibold leading-none text-gray-900">
                             {day.getDate()}
                           </p>
                         </div>
@@ -633,7 +587,7 @@ export default function WeekCalendar({
                           className="absolute left-0 right-0 flex items-start justify-end border-t pr-2.5"
                           style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET - 8, height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
                         >
-                          <span className="text-[10px] font-normal leading-none text-[#7d8794]">
+                          <span className="text-[12px] font-medium leading-none text-[#5f6b7a]">
                             {formatHour(h)}
                           </span>
                         </div>
@@ -685,7 +639,7 @@ export default function WeekCalendar({
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="sticky top-0 z-20 grid grid-cols-7 border-b border-gray-200 bg-white">
             {DAY_NAMES.map(day => (
-              <div key={day} className="px-2 py-2 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-gray-500">
+              <div key={day} className="px-2 py-2 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-slate-600">
                 {day}
               </div>
             ))}
@@ -702,13 +656,13 @@ export default function WeekCalendar({
                 return (
                   <div
                     key={dayKey}
-                    className={`border-l border-b border-gray-200 p-1.5 ${inMonth ? 'bg-white' : 'bg-gray-50 text-gray-400'}`}
+                    className={`border-l border-b border-gray-200 p-1.5 ${inMonth ? 'bg-white' : 'bg-gray-50 text-slate-500'}`}
                   >
                     <div className="mb-1 flex items-start justify-between gap-2">
-                      <span className={`text-[12px] font-semibold ${isToday ? 'text-gray-900' : inMonth ? 'text-gray-900' : 'text-gray-400'}`}>
+                      <span className={`text-[12px] font-semibold ${isToday ? 'text-gray-900' : inMonth ? 'text-gray-900' : 'text-slate-500'}`}>
                         {day.getDate()}
                       </span>
-                      <span className="text-[10px] text-gray-400">
+                      <span className="text-[10px] text-slate-500">
                         {dayAppts.length ? `${dayAppts.length}` : ''}
                       </span>
                     </div>
@@ -742,7 +696,7 @@ export default function WeekCalendar({
                       })}
 
                       {dayAppts.length > 2 && (
-                        <p className="px-1 text-[11px] font-medium text-gray-500">
+                        <p className="px-1 text-[11px] font-medium text-slate-600">
                           +{dayAppts.length - 2} more
                         </p>
                       )}

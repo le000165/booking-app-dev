@@ -45,6 +45,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     () => getCurrentSection(pathname, tabParam),
     [pathname, tabParam]
   );
+  const isCalendarWorkspace = currentSection === 'appointments' && viewParam === 'calendar';
   useEffect(() => {
     let cancelled = false;
 
@@ -117,7 +118,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         </div>
       </aside>
 
-      <div className="admin-main">
+      <div className={`admin-main ${isCalendarWorkspace ? 'admin-main-calendar' : ''}`}>
         {children}
       </div>
 
