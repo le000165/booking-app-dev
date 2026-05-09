@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 interface Appointment {
   id: string;
@@ -28,11 +28,12 @@ interface WeekCalendarProps {
   onAppointmentClick: (appt: Appointment) => void;
 }
 
-const START_HOUR  = 6;
-const END_HOUR    = 21;
-const HOUR_HEIGHT = 54;
+const START_HOUR  = 0;
+const END_HOUR    = 24;
+const HOUR_HEIGHT = 72;
 const GRID_OFFSET = 8;
 const TIME_COLUMN_WIDTH = 62;
+const DEFAULT_SCROLL_HOUR = 6;
 const GRID_BORDER = '#d8dde3';
 const GRID_MINOR_BORDER = '#edf0f3';
 
@@ -49,10 +50,11 @@ const STAFF_COLOR_PALETTE = [
 ] as const;
 
 function formatHour(h: number) {
-  if (h === 0)  return '12 AM';
-  if (h < 12)   return `${h} AM`;
-  if (h === 12) return '12 PM';
-  return `${h - 12} PM`;
+  const hour = h % 24;
+  if (hour === 0) return '12 AM';
+  if (hour < 12) return `${hour} AM`;
+  if (hour === 12) return '12 PM';
+  return `${hour - 12} PM`;
 }
 
 /** Local-date key for equality comparison — never uses UTC/toISOString. */
@@ -155,14 +157,14 @@ function renderTimedAppointmentCard(
       }}
     >
       <div className="flex h-full min-h-0 flex-col justify-center gap-0.5 overflow-hidden">
-        <p className="truncate whitespace-nowrap text-[12px] font-semibold leading-tight">
+        <p className="truncate whitespace-nowrap text-[13px] font-semibold leading-tight">
           {appt.customer_name}
         </p>
-        <p className="truncate whitespace-nowrap text-[11px] font-medium leading-tight opacity-95">
+        <p className="truncate whitespace-nowrap text-[12px] font-medium leading-tight opacity-95">
           {startLabel} – {endLabel}
         </p>
         {services && (
-          <p className="truncate whitespace-nowrap text-[10px] leading-tight opacity-85">
+          <p className="truncate whitespace-nowrap text-[11px] leading-tight opacity-85">
             {services}
           </p>
         )}
@@ -181,6 +183,8 @@ export default function WeekCalendar({
   onDateSelect,
   onAppointmentClick,
 }: WeekCalendarProps) {
+  const sideBySideScrollRef = useRef<HTMLDivElement | null>(null);
+  const scheduleScrollRef = useRef<HTMLDivElement | null>(null);
   const todayKey = useMemo(() => formatLocalDateKey(new Date()), []);
   const selectedDayKey = formatLocalDateKey(selectedDate ?? anchorDate);
 
@@ -201,6 +205,23 @@ export default function WeekCalendar({
     () => visibleDays.map(formatLocalDateKey),
     [visibleDays]
   );
+  const visibleRangeKey = visibleDayKeys.join('|');
+
+  useEffect(() => {
+    if (view === 'month') return;
+
+    const scrollContainer =
+      displayMode === 'sideBySide'
+        ? sideBySideScrollRef.current
+        : scheduleScrollRef.current;
+
+    if (!scrollContainer) return;
+
+    scrollContainer.scrollTop = Math.max(
+      0,
+      (DEFAULT_SCROLL_HOUR - START_HOUR) * HOUR_HEIGHT
+    );
+  }, [displayMode, view, visibleRangeKey]);
 
   const dayStripDates = useMemo(() => {
     if (view !== 'day') return [];
@@ -210,7 +231,7 @@ export default function WeekCalendar({
   }, [anchorDate, selectedDate, view]);
 
   const hours = useMemo(
-    () => Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i),
+    () => Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i),
     []
   );
   const halfHours = useMemo(
@@ -293,11 +314,9 @@ export default function WeekCalendar({
     return Math.max(15, (end - start) / 60000) * (HOUR_HEIGHT / 60);
   }
 
-  const gridHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET + 12;
+  const gridHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET + 40;
   const gridMinWidth = Math.max(640, TIME_COLUMN_WIDTH + visibleDays.length * 180);
-  const sideBySideLaneHeight = 30;
   const sideBySideLanes = [...sideBySideStaff, ...(hasUnassigned ? [{ id: '__unassigned__', first_name: 'Unassigned', last_name: '' }] : [])];
-  const sideBySideGridHeight = gridHeight + sideBySideLaneHeight;
   const sideBySideMinWidth = Math.max(780, TIME_COLUMN_WIDTH + visibleDays.length * Math.max(220, sideBySideLanes.length * 120));
   const isMonthView = view === 'month';
   const monthMonth = startOfMonth(anchorDate);
@@ -417,7 +436,7 @@ export default function WeekCalendar({
           </div>
 
           {displayMode === 'sideBySide' ? (
-            <div className="hidden min-h-0 flex-1 overflow-auto bg-white sm:block">
+            <div className="hidden min-h-0 flex-1 overflow-x-auto overflow-y-hidden bg-white sm:block">
               {sideBySideLanes.length === 0 ? (
                 <div className="flex h-full items-center justify-center px-6 py-20 text-center">
                   <div className="max-w-sm">
@@ -426,22 +445,19 @@ export default function WeekCalendar({
                   </div>
                 </div>
               ) : (
-                <div className="flex min-h-full flex-col" style={{ minWidth: sideBySideMinWidth }}>
+                <div className="flex h-full min-h-0 flex-col" style={{ minWidth: sideBySideMinWidth }}>
                   {view !== 'day' && (
-                    <div className="sticky top-0 z-20 flex border-b border-[#d8dde3] bg-white">
-                      <div className="shrink-0" style={{ width: TIME_COLUMN_WIDTH }} />
+                    <div className="z-20 flex shrink-0 border-b border-[#d8dde3] bg-white">
+                      <div className="sticky left-0 z-30 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH }} />
                       {visibleDays.map((day, i) => {
                         const isToday = visibleDayKeys[i] === todayKey;
                         return (
                           <div
                             key={i}
-                            className={`flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-2 text-center ${isToday ? 'bg-gray-50' : ''}`}
+                            className="flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-1.5 text-center bg-white"
                           >
-                            <p className={`text-[12px] font-medium uppercase tracking-[0.08em] ${isToday ? 'text-gray-900' : 'text-slate-600'}`}>
-                              {DAY_NAMES[day.getDay()]}
-                            </p>
-                            <p className="mt-1 text-[17px] font-semibold leading-none text-gray-900">
-                              {day.getDate()}
+                            <p className={`text-[14px] font-semibold leading-none ${isToday ? 'text-gray-900' : 'text-slate-600'}`}>
+                              {DAY_NAMES[day.getDay()]} {String(day.getMonth() + 1).padStart(2, '0')}/{String(day.getDate()).padStart(2, '0')}
                             </p>
                           </div>
                         );
@@ -449,18 +465,46 @@ export default function WeekCalendar({
                     </div>
                   )}
 
-                  <div className="min-h-0 flex-1 overflow-y-auto">
+                  <div className="z-20 flex shrink-0 border-b border-[#d8dde3] bg-white">
+                    <div className="sticky left-0 z-30 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH }} />
+                    {visibleDays.map((day, dayIdx) => {
+                      const isToday = visibleDayKeys[dayIdx] === todayKey;
+                      return (
+                        <div
+                          key={dayIdx}
+                          className="min-w-0 flex-1 border-l bg-white"
+                          style={{ borderColor: GRID_BORDER }}
+                        >
+                          <div
+                            className="grid text-center"
+                            style={{ gridTemplateColumns: `repeat(${sideBySideLanes.length}, minmax(0, 1fr))` }}
+                          >
+                            {sideBySideLanes.map(lane => (
+                                <div key={lane.id} className="min-w-0 border-l px-3 py-2 text-[14px] font-semibold text-[#313842] first:border-l-0" style={{ borderColor: GRID_BORDER }}>
+                                  <p className="truncate whitespace-nowrap">
+                                    {lane.id === '__unassigned__' ? 'Unassigned' : `${lane.first_name} ${lane.last_name}`}
+                                  </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div ref={sideBySideScrollRef} className="min-h-0 flex-1 overflow-y-auto pb-8">
                     <div className="flex">
-                      <div className="relative shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH, height: sideBySideGridHeight }}>
-                        <div className="h-[30px]" />
+                      <div className="sticky left-0 z-10 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH, height: gridHeight }}>
                         {hours.map(h => (
                           <div
                             key={h}
                             className="absolute left-0 right-0 flex items-start justify-end border-t pr-2.5"
-                            style={{ top: sideBySideLaneHeight + (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET - 8, height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
+                            style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET, height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
                           >
-                            <span className="text-[12px] font-medium leading-none text-[#5f6b7a]">
-                              {formatHour(h)}
+                            <span className="translate-y-[6px]">
+                              <span className="inline-block bg-white px-1 text-[13px] font-medium leading-none text-[#5f6b7a]">
+                                {formatHour(h)}
+                              </span>
                             </span>
                           </div>
                         ))}
@@ -473,23 +517,10 @@ export default function WeekCalendar({
                         return (
                           <div
                             key={dayIdx}
-                            className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-gray-50/50' : 'bg-white'}`}
-                            style={{ height: sideBySideGridHeight, borderColor: GRID_BORDER }}
+                            className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-sky-50/40' : 'bg-white'}`}
+                            style={{ height: gridHeight, borderColor: GRID_BORDER }}
                           >
-                            <div
-                              className="grid border-b bg-white text-center"
-                              style={{ gridTemplateColumns: `repeat(${sideBySideLanes.length}, minmax(0, 1fr))`, borderColor: GRID_BORDER }}
-                            >
-                              {sideBySideLanes.map(lane => (
-                                <div key={lane.id} className="min-w-0 px-3 py-2 text-[13px] font-semibold text-[#313842]">
-                                  <p className="truncate whitespace-nowrap">
-                                    {lane.id === '__unassigned__' ? 'Unassigned' : `${lane.first_name} ${lane.last_name}`}
-                                  </p>
-                                </div>
-                              ))}
-                            </div>
-
-                            <div className="flex" style={{ height: gridHeight }}>
+                            <div className="flex h-full">
                               {sideBySideLanes.map((lane, laneIdx) => {
                                 const laneAppointments = dayAppts.filter(appt => {
                                   if (lane.id === '__unassigned__') return !appt.assigned_employee_id;
@@ -535,42 +566,20 @@ export default function WeekCalendar({
               )}
             </div>
           ) : (
-          <div className="hidden min-h-0 flex-1 overflow-auto bg-white sm:block">
-              <div className="flex min-h-full flex-col" style={{ minWidth: gridMinWidth }}>
-                {view === 'day' && (
-                  <div className="sticky top-0 z-20 flex border-b border-[#d8dde3] bg-white">
-                    <div className="shrink-0" style={{ width: TIME_COLUMN_WIDTH }} />
-                    {visibleDays.map((day, i) => {
-                      const isToday = visibleDayKeys[i] === todayKey;
-                      return (
-                        <div
-                          key={i}
-                          className={`flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-2 text-center ${isToday ? 'bg-gray-50' : ''}`}
-                        >
-                            <p className={`text-[11px] font-medium uppercase tracking-[0.1em] ${isToday ? 'text-gray-900' : 'text-slate-600'}`}>
-                              {DAY_NAMES[day.getDay()]} {String(day.getMonth() + 1).padStart(2, '0')}/{String(day.getDate()).padStart(2, '0')}
-                            </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
+          <div className="hidden min-h-0 flex-1 overflow-x-auto overflow-y-hidden bg-white sm:block">
+              <div className="flex h-full min-h-0 flex-col" style={{ minWidth: gridMinWidth }}>
                 {view !== 'day' && (
                   <div className="sticky top-0 z-20 flex border-b border-[#d8dde3] bg-white">
-                    <div className="shrink-0" style={{ width: TIME_COLUMN_WIDTH }} />
+                    <div className="sticky left-0 z-30 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH }} />
                     {visibleDays.map((day, i) => {
                       const isToday = visibleDayKeys[i] === todayKey;
                       return (
                         <div
                           key={i}
-                          className={`flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-2 text-center ${isToday ? 'bg-gray-50' : ''}`}
+                          className="flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-1.5 text-center bg-white"
                         >
-                            <p className={`text-[12px] font-medium uppercase tracking-[0.08em] ${isToday ? 'text-gray-900' : 'text-slate-600'}`}>
-                              {DAY_NAMES[day.getDay()]}
-                            </p>
-                          <p className="mt-1 text-[16px] font-semibold leading-none text-gray-900">
-                            {day.getDate()}
+                          <p className={`text-[14px] font-semibold leading-none ${isToday ? 'text-gray-900' : 'text-slate-600'}`}>
+                            {DAY_NAMES[day.getDay()]} {String(day.getMonth() + 1).padStart(2, '0')}/{String(day.getDate()).padStart(2, '0')}
                           </p>
                         </div>
                       );
@@ -578,17 +587,19 @@ export default function WeekCalendar({
                   </div>
                 )}
 
-                <div className="min-h-0 flex-1 overflow-y-auto">
+                <div ref={scheduleScrollRef} className="min-h-0 flex-1 overflow-y-auto pb-8">
                   <div className="flex">
-                    <div className="relative shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH, height: gridHeight }}>
+                    <div className="sticky left-0 z-10 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH, height: gridHeight }}>
                       {hours.map(h => (
                         <div
                           key={h}
                           className="absolute left-0 right-0 flex items-start justify-end border-t pr-2.5"
-                          style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET - 8, height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
+                          style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET, height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
                         >
-                          <span className="text-[12px] font-medium leading-none text-[#5f6b7a]">
-                            {formatHour(h)}
+                          <span className="translate-y-[6px]">
+                            <span className="inline-block bg-white px-1 text-[13px] font-medium leading-none text-[#5f6b7a]">
+                              {formatHour(h)}
+                            </span>
                           </span>
                         </div>
                       ))}
@@ -601,7 +612,7 @@ export default function WeekCalendar({
                       return (
                         <div
                           key={dayIdx}
-                          className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-gray-50/50' : 'bg-white'}`}
+                          className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-sky-50/40' : 'bg-white'}`}
                           style={{ height: gridHeight, borderColor: GRID_BORDER }}
                         >
                           {halfHours.map(h => (

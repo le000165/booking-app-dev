@@ -633,14 +633,8 @@ input[type="time"].input-field { width: auto; }
 .admin-main {
   position: relative;
   min-height: 100vh;
-  background: #f6f6f7;
+  background: #ffffff;
   padding: 16px 16px 80px;
-}
-.admin-main-calendar {
-  display: flex;
-  min-height: 100vh;
-  flex-direction: column;
-  padding: 0 0 80px;
 }
 .admin-sidebar-footer {
   margin-top: auto;
@@ -768,9 +762,8 @@ input[type="time"].input-field { width: auto; }
   }
   .admin-main-calendar {
     height: 100vh;
-    min-height: 0;
+    min-height: 100vh;
     overflow: hidden;
-    padding: 0;
   }
   .sticky-action {
     display: none;

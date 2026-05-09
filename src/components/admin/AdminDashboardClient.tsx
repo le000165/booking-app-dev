@@ -1100,13 +1100,19 @@ export default function AdminPage() {
 
   if (loadingUser)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f6f6f7]">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <Loader2 className="animate-spin text-[var(--text-muted)]" />
       </div>
     );
 
+  const isCalendarWorkspace = tab === "appointments" && apptView === "calendar";
+
   return (
-    <div className="min-h-screen bg-[#f6f6f7] md:h-screen md:overflow-hidden">
+    <div
+      className={`min-h-screen bg-white md:overflow-hidden ${
+        isCalendarWorkspace ? "md:h-full md:min-h-0" : "md:h-screen"
+      }`}
+    >
       {/* Appointment Edit Modal */}
       {apptEditorOpen && (
         <ResponsiveModal
@@ -1270,17 +1276,17 @@ export default function AdminPage() {
         {/* ── APPOINTMENTS ── */}
         {tab === "appointments" && (
           <div
-            className={`slide-up flex w-full flex-1 flex-col ${
+            className={`slide-up flex min-h-[calc(100vh-78px)] flex-1 flex-col ${
               apptView === "calendar"
-                ? "h-full min-h-0 bg-white"
-                : "min-h-[calc(100vh-78px)] bg-transparent md:min-h-full"
+                ? "bg-white md:h-full md:min-h-0 md:overflow-hidden"
+                : "bg-transparent md:min-h-full"
             }`}
           >
             {apptView === "calendar" ? (
               <>
-                <div className="shrink-0 border-b border-[#d7dce2] bg-white px-4 py-4 md:px-6">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5">
+                <div className="shrink-0 border-b border-[#d7dce2] bg-white py-4">
+                  <div className="flex w-full flex-wrap items-center justify-between gap-4">
+                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
                       <div className="flex shrink-0 items-center rounded-lg border border-[#d6dbe5] bg-white p-0.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                         <button
                           onClick={showAppointmentList}
@@ -1369,7 +1375,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <div className="min-h-0 flex-1 bg-white">
+                <div className="min-h-0 flex-1 overflow-hidden bg-white pt-3 pb-6">
                   {onlyMeMissingTeamMember ? (
                     <div className="flex h-full items-center justify-center py-24 text-center">
                       <div className="max-w-sm">
