@@ -50,6 +50,7 @@ export async function login(formData: FormData) {
     .select('role, business_id')
     .eq('user_id', data.user.id)
     .limit(1)
+    .returns<{ role: string; business_id: string }[]>()
     .single()
 
   console.log('[AUTH][LOGIN] Membership lookup:', {

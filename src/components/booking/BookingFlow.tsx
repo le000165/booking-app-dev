@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
 import StepIndicator from '@/components/StepIndicator';
-import ServiceCard from '@/components/ServiceCard';
 import TimeSlotGrid from '@/components/TimeSlotGrid';
-import { ChevronLeft, ChevronRight, MapPin, Clock, CheckCircle, Loader2, AlertCircle, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Clock, CheckCircle, Loader2, Check } from 'lucide-react';
 
 const DAYS   = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -77,21 +75,20 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-/* ── Main Page ───────────────────────────────────────────────────────── */
+interface BookingFlowProps {
+  business: Business;
+  initialServices: Service[];
+}
 
-export default function BookingPage() {
-  const params = useParams();
-  const slug = params.slug as string;
+/* ── Main Flow ───────────────────────────────────────────────────────── */
 
+export default function BookingFlow({ business, initialServices }: BookingFlowProps) {
   // ── Data ──
-  const [business, setBusiness]         = useState<Business | null>(null);
-  const [services, setServices]         = useState<Service[]>([]);
+  const [services]                      = useState<Service[]>(initialServices);
   const [employees, setEmployees]       = useState<any[]>([]);
   const [slots, setSlots]               = useState<string[]>([]);
-  const [pageLoading, setPageLoading]   = useState(true);
   const [employeesLoading, setEmployeesLoading] = useState(false);
   const [slotsLoading, setSlotsLoading] = useState(false);
-  const [notFound, setNotFound]         = useState(false);
 
   // ── Booking state ──
   const [step, setStep]                       = useState<Step>(1);
@@ -124,35 +121,13 @@ export default function BookingPage() {
   const canGoBack    = dateWindowStart > 0;
   const canGoForward = dateWindowStart + DATES_PER_PAGE < ALL_DATES.length;
 
-  // ── Load business + services ──
-  useEffect(() => {
-    async function loadBusiness() {
-      try {
-        const [bizRes, svcRes] = await Promise.all([
-          fetch(`/api/business?slug=${slug}`),
-          fetch(`/api/services?slug=${slug}`),
-        ]);
-        if (!bizRes.ok) { setNotFound(true); return; }
-        const bizData = await bizRes.json();
-        const svcData = await svcRes.json();
-        setBusiness(bizData.business);
-        setServices(svcData.services || []);
-      } catch {
-        setNotFound(true);
-      } finally {
-        setPageLoading(false);
-      }
-    }
-    loadBusiness();
-  }, [slug]);
-
   // ── Load employees when services chosen ──
   useEffect(() => {
-    if (!business || selectedServiceIds.length === 0) return;
+    if (selectedServiceIds.length === 0) return;
     async function loadEmployees() {
       setEmployeesLoading(true);
       try {
-        const res  = await fetch(`/api/employees?business_id=${business!.id}&service_ids=${serviceIdsParam}`);
+        const res  = await fetch(`/api/employees?business_id=${business.id}&service_ids=${serviceIdsParam}`);
         const data = await res.json();
         setEmployees(data.employees || []);
         setSelectedEmployeeId('any');
@@ -163,17 +138,17 @@ export default function BookingPage() {
       }
     }
     loadEmployees();
-  }, [business, serviceIdsParam]);
+  }, [business.id, serviceIdsParam, selectedServiceIds.length]);
 
   // ── Load slots ──
   useEffect(() => {
-    if (!selectedDate || selectedServiceIds.length === 0 || !business) return;
+    if (!selectedDate || selectedServiceIds.length === 0) return;
     async function loadSlots() {
       setSlotsLoading(true);
       try {
         const dateStr = toLocalDateStr(selectedDate!);
         const res  = await fetch(
-          `/api/slots?business_id=${business!.id}&service_ids=${serviceIdsParam}&date=${dateStr}&employee_id=${selectedEmployeeId}`
+          `/api/slots?business_id=${business.id}&service_ids=${serviceIdsParam}&date=${dateStr}&employee_id=${selectedEmployeeId}`
         );
         const data = await res.json();
         setSlots(data.slots || []);
@@ -184,7 +159,7 @@ export default function BookingPage() {
       }
     }
     loadSlots();
-  }, [selectedDate, serviceIdsParam, business, selectedEmployeeId]);
+  }, [selectedDate, serviceIdsParam, business.id, selectedEmployeeId, selectedServiceIds.length]);
 
   const goBack = () => setStep(prev => (prev > 1 ? (prev - 1) as Step : prev));
 
@@ -194,7 +169,7 @@ export default function BookingPage() {
   };
 
   const handleSubmit = useCallback(async () => {
-    if (selectedServiceIds.length === 0 || !selectedSlot || !form.name || !form.email || !business) return;
+    if (selectedServiceIds.length === 0 || !selectedSlot || !form.name || !form.email) return;
     setLoading(true);
     setError(null);
 
@@ -246,27 +221,39 @@ export default function BookingPage() {
     }
   }, [selectedServiceIds, totalDurationMins, selectedSlot, form, business, selectedDate, selectedEmployeeId, serviceIdsParam]);
 
-  // ── Loading ──
-  if (pageLoading) {
-    return (
-      <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center">
-        <Loader2 size={24} className="animate-spin text-[var(--text-muted)]" />
-      </div>
-    );
+  let mobileActionLabel = '';
+  let mobileActionDisabled = false;
+  let mobileAction: (() => void) | null = null;
+
+  if (step === 1) {
+    mobileActionLabel = 'Continue';
+    mobileActionDisabled = selectedServiceIds.length === 0;
+    mobileAction = () => setStep(2);
+  } else if (step === 2) {
+    mobileActionLabel = 'Continue';
+    mobileActionDisabled = false;
+    mobileAction = () => setStep(3);
+  } else if (step === 3) {
+    mobileActionLabel = 'Continue';
+    mobileActionDisabled = !selectedSlot;
+    mobileAction = () => { setError(null); setStep(4); };
+  } else if (step === 4) {
+    mobileActionLabel = loading ? 'Booking...' : 'Book appointment';
+    mobileActionDisabled = !form.name || !form.email || loading;
+    mobileAction = () => { void handleSubmit(); };
   }
 
-  // ── 404 ──
-  if (notFound || !business) {
-    return (
-      <div className="min-h-screen bg-[var(--bg-page)] flex flex-col items-center justify-center px-5 text-center gap-4">
-        <AlertCircle size={36} className="text-[var(--text-muted)]" />
-        <h1 className="text-[18px] font-semibold text-[var(--text-primary)]">Business not found</h1>
-        <p className="text-[14px] text-[var(--text-secondary)] max-w-[280px]">
-          The booking page for &quot;{slug}&quot; doesn&apos;t exist or is no longer active.
-        </p>
-      </div>
-    );
-  }
+  const mobileSummary = (() => {
+    if (step === 1) {
+      return selectedServiceIds.length === 0
+        ? 'Select at least one service'
+        : `${selectedServiceIds.length} service${selectedServiceIds.length > 1 ? 's' : ''} · $${totalPrice.toFixed(2)}`;
+    }
+    if (step === 2) return selectedEmployeeId === 'any' ? 'Any available staff' : 'Provider selected';
+    if (step === 3) return selectedSlot ? `Time selected · $${totalPrice.toFixed(2)}` : 'Choose a time slot';
+    if (step === 4) return `${totalDurationMins} min · $${totalPrice.toFixed(2)}`;
+    return '';
+  })();
 
   return (
     <div className="min-h-screen bg-[var(--bg-page)]">
@@ -301,7 +288,7 @@ export default function BookingPage() {
       </header>
 
       {/* ── Content ── */}
-      <main className="max-container" style={{ paddingTop: 28, paddingBottom: 40 }}>
+      <main className="max-container" style={{ paddingTop: 28, paddingBottom: 122 }}>
 
         {/* ── STEP 1: Choose Services ── */}
         {step === 1 && (
@@ -355,7 +342,7 @@ export default function BookingPage() {
               </div>
             )}
 
-            <div className="flex flex-col md:flex-row md:justify-end mt-6">
+            <div className="hidden md:flex md:flex-row md:justify-end mt-6">
               <button
                 className="btn-primary w-full md:w-auto"
                 disabled={selectedServiceIds.length === 0}
@@ -439,7 +426,7 @@ export default function BookingPage() {
               </div>
             )}
 
-            <div className="flex flex-col md:flex-row md:justify-end mt-6">
+            <div className="hidden md:flex md:flex-row md:justify-end mt-6">
               <button className="btn-primary w-full md:w-auto" onClick={() => setStep(3)}>
                 Continue
               </button>
@@ -537,7 +524,7 @@ export default function BookingPage() {
               </div>
             )}
 
-            <div className="flex flex-col md:flex-row md:justify-end mt-6">
+            <div className="hidden md:flex md:flex-row md:justify-end mt-6">
               <button
                 className="btn-primary w-full md:w-auto"
                 disabled={!selectedSlot}
@@ -628,7 +615,7 @@ export default function BookingPage() {
               </div>
             )}
 
-            <div className="flex flex-col md:flex-row md:justify-end mt-6">
+            <div className="hidden md:flex md:flex-row md:justify-end mt-6">
               <button
                 className="btn-primary w-full md:w-auto"
                 disabled={!form.name || !form.email || loading}
@@ -722,6 +709,22 @@ export default function BookingPage() {
         )}
 
       </main>
+
+      {step < 5 && mobileAction ? (
+        <div className="sticky-action md:hidden">
+          <div className="sticky-action-inner">
+            <p className="text-[12px] text-[var(--text-secondary)] flex-1 leading-tight">{mobileSummary}</p>
+            <button
+              className="btn-primary !w-auto !px-5 !py-2.5"
+              disabled={mobileActionDisabled}
+              onClick={mobileAction}
+            >
+              {step === 4 && loading ? <Loader2 size={14} className="animate-spin" /> : null}
+              {mobileActionLabel}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

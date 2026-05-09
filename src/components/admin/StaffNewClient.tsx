@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import {
-  X, ChevronRight, ChevronLeft, Loader2, Check,
+  X, ChevronRight, Loader2, Check,
   User, Shield, Briefcase, Clock,
 } from 'lucide-react';
 
@@ -99,7 +99,7 @@ function Label({ children, htmlFor, optional }: { children: React.ReactNode; htm
   return (
     <label
       htmlFor={htmlFor}
-      className="block text-[13px] font-medium text-gray-700 mb-1.5"
+      className="block text-[13px] font-medium text-gray-700 mb-1"
     >
       {children}
       {optional && <span className="ml-1.5 text-[12px] font-normal text-gray-400">Optional</span>}
@@ -126,7 +126,7 @@ function Input({ id, error, ...props }: React.InputHTMLAttributes<HTMLInputEleme
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-4">
+    <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-3">
       {children}
     </p>
   );
@@ -142,14 +142,14 @@ function StepProfile({
   onChange: (patch: Partial<StaffForm>) => void;
   touched: Record<string, boolean>;
   setTouched: (k: string) => void;
-}) {
+  }) {
   const firstErr = touched.first_name && !form.first_name.trim() ? 'Required' : '';
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <SectionLabel>Basic info</SectionLabel>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <Label htmlFor="sf-first">Preferred name <span className="text-red-500">*</span></Label>
           <Input
@@ -210,7 +210,7 @@ function StepProfile({
 // ─────────────────────────────────────────────────────────────────────────────
 function StepRole({ form, onChange }: { form: StaffForm; onChange: (patch: Partial<StaffForm>) => void }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
         <SectionLabel>Role</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
@@ -219,9 +219,9 @@ function StepRole({ form, onChange }: { form: StaffForm; onChange: (patch: Parti
               key={r}
               type="button"
               onClick={() => onChange({ role: r })}
-              className={`flex flex-col items-start gap-1.5 p-4 rounded-xl border text-left transition-all ${
+              className={`flex flex-col items-start gap-1.5 rounded-xl border px-4 py-4 text-left transition-all ${
                 form.role === r
-                  ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
+                  ? 'border-gray-900 bg-white shadow-sm'
                   : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
@@ -245,7 +245,7 @@ function StepRole({ form, onChange }: { form: StaffForm; onChange: (patch: Parti
         <SectionLabel>Settings</SectionLabel>
 
         {/* Bookable toggle */}
-        <div className="flex items-center justify-between py-3.5 px-4 rounded-xl border border-gray-200 bg-white">
+        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3.5">
           <div>
             <p className="text-[14px] font-medium text-gray-800">Bookable by customers</p>
             <p className="text-[12px] text-gray-400 mt-0.5">Show this person on the public booking page</p>
@@ -269,7 +269,7 @@ function StepRole({ form, onChange }: { form: StaffForm; onChange: (patch: Parti
 
         {/* Login invite — only visible when email is provided */}
         {form.email.trim() ? (
-          <label className="flex items-start gap-3 py-3.5 px-4 rounded-xl border border-gray-200 bg-white cursor-pointer hover:bg-gray-50 transition-colors">
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3.5 transition-colors hover:bg-gray-50">
             <input
               type="checkbox"
               checked={form.invite}
@@ -284,7 +284,7 @@ function StepRole({ form, onChange }: { form: StaffForm; onChange: (patch: Parti
             </div>
           </label>
         ) : (
-          <div className="py-3.5 px-4 rounded-xl border border-dashed border-gray-200 bg-gray-50">
+          <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-3.5">
             <p className="text-[13px] text-gray-400">Add an email address in the previous step to send a login invite.</p>
           </div>
         )}
@@ -338,7 +338,7 @@ function StepServices({
           <Loader2 size={22} className="animate-spin text-gray-400" />
         </div>
       ) : services.length === 0 ? (
-        <div className="text-center py-12 rounded-xl border border-dashed border-gray-200 bg-gray-50">
+        <div className="rounded-xl border border-dashed border-gray-200 bg-white py-12 text-center">
           <Briefcase size={24} className="mx-auto text-gray-300 mb-3" />
           <p className="text-[14px] font-medium text-gray-600">No services yet</p>
           <p className="text-[13px] text-gray-400 mt-1">Create services first, then assign them to staff.</p>
@@ -352,9 +352,9 @@ function StepServices({
                 key={svc.id}
                 type="button"
                 onClick={() => toggle(svc.id)}
-                className={`w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all ${
+                className={`w-full flex items-center gap-4 rounded-xl border px-4 py-4 text-left transition-all ${
                   selected
-                    ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
+                    ? 'border-gray-900 bg-white shadow-sm'
                     : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
               >
@@ -433,7 +433,7 @@ function StepAvailability({
   const workingCount = form.schedule.filter(d => d.open).length;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       <div className="flex items-center justify-between mb-4">
         <SectionLabel>Weekly schedule</SectionLabel>
         <span className="text-[12px] text-gray-400">
@@ -447,7 +447,7 @@ function StepAvailability({
           <div
             key={day.day_of_week}
             className={`rounded-xl border transition-colors ${
-              day.open ? 'border-gray-200 bg-white' : 'border-gray-100 bg-gray-50'
+              day.open ? 'border-gray-200 bg-white' : 'border-gray-100 bg-white'
             }`}
           >
             {/* Day row */}
@@ -524,9 +524,12 @@ function StepAvailability({
 // ─────────────────────────────────────────────────────────────────────────────
 export default function NewStaffPage() {
   const router   = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+  const returnTo = searchParams.get('returnTo') || '/admin?tab=staff';
 
   const [step, setStep]       = useState(1);
+  const [mounted, setMounted] = useState(false);
   const [form, setForm]       = useState<StaffForm>(EMPTY_FORM);
   const [touched, setTouchedMap] = useState<Record<string, boolean>>({});
 
@@ -550,6 +553,7 @@ export default function NewStaffPage() {
         .eq('user_id', user.id)
         .in('role', ['owner', 'admin'])
         .limit(1)
+        .returns<{ business_id: string; role: string }[]>()
         .single();
 
       if (!membership) { router.replace('/admin'); return; }
@@ -557,6 +561,21 @@ export default function NewStaffPage() {
     }
     init();
   }, [supabase, router]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        router.push(returnTo);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [mounted, router, returnTo]);
 
   // ── Load services when we hit step 3 ─────────────────────────────────────
   useEffect(() => {
@@ -568,12 +587,6 @@ export default function NewStaffPage() {
       .catch(console.error)
       .finally(() => setServicesLoading(false));
   }, [step, businessId, services.length]);
-
-  // ── Prevent body scroll ───────────────────────────────────────────────────
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, []);
 
   // ── Form helpers ─────────────────────────────────────────────────────────
   const patchForm = useCallback((patch: Partial<StaffForm>) => {
@@ -590,12 +603,6 @@ export default function NewStaffPage() {
     if (s === 1) return form.first_name.trim().length > 0;
     if (s === 4) return Object.keys(scheduleErrors(form.schedule)).length === 0;
     return true;
-  }
-
-  // ── Navigation ────────────────────────────────────────────────────────────
-  function handleBack() {
-    if (step === 1) { router.push('/admin'); return; }
-    setStep(s => s - 1);
   }
 
   function handleNext() {
@@ -662,7 +669,7 @@ export default function NewStaffPage() {
       }
 
       setDone(true);
-      setTimeout(() => router.push('/admin'), 1800);
+      setTimeout(() => router.push(returnTo), 1800);
     } catch (err: any) {
       setSubmitError('Unexpected error. Please try again.');
     } finally {
@@ -672,14 +679,13 @@ export default function NewStaffPage() {
 
   const progress = ((step - 1) / (TOTAL - 1)) * 100;
   const isLast   = step === TOTAL;
-  const StepIcon = STEPS[step - 1].icon;
 
   // ─────────────────────────────────────────────────────────────────────────
   // Success screen
   // ─────────────────────────────────────────────────────────────────────────
   if (done) {
     return (
-      <div className="fixed inset-0 bg-white z-[200] flex flex-col items-center justify-center gap-5">
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
         <span className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-900">
           <Check size={32} strokeWidth={2.5} className="text-white" />
         </span>
@@ -696,114 +702,89 @@ export default function NewStaffPage() {
   // ─────────────────────────────────────────────────────────────────────────
   // Main render
   // ─────────────────────────────────────────────────────────────────────────
+  if (!mounted) return null;
+
   return (
-    <div className="fixed inset-0 bg-white z-[200] flex flex-col overflow-hidden">
-
-      {/* ── Progress bar ── */}
-      <div className="h-[3px] bg-gray-100 shrink-0">
-        <div
-          className="h-full bg-gray-900 transition-all duration-500 ease-out"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
-      {/* ── Top bar ── */}
-      <header className="shrink-0 border-b border-gray-100 bg-white">
-        <div className="max-w-2xl mx-auto w-full px-5 h-14 flex items-center justify-between gap-4">
-          {/* Left: Back / Close */}
+    <div className="min-h-screen bg-white text-gray-900">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <button
             type="button"
-            onClick={handleBack}
-            className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-900 transition-colors"
-            aria-label={step === 1 ? 'Close' : 'Back'}
+            onClick={() => router.push(returnTo)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900"
+            aria-label="Close"
           >
-            {step === 1 ? (
-              <><X size={18} /> <span className="hidden sm:inline">Close</span></>
-            ) : (
-              <><ChevronLeft size={18} /> <span className="hidden sm:inline">Back</span></>
-            )}
+            <X size={18} />
           </button>
 
-          {/* Center: Step label */}
-          <div className="flex items-center gap-2 text-[14px] font-semibold text-gray-900">
-            <StepIcon size={16} className="text-gray-400" />
-            {STEPS[step - 1].label}
+          <div className="hidden min-w-0 flex-1 text-center sm:block">
+            <p className="text-[12px] font-medium text-gray-500">
+              Step {step} of {TOTAL}
+            </p>
           </div>
 
-          {/* Right: Next / Save */}
           <button
             type="button"
             id="staff-next-btn"
             onClick={handleNext}
             disabled={!isStepValid(step) || submitting}
-            className="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-gray-900 text-white text-[13px] font-semibold
-              hover:bg-gray-800 transition-colors
-              disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-gray-900 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {submitting ? (
               <Loader2 size={14} className="animate-spin" />
             ) : isLast ? (
-              'Create team member'
+              'Create'
             ) : (
-              <><span>Next</span><ChevronRight size={15} /></>
+              <>
+                <span>Next</span>
+                <ChevronRight size={15} />
+              </>
             )}
           </button>
         </div>
+
+        <div className="mx-auto w-full max-w-5xl px-4 pb-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-3 text-[12px] text-gray-500">
+            <span>Step {step} of {TOTAL}</span>
+            <span className="truncate font-medium text-gray-700">{STEPS[step - 1].label}</span>
+          </div>
+          <div className="mt-2 h-1.5 rounded-full bg-gray-100">
+            <div
+              className="h-full rounded-full bg-gray-900 transition-all duration-300 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
       </header>
 
-      {/* ── Step indicator dots ── */}
-      <div className="shrink-0 flex items-center justify-center gap-2 pt-5 pb-1">
-        {STEPS.map(s => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => {
-              // Only allow going to already-visited steps
-              if (s.id < step) setStep(s.id);
-            }}
-            className={`transition-all duration-200 rounded-full ${
-              s.id === step
-                ? 'w-6 h-2 bg-gray-900'
-                : s.id < step
-                  ? 'w-2 h-2 bg-gray-400 hover:bg-gray-600 cursor-pointer'
-                  : 'w-2 h-2 bg-gray-200 cursor-default'
-            }`}
-            aria-label={`Step ${s.id}: ${s.label}`}
-            disabled={s.id >= step}
-          />
-        ))}
-      </div>
+      <main className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+        <div className="space-y-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">
+            Add team member
+          </p>
+          <h1 className="text-[28px] font-semibold tracking-[-0.03em] text-gray-950 sm:text-[32px]">
+            {step === 1 && 'Profile'}
+            {step === 2 && 'Role and access'}
+            {step === 3 && 'Services'}
+            {step === 4 && 'Availability'}
+          </h1>
+          <p className="max-w-2xl text-[14px] leading-6 text-gray-600">
+            {step === 1 && 'Enter the details customers and your team will use to recognize this person.'}
+            {step === 2 && 'Choose how this team member appears in the dashboard and on the booking page.'}
+            {step === 3 && 'Select the services this person can perform.'}
+            {step === 4 && 'Set the days and hours this team member is available.'}
+          </p>
+        </div>
 
-      {/* ── Scrollable body ── */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto w-full px-5 py-8 pb-24">
-
-          {/* Step heading */}
-          <div className="mb-8">
-            <h1 className="text-[22px] font-semibold text-gray-900">
-              {step === 1 && 'Tell us about this team member'}
-              {step === 2 && 'Set their role and access'}
-              {step === 3 && 'Which services can they perform?'}
-              {step === 4 && 'When are they available?'}
-            </h1>
-            <p className="text-[14px] text-gray-500 mt-1.5 leading-relaxed">
-              {step === 1 && 'You can always update this information later from the Staff tab.'}
-              {step === 2 && "Choose how this person interacts with your booking system."}
-              {step === 3 && 'Customers will only see this staff member for the services you select. Skip to allow all.'}
-              {step === 4 && 'Set individual hours or skip to use your business hours.'}
-            </p>
+        {submitError && (
+          <div className="mt-6 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-4">
+            <X size={15} className="mt-0.5 shrink-0 text-red-500" />
+            <p className="text-[13px] text-red-700">{submitError}</p>
           </div>
+        )}
 
-          {/* Error banner */}
-          {submitError && (
-            <div className="mb-6 flex items-start gap-3 p-4 rounded-xl border border-red-100 bg-red-50">
-              <X size={15} className="text-red-500 mt-0.5 shrink-0" />
-              <p className="text-[13px] text-red-700">{submitError}</p>
-            </div>
-          )}
-
-          {/* Step content */}
-          <div key={step} className="fade-in">
+        <div key={step} className="fade-in mt-8">
+          <div className="space-y-8">
             {step === 1 && (
               <StepProfile
                 form={form}
@@ -827,15 +808,12 @@ export default function NewStaffPage() {
               <StepAvailability form={form} onChange={patchForm} />
             )}
           </div>
-
-          {/* Step counter — bottom */}
-          <p className="mt-10 text-center text-[12px] text-gray-400">
-            Step {step} of {TOTAL}
-          </p>
-
         </div>
-      </main>
 
+        <p className="mt-10 text-center text-[12px] text-gray-400">
+          Use Next to move through the setup flow.
+        </p>
+      </main>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, CheckCircle, ChevronRight, ChevronLeft, Building2, Scissors, User, Clock } from 'lucide-react';
+import SquareSelect from '@/components/ui/square-select';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -251,11 +252,13 @@ export default function OnboardingPage() {
                 </div>
                 <div>
                   <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Timezone</label>
-                  <select className="input-field" value={timezone} onChange={e => setTimezone(e.target.value)}>
-                    {TIMEZONES.map(tz => (
-                      <option key={tz} value={tz}>{tz.replace('_', ' ')}</option>
-                    ))}
-                  </select>
+                  <SquareSelect
+                    label="Timezone"
+                    value={timezone}
+                    onChange={setTimezone}
+                    options={TIMEZONES.map(tz => ({ value: tz, label: tz.replaceAll('_', ' ') }))}
+                    className="w-full"
+                  />
                 </div>
               </div>
             </>

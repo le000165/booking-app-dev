@@ -1,19 +1,11 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceRoleClient } from '@/lib/supabase/service-role';
 
 /**
  * Admin (service-role) client — bypasses RLS so the public booking page
  * can read team_members and service_team_members without requiring a session.
  * This route must NEVER expose private fields like user_id, email, or phone.
  */
-function createAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
-
 /**
  * GET /api/employees?business_id=xyz&service_ids=a,b
  *
@@ -43,7 +35,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing business_id' }, { status: 400 });
   }
 
-  const admin = createAdminClient();
+  const admin = createServiceRoleClient();
 
   // ── 1. Resolve service-staff filter (only when service_ids provided) ────────
   let eligibleIds: string[] | null = null; // null = "no filter, return all"

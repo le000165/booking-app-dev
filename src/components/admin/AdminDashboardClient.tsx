@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Clock, CheckCircle, XCircle, ChevronRight, Settings, Calendar,
   Loader2, MoreHorizontal, Plus, Pencil, Trash2, X, Check, ChevronDown,
-  LogOut, User, Search, Filter, RotateCcw, UserMinus, Mail, MessageSquare,
+  User, Search, Filter, RotateCcw, UserMinus, Mail, MessageSquare,
   ChevronLeft, Link2, Copy, ExternalLink
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import WeekCalendar from '@/components/admin/WeekCalendar';
+import SquareSelect from '@/components/ui/square-select';
+import ResponsiveModal from '@/components/ui/responsive-modal';
 
 const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -82,9 +84,101 @@ function formatDateTime(iso: string) {
   return `${DAYS_SHORT[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()} · ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
 }
 
+type CalendarView = 'day' | 'fiveDay' | 'week' | 'month';
+type CalendarDisplayMode = 'combined' | 'onlyMe' | 'sideBySide';
+
+const CALENDAR_VIEW_OPTIONS: { value: CalendarView; label: string }[] = [
+  { value: 'day', label: 'Day' },
+  { value: 'fiveDay', label: '5 days' },
+  { value: 'week', label: 'Week' },
+  { value: 'month', label: 'Month' },
+];
+
+const CALENDAR_DISPLAY_OPTIONS: { value: CalendarDisplayMode; label: string }[] = [
+  { value: 'combined', label: 'Combined' },
+  { value: 'onlyMe', label: 'Only me' },
+  { value: 'sideBySide', label: 'Side-by-side' },
+];
+
+function startOfLocalDay(date: Date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function endOfLocalDay(date: Date) {
+  const d = new Date(date);
+  d.setHours(23, 59, 59, 999);
+  return d;
+}
+
+function addDays(date: Date, amount: number) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + amount);
+  return d;
+}
+
+function startOfWeek(date: Date) {
+  const d = startOfLocalDay(date);
+  d.setDate(d.getDate() - d.getDay());
+  return d;
+}
+
+function startOfMonth(date: Date) {
+  const d = startOfLocalDay(date);
+  d.setDate(1);
+  return d;
+}
+
+function endOfMonth(date: Date) {
+  const d = startOfLocalDay(date);
+  d.setMonth(d.getMonth() + 1, 0);
+  d.setHours(23, 59, 59, 999);
+  return d;
+}
+
+function formatCalendarLabel(view: CalendarView, start: Date, end: Date) {
+  const sameMonth = start.getMonth() === end.getMonth();
+  const sameYear = start.getFullYear() === end.getFullYear();
+
+  if (view === 'month') {
+    return `${MONTHS[start.getMonth()]} ${start.getFullYear()}`;
+  }
+
+  if (view === 'day') {
+    return `${MONTHS[start.getMonth()]} ${start.getDate()}, ${start.getFullYear()}`;
+  }
+
+  const startLabel = `${MONTHS[start.getMonth()]} ${start.getDate()}`;
+  const endLabel = sameMonth ? `${end.getDate()}` : `${MONTHS[end.getMonth()]} ${end.getDate()}`;
+  return `${startLabel} – ${endLabel}, ${sameYear ? start.getFullYear() : end.getFullYear()}`;
+}
+
+function getCalendarRange(view: CalendarView, anchorDate: Date) {
+  const anchor = startOfLocalDay(anchorDate);
+
+  if (view === 'day') return { start: anchor, end: anchor };
+  if (view === 'fiveDay') return { start: anchor, end: addDays(anchor, 4) };
+  if (view === 'week') {
+    const start = startOfWeek(anchor);
+    return { start, end: addDays(start, 6) };
+  }
+
+  return { start: startOfMonth(anchor), end: endOfMonth(anchor) };
+}
+
 export default function AdminPage() {
   const supabase = createClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const viewParam = searchParams.get('view');
+  const initialTab = (() => {
+    return tabParam === 'availability' || tabParam === 'services' || tabParam === 'staff'
+      ? tabParam
+      : 'appointments';
+  })();
+  const initialApptView = viewParam === 'calendar' ? 'calendar' : 'overview';
   const [businessId, setBusinessId] = useState('');
   const [businessSlug, setBusinessSlug] = useState('');
   const [businessName, setBusinessName] = useState('');
@@ -92,7 +186,7 @@ export default function AdminPage() {
   const [bookingUrl, setBookingUrl] = useState('');
   const [loadingUser, setLoadingUser] = useState(true);
 
-  const [tab, setTab] = useState<Tab>('appointments');
+  const [tab, setTab] = useState<Tab>(initialTab);
 
   // ── Appointments ──
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -104,28 +198,46 @@ export default function AdminPage() {
 
   // ── Calendar View ──
   type ApptView = 'overview' | 'calendar';
-  const [apptView, setApptView] = useState<ApptView>('overview');
-  const [calWeekStart, setCalWeekStart] = useState<Date>(() => {
-    const now = new Date();
-    const d = new Date(now);
-    d.setDate(now.getDate() - now.getDay()); // Sunday
-    d.setHours(0, 0, 0, 0);
-    return d;
-  });
+  const [apptView, setApptView] = useState<ApptView>(initialApptView);
+  const [calendarView, setCalendarView] = useState<CalendarView>('day');
+  const [calendarDisplayMode, setCalendarDisplayMode] = useState<CalendarDisplayMode>('sideBySide');
+  const [currentTeamMemberId, setCurrentTeamMemberId] = useState('');
+  const [calendarDate, setCalendarDate] = useState<Date>(() => startOfLocalDay(new Date()));
 
-  const prevWeek = () => setCalWeekStart(d => { const n = new Date(d); n.setDate(d.getDate() - 7); return n; });
-  const nextWeek = () => setCalWeekStart(d => { const n = new Date(d); n.setDate(d.getDate() + 7); return n; });
-  const goToday = () => {
-    const now = new Date();
-    const d = new Date(now);
-    d.setDate(now.getDate() - now.getDay());
-    d.setHours(0, 0, 0, 0);
-    setCalWeekStart(d);
+  const calendarRange = useMemo(
+    () => getCalendarRange(calendarView, calendarDate),
+    [calendarView, calendarDate]
+  );
+  const calLabel = useMemo(
+    () => formatCalendarLabel(calendarView, calendarRange.start, calendarRange.end),
+    [calendarView, calendarRange.start, calendarRange.end]
+  );
+
+  const prevPeriod = () => {
+    setCalendarDate(d => {
+      if (calendarView === 'day') return addDays(d, -1);
+      if (calendarView === 'fiveDay') return addDays(d, -5);
+      if (calendarView === 'week') return addDays(d, -7);
+      const n = new Date(d);
+      n.setMonth(n.getMonth() - 1);
+      return n;
+    });
   };
 
-  const calWeekEnd = new Date(calWeekStart);
-  calWeekEnd.setDate(calWeekStart.getDate() + 6);
-  const calLabel = `${MONTHS[calWeekStart.getMonth()]} ${calWeekStart.getDate()} – ${calWeekStart.getMonth() !== calWeekEnd.getMonth() ? MONTHS[calWeekEnd.getMonth()] + ' ' : ''}${calWeekEnd.getDate()}, ${calWeekEnd.getFullYear()}`;
+  const nextPeriod = () => {
+    setCalendarDate(d => {
+      if (calendarView === 'day') return addDays(d, 1);
+      if (calendarView === 'fiveDay') return addDays(d, 5);
+      if (calendarView === 'week') return addDays(d, 7);
+      const n = new Date(d);
+      n.setMonth(n.getMonth() + 1);
+      return n;
+    });
+  };
+
+  const goToday = () => {
+    setCalendarDate(startOfLocalDay(new Date()));
+  };
 
   // ── Filters ──
   const [dateRange, setDateRange] = useState({
@@ -154,6 +266,7 @@ export default function AdminPage() {
   // ── Appointment Edit ──
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [editAppt, setEditAppt] = useState<Appointment | null>(null);
+  const [apptEditorOpen, setApptEditorOpen] = useState(false);
   const [apptForm, setApptForm] = useState({
     staff_id: '',
     date: '',
@@ -197,6 +310,19 @@ export default function AdminPage() {
   // ── Stats ──
   const [stats, setStats] = useState<any>(null);
   const [statsLoading, setStatsLoading] = useState(true);
+  const staffFormUrl = `/admin/staff/new?returnTo=${encodeURIComponent('/admin?tab=staff')}`;
+
+  useEffect(() => {
+    const nextTab: Tab =
+      tabParam === 'availability' || tabParam === 'services' || tabParam === 'staff'
+        ? tabParam
+        : 'appointments';
+    setTab(nextTab);
+  }, [tabParam]);
+
+  useEffect(() => {
+    setApptView(viewParam === 'calendar' ? 'calendar' : 'overview');
+  }, [viewParam]);
 
   // ── Date Helpers ──
   const setToday = () => {
@@ -251,16 +377,45 @@ export default function AdminPage() {
   const [calAppts, setCalAppts] = useState<Appointment[]>([]);
   const [calLoading, setCalLoading] = useState(false);
 
+  const calendarAppointments = useMemo(() => {
+    if (calendarDisplayMode === 'onlyMe') {
+      if (!currentTeamMemberId) return [];
+      return calAppts.filter(appt => appt.assigned_employee_id === currentTeamMemberId);
+    }
+    return calAppts;
+  }, [calendarDisplayMode, calAppts, currentTeamMemberId]);
+
+  const calendarSideBySideStaff = useMemo(() => {
+    if (calendarDisplayMode !== 'sideBySide') return [];
+
+    const seen = new Map<string, Employee>();
+    employees.forEach(emp => {
+      if (!seen.has(emp.id)) seen.set(emp.id, emp);
+    });
+    calAppts.forEach(appt => {
+      if (appt.staff && !seen.has(appt.staff.id)) {
+        seen.set(appt.staff.id, {
+          id: appt.staff.id,
+          first_name: appt.staff.first_name,
+          last_name: appt.staff.last_name,
+        });
+      }
+    });
+
+    return Array.from(seen.values());
+  }, [calendarDisplayMode, employees, calAppts]);
+
+  const onlyMeMissingTeamMember = calendarDisplayMode === 'onlyMe' && !currentTeamMemberId;
+  const sideBySideMissingStaff = calendarDisplayMode === 'sideBySide' && calendarSideBySideStaff.length === 0;
+
   const loadCalendarAppts = useCallback(async () => {
     if (!businessId) return;
     setCalLoading(true);
     try {
-      const weekEndDate = new Date(calWeekStart);
-      weekEndDate.setDate(calWeekStart.getDate() + 6);
       const params = new URLSearchParams({
         business_id: businessId,
-        from: calWeekStart.toISOString(),
-        to: new Date(weekEndDate.getFullYear(), weekEndDate.getMonth(), weekEndDate.getDate(), 23, 59, 59, 999).toISOString(),
+        from: calendarRange.start.toISOString(),
+        to: endOfLocalDay(calendarRange.end).toISOString(),
       });
       const res = await fetch(`/api/appointments?${params.toString()}`);
       const data = await res.json();
@@ -270,11 +425,11 @@ export default function AdminPage() {
     } finally {
       setCalLoading(false);
     }
-  }, [businessId, calWeekStart]);
+  }, [businessId, calendarRange.start, calendarRange.end]);
 
   useEffect(() => {
     if (apptView === 'calendar' && businessId) loadCalendarAppts();
-  }, [apptView, calWeekStart, businessId, loadCalendarAppts]);
+  }, [apptView, calendarRange, businessId, loadCalendarAppts]);
 
   const loadServices = useCallback(async () => {
     if (!businessId) return;
@@ -415,7 +570,7 @@ export default function AdminPage() {
 
       const { data: member, error: memberError } = await supabase
         .from('team_members')
-        .select('business_id, role')
+        .select('id, business_id, role')
         .eq('user_id', user.id)
         .limit(1)
         .single();
@@ -427,6 +582,7 @@ export default function AdminPage() {
 
       const bid = memberData.business_id;
       setBusinessId(bid);
+      setCurrentTeamMemberId(memberData.id || '');
 
       // Also load the business slug for the booking link card
       const { data: biz } = await supabase
@@ -530,11 +686,27 @@ export default function AdminPage() {
       customer_phone: appt.customer_phone || ''
     });
     setEditAppt(appt);
+    setApptEditorOpen(true);
+  };
+
+  const openApptCreate = () => {
+    const baseDate = calendarDate ?? startOfLocalDay(new Date());
+    setApptForm({
+      staff_id: '',
+      date: baseDate.toISOString().split('T')[0],
+      time: '09:00',
+      service_ids: services[0] ? [services[0].id] : [],
+      customer_name: '',
+      customer_email: '',
+      customer_phone: ''
+    });
+    setEditAppt(null);
+    setApptEditorOpen(true);
   };
 
   const handleApptSubmit = async () => {
-    if (!editAppt || !apptForm.date || !apptForm.time || apptForm.service_ids.length === 0) return;
-    setUpdatingId(editAppt.id);
+    if (!apptForm.date || !apptForm.time || apptForm.service_ids.length === 0) return;
+    setUpdatingId(editAppt?.id ?? '__create__');
     try {
       const start = new Date(`${apptForm.date}T${apptForm.time}:00`);
       let totalDuration = 0;
@@ -544,7 +716,19 @@ export default function AdminPage() {
       });
       const end = new Date(start.getTime() + totalDuration * 60000);
 
-      const res = await fetch(`/api/appointments/${editAppt.id}`, {
+      const createPayload = {
+        business_id: businessId,
+        service_id: apptForm.service_ids[0],
+        service_ids: apptForm.service_ids,
+        assigned_employee_id: apptForm.staff_id || null,
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+        customer_name: apptForm.customer_name,
+        customer_email: apptForm.customer_email,
+        customer_phone: apptForm.customer_phone
+      };
+
+      const res = editAppt ? await fetch(`/api/appointments/${editAppt.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -557,14 +741,19 @@ export default function AdminPage() {
           customer_email: apptForm.customer_email,
           customer_phone: apptForm.customer_phone
         }),
+      }) : await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createPayload),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to update appointment');
+        throw new Error(data.error || (editAppt ? 'Failed to update appointment' : 'Failed to create appointment'));
       }
 
       setEditAppt(null);
+      setApptEditorOpen(false);
       if (apptView === 'calendar') {
         await loadCalendarAppts();
       } else {
@@ -686,117 +875,211 @@ export default function AdminPage() {
     } catch (err: any) { alert(err.message); }
   };
 
-  const handleSignOut = async () => { await supabase.auth.signOut(); router.push('/login'); };
-
   if (loadingUser) return <div className="min-h-screen flex items-center justify-center bg-[var(--bg-page)]"><Loader2 className="animate-spin text-[var(--text-muted)]" /></div>;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-page)]">
+    <div className="min-h-screen bg-[#f8fafc] md:h-screen md:overflow-hidden md:bg-white">
 
       {/* Appointment Edit Modal */}
-      {editAppt && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="card w-full max-w-md shadow-2xl border-[1.5px] border-[var(--border-focus)] slide-up">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-[17px] font-semibold text-[var(--text-primary)]">Edit Appointment</h3>
-              <button className="btn-ghost p-1.5" onClick={() => setEditAppt(null)}><X size={18} /></button>
+      {apptEditorOpen && (
+        <ResponsiveModal
+          open={apptEditorOpen}
+          title={editAppt ? 'Edit Appointment' : 'Create Appointment'}
+          onClose={() => {
+            setApptEditorOpen(false);
+            setEditAppt(null);
+          }}
+          footer={(
+            <div className="flex gap-2 w-full">
+              <button className="btn-secondary flex-1" onClick={() => { setApptEditorOpen(false); setEditAppt(null); }}>Cancel</button>
+              <button className="btn-primary flex-1" onClick={handleApptSubmit} disabled={updatingId === (editAppt?.id ?? '__create__')}>
+                {updatingId === (editAppt?.id ?? '__create__') ? <Loader2 size={16} className="animate-spin" /> : (editAppt ? 'Save changes' : 'Create appointment')}
+              </button>
             </div>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-3">
-                <div>
-                  <label className="input-label">Customer Name</label>
-                  <input type="text" className="input-field" value={apptForm.customer_name} onChange={e => setApptForm(f => ({ ...f, customer_name: e.target.value }))} />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="input-label">Email</label>
-                    <input type="email" className="input-field" value={apptForm.customer_email} onChange={e => setApptForm(f => ({ ...f, customer_email: e.target.value }))} />
-                  </div>
-                  <div>
-                    <label className="input-label">Phone</label>
-                    <input type="tel" className="input-field" value={apptForm.customer_phone} onChange={e => setApptForm(f => ({ ...f, customer_phone: e.target.value }))} />
-                  </div>
-                </div>
-              </div>
-
+          )}
+        >
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-3">
               <div>
-                <label className="input-label">Assigned Staff</label>
-                <select className="input-field" value={apptForm.staff_id} onChange={e => setApptForm(f => ({ ...f, staff_id: e.target.value }))}>
-                  <option value="">Any available</option>
-                  {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
-                </select>
+                <label className="input-label">Customer Name</label>
+                <input type="text" className="input-field" value={apptForm.customer_name} onChange={e => setApptForm(f => ({ ...f, customer_name: e.target.value }))} />
               </div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="input-label">Date</label>
-                  <input type="date" className="input-field" value={apptForm.date} onChange={e => setApptForm(f => ({ ...f, date: e.target.value }))} />
+                  <label className="input-label">Email</label>
+                  <input type="email" className="input-field" value={apptForm.customer_email} onChange={e => setApptForm(f => ({ ...f, customer_email: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="input-label">Start Time</label>
-                  <input type="time" className="input-field" value={apptForm.time} onChange={e => setApptForm(f => ({ ...f, time: e.target.value }))} />
+                  <label className="input-label">Phone</label>
+                  <input type="tel" className="input-field" value={apptForm.customer_phone} onChange={e => setApptForm(f => ({ ...f, customer_phone: e.target.value }))} />
                 </div>
               </div>
+            </div>
 
+            <div>
+              <label className="input-label">Assigned Staff</label>
+              <select className="input-field" value={apptForm.staff_id} onChange={e => setApptForm(f => ({ ...f, staff_id: e.target.value }))}>
+                <option value="">Any available</option>
+                {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="input-label mb-2 block">Services</label>
-                <div className="max-h-[160px] overflow-y-auto space-y-1 p-1 border rounded-lg border-[var(--border-default)]">
-                  {services.map(s => (
-                    <label key={s.id} className="flex items-center gap-2 p-2 rounded hover:bg-[var(--bg-subtle)] cursor-pointer">
-                      <input type="checkbox" checked={apptForm.service_ids.includes(s.id)}
-                        onChange={e => {
-                          const ids = e.target.checked ? [...apptForm.service_ids, s.id] : apptForm.service_ids.filter(id => id !== s.id);
-                          setApptForm(f => ({ ...f, service_ids: ids }));
-                        }}
-                      />
-                      <span className="text-[13px] text-[var(--text-primary)]">{s.emoji} {s.name}</span>
-                      <span className="text-[11px] text-[var(--text-secondary)] ml-auto">${Number(s.price).toFixed(0)}</span>
-                    </label>
-                  ))}
-                </div>
+                <label className="input-label">Date</label>
+                <input type="date" className="input-field" value={apptForm.date} onChange={e => setApptForm(f => ({ ...f, date: e.target.value }))} />
               </div>
+              <div>
+                <label className="input-label">Start Time</label>
+                <input type="time" className="input-field" value={apptForm.time} onChange={e => setApptForm(f => ({ ...f, time: e.target.value }))} />
+              </div>
+            </div>
 
-              <div className="flex gap-2 pt-2">
-                <button className="btn-secondary flex-1" onClick={() => setEditAppt(null)}>Cancel</button>
-                <button className="btn-primary flex-1" onClick={handleApptSubmit} disabled={updatingId === editAppt.id}>
-                  {updatingId === editAppt.id ? <Loader2 size={16} className="animate-spin" /> : 'Save changes'}
-                </button>
+            <div>
+              <label className="input-label mb-2 block">Services</label>
+              <div className="max-h-[160px] overflow-y-auto space-y-1 p-1 border rounded-lg border-[var(--border-default)]">
+                {services.map(s => (
+                  <label key={s.id} className="flex items-center gap-2 p-2 rounded hover:bg-[var(--bg-subtle)] cursor-pointer">
+                    <input type="checkbox" checked={apptForm.service_ids.includes(s.id)}
+                      onChange={e => {
+                        const ids = e.target.checked ? [...apptForm.service_ids, s.id] : apptForm.service_ids.filter(id => id !== s.id);
+                        setApptForm(f => ({ ...f, service_ids: ids }));
+                      }}
+                    />
+                    <span className="text-[13px] text-[var(--text-primary)]">{s.emoji} {s.name}</span>
+                    <span className="text-[11px] text-[var(--text-secondary)] ml-auto">${Number(s.price).toFixed(0)}</span>
+                  </label>
+                ))}
               </div>
             </div>
           </div>
-        </div>
+        </ResponsiveModal>
       )}
 
-      {/* Header */}
-      <header className="app-header">
-        <div className="app-header-inner max-w-3xl mx-auto px-4 w-full flex justify-between items-center">
-          <p className="font-semibold text-base md:text-lg text-[var(--text-primary)]">Admin Dashboard</p>
-          <button onClick={handleSignOut} className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-1.5 transition-colors font-medium">
-            <LogOut size={16} /> <span className="hidden sm:inline">Sign out</span>
-          </button>
-        </div>
-        <div className="max-w-3xl mx-auto px-4 w-full overflow-x-auto no-scrollbar">
-          <div className="flex gap-1 border-b border-[var(--border-default)]">
-            {(['appointments', 'availability', 'services', 'staff'] as Tab[]).map(t => (
-              <button key={t} onClick={() => setTab(t)} className={`nav-tab relative ${tab === t ? 'active' : ''}`}
-                style={tab === t ? { color: 'var(--text-primary)', fontWeight: 600 } : {}}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-                {tab === t && <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-[var(--text-primary)] rounded-t" style={{ transform: 'translateY(1px)' }} />}
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-3xl mx-auto px-4 py-6 md:py-8 w-full space-y-6">
+      <main className="w-full min-h-0 flex-1 overflow-hidden md:h-full">
 
         {/* ── APPOINTMENTS ── */}
         {tab === 'appointments' && (
-          <div className="slide-up space-y-5">
+          <div className={`slide-up flex min-h-[calc(100vh-78px)] flex-1 flex-col overflow-hidden md:min-h-full ${
+            apptView === 'calendar' ? 'bg-white md:-mx-7' : 'bg-transparent'
+          }`}>
+            {apptView === 'calendar' ? (
+              <>
+                <div className="border-b border-[#e5e7eb] bg-white px-5 py-3 md:px-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto no-scrollbar">
+                      <div className="flex shrink-0 items-center rounded-full border border-[#d6dbe5] bg-white p-1 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                        <button
+                          onClick={() => setApptView('overview')}
+                          className="rounded-full px-4 py-2 text-[13px] font-medium text-[#697386] transition-colors hover:text-[#111827]"
+                        >
+                          List
+                        </button>
+                        <button
+                          onClick={() => setApptView('calendar')}
+                          className="rounded-full bg-[#111827] px-4 py-2 text-[13px] font-medium text-white transition-colors"
+                        >
+                          Calendar
+                        </button>
+                      </div>
 
-            {/* ── Public Booking Link Card ── */}
-            {businessSlug && bookingUrl && (
+                      <div className="flex shrink-0 items-center gap-2">
+                        <button onClick={prevPeriod} className="grid h-10 w-10 place-items-center rounded-full border border-[#d6dbe5] bg-white text-[#6b7280] hover:bg-[#f8fafc] transition-colors">
+                          <ChevronLeft size={16} />
+                        </button>
+                        <button onClick={goToday} className="min-w-[132px] rounded-full border border-[#d6dbe5] bg-white px-5 py-2 text-[13px] font-medium text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:bg-[#f8fafc] transition-colors">
+                          {calLabel}
+                        </button>
+                        <button onClick={nextPeriod} className="grid h-10 w-10 place-items-center rounded-full border border-[#d6dbe5] bg-white text-[#6b7280] hover:bg-[#f8fafc] transition-colors">
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-2">
+                        <SquareSelect
+                          label="Range"
+                          value={calendarView}
+                          onChange={value => setCalendarView(value as CalendarView)}
+                          options={CALENDAR_VIEW_OPTIONS}
+                          className="w-[170px]"
+                        />
+                        <SquareSelect
+                          label="View"
+                          value={calendarDisplayMode}
+                          onChange={value => setCalendarDisplayMode(value as CalendarDisplayMode)}
+                          options={CALENDAR_DISPLAY_OPTIONS}
+                          className="w-[190px]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="ml-auto flex shrink-0 items-center gap-2">
+                      <button
+                        id="appt-settings-btn"
+                        onClick={() => {
+                          setPendingFilter(f => ({ ...f, staff: filterStaff, status: filterStatus, search: searchTerm }));
+                          setShowFilterPanel(true);
+                        }}
+                        className="grid h-10 w-10 place-items-center rounded-full border border-[#d6dbe5] bg-white text-[#6b7280] shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:bg-[#f8fafc] transition-colors"
+                        title="Settings"
+                      >
+                        <Settings size={16} />
+                      </button>
+                      <button
+                        onClick={openApptCreate}
+                        className="inline-flex h-11 items-center gap-2 rounded-full bg-[#111827] px-5 text-[14px] font-semibold text-white hover:bg-[#0b1220] transition-colors"
+                      >
+                        <Plus size={15} />
+                        Create
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="min-h-0 flex-1 overflow-hidden bg-[#fbfcfe]">
+                  {onlyMeMissingTeamMember ? (
+                    <div className="flex h-full items-center justify-center py-24 text-center">
+                      <div className="max-w-sm">
+                        <p className="text-[16px] font-semibold text-gray-900">No appointments assigned to you</p>
+                        <p className="mt-1 text-[13px] text-gray-500">
+                          We could not find a team member record for the current user, so this view cannot be filtered yet.
+                        </p>
+                      </div>
+                    </div>
+                  ) : sideBySideMissingStaff ? (
+                    <div className="flex h-full items-center justify-center py-24 text-center">
+                      <div className="max-w-sm">
+                        <p className="text-[16px] font-semibold text-gray-900">No staff members found</p>
+                        <p className="mt-1 text-[13px] text-gray-500">
+                          Add staff members to use the side-by-side schedule view.
+                        </p>
+                      </div>
+                    </div>
+                  ) : calLoading ? (
+                    <div className="flex h-full items-center justify-center py-24">
+                      <Loader2 size={22} className="animate-spin text-gray-400" />
+                    </div>
+                  ) : (
+                    <WeekCalendar
+                      appointments={calendarAppointments}
+                      view={calendarView}
+                      anchorDate={calendarDate}
+                      selectedDate={calendarDate}
+                      displayMode={calendarDisplayMode}
+                      staffMembers={calendarSideBySideStaff}
+                      onDateSelect={setCalendarDate}
+                      onAppointmentClick={(appt) => {
+                        setExpandedId(appt.id);
+                        openApptEdit(appt);
+                      }}
+                    />
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="mx-auto w-full max-w-6xl space-y-6 py-4 md:py-6">
+                {/* ── Public Booking Link Card ── */}
+                {businessSlug && bookingUrl && (
               <div className="card flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="w-9 h-9 rounded-xl bg-[var(--brand-light)] flex items-center justify-center shrink-0">
@@ -818,7 +1101,7 @@ export default function AdminPage() {
                         setTimeout(() => setLinkCopied(false), 2000);
                       });
                     }}
-                    className="btn-secondary !py-1.5 !px-3 !text-xs flex items-center gap-1.5"
+                    className="btn-secondary btn-sm"
                   >
                     {linkCopied ? <Check size={13} className="text-[var(--success)]" /> : <Copy size={13} />}
                     {linkCopied ? 'Copied!' : 'Copy'}
@@ -828,29 +1111,29 @@ export default function AdminPage() {
                     href={bookingUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-secondary !py-1.5 !px-3 !text-xs flex items-center gap-1.5"
+                    className="btn-secondary btn-sm"
                   >
                     <ExternalLink size={13} /> Open
                   </a>
                 </div>
               </div>
-            )}
+                )}
 
-            {/* Dashboard Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="card p-4">
+                {/* Dashboard Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="card">
                 <p className="text-[12px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-1">Today's Bookings</p>
                 {statsLoading ? <Loader2 size={18} className="animate-spin text-[var(--text-muted)]" /> : (
                   <p className="text-[24px] font-semibold text-[var(--text-primary)]">{stats?.todayBookingCount || 0}</p>
                 )}
               </div>
-              <div className="card p-4">
+              <div className="card">
                 <p className="text-[12px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-1">Revenue Today</p>
                 {statsLoading ? <Loader2 size={18} className="animate-spin text-[var(--text-muted)]" /> : (
                   <p className="text-[24px] font-semibold text-[var(--text-primary)]">${(stats?.revenueToday || 0).toFixed(2)}</p>
                 )}
               </div>
-              <div className="card p-4">
+              <div className="card">
                 <p className="text-[12px] uppercase tracking-wider font-semibold text-[var(--text-muted)] mb-1">Next Appointment</p>
                 {statsLoading ? <Loader2 size={18} className="animate-spin text-[var(--text-muted)]" /> : stats?.nextUpcomingAppointment ? (
                   <div>
@@ -864,10 +1147,10 @@ export default function AdminPage() {
                   <p className="text-[14px] text-[var(--text-secondary)] mt-1">None scheduled</p>
                 )}
               </div>
-            </div>
+                </div>
 
-            {/* ── Square-style Toolbar ── */}
-            <div className="flex flex-col gap-2">
+                {/* ── Square-style Toolbar ── */}
+                <div className="flex flex-col gap-2">
 
               {/* Row 1: view tabs (left) + settings gear (right) */}
               <div className="flex items-center justify-between gap-3">
@@ -876,17 +1159,13 @@ export default function AdminPage() {
                 <div className="flex items-center bg-gray-100 rounded-lg p-0.5 shrink-0">
                   <button
                     onClick={() => setApptView('overview')}
-                    className={`px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${
-                      apptView === 'overview' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
-                    }`}
+                    className="px-3 py-1.5 rounded-md text-[13px] font-medium bg-white shadow-sm text-gray-900 transition-colors"
                   >
                     List
                   </button>
                   <button
                     onClick={() => setApptView('calendar')}
-                    className={`px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${
-                      apptView === 'calendar' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
-                    }`}
+                    className="px-3 py-1.5 rounded-md text-[13px] font-medium text-gray-500 hover:text-gray-700 transition-colors"
                   >
                     Calendar
                   </button>
@@ -957,18 +1236,32 @@ export default function AdminPage() {
                   )}
                 </div>
               ) : (
-                /* Calendar week nav */
-                <div className="flex items-center gap-2">
-                  <button onClick={prevWeek} className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                /* Calendar nav */
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  <button onClick={prevPeriod} className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
                     <ChevronLeft size={15} className="text-gray-600" />
                   </button>
                   <button onClick={goToday} className="px-2.5 h-8 rounded-lg border border-gray-200 text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                     Today
                   </button>
-                  <button onClick={nextWeek} className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                  <button onClick={nextPeriod} className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
                     <ChevronRight size={15} className="text-gray-600" />
                   </button>
                   <span className="text-[13px] font-medium text-gray-600 hidden sm:block">{calLabel}</span>
+                  <SquareSelect
+                    label="Range"
+                    value={calendarView}
+                    onChange={value => setCalendarView(value as CalendarView)}
+                    options={CALENDAR_VIEW_OPTIONS}
+                    className="w-[145px] shrink-0"
+                  />
+                  <SquareSelect
+                    label="View"
+                    value={calendarDisplayMode}
+                    onChange={value => setCalendarDisplayMode(value as CalendarDisplayMode)}
+                    options={CALENDAR_DISPLAY_OPTIONS}
+                    className="w-[170px] shrink-0"
+                  />
                   <button
                     className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-gray-500"
                     onClick={loadCalendarAppts}
@@ -979,11 +1272,10 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Calendar week label on mobile */}
-              {apptView === 'calendar' && (
-                <p className="text-[12px] font-medium text-gray-500 sm:hidden">{calLabel}</p>
-              )}
             </div>
+
+              </div>
+            )}
 
             {/* ── Appointment Attributes — Full-Screen Panel ── */}
             {showFilterPanel && (
@@ -1179,30 +1471,6 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* ── CALENDAR VIEW ── */}
-            {apptView === 'calendar' && (
-              <div className="slide-up">
-                {calLoading ? (
-                  <div className="flex justify-center py-24">
-                    <Loader2 size={22} className="animate-spin text-gray-400" />
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <div className="min-w-[640px]">
-                      <WeekCalendar
-                        appointments={calAppts}
-                        weekStart={calWeekStart}
-                        onAppointmentClick={(appt) => {
-                          setExpandedId(appt.id);
-                          openApptEdit(appt);
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* ── OVERVIEW / LIST VIEW ── */}
             {apptView === 'overview' && apptLoading ? (
               <div className="flex justify-center py-16">
@@ -1215,7 +1483,7 @@ export default function AdminPage() {
                 <p className="text-[13px] text-[var(--text-secondary)] mt-1">Try adjusting your filters.</p>
               </div>
             ) : apptView === 'overview' ? (
-              <div className="card overflow-hidden" style={{ padding: 0 }}>
+              <div className="card-flush">
                 {appointments.map((appt, i) => (
                   <div key={appt.id}>
                     <button className="w-full flex items-start gap-3 p-4 text-left hover:bg-gray-50 transition-colors"
@@ -1253,22 +1521,22 @@ export default function AdminPage() {
                     </button>
 
                     {expandedId === appt.id && (
-                      <div className="px-4 pb-4 pt-3 bg-gray-50 border-b border-gray-200">
+                      <div className="px-4 pb-4 pt-3 bg-[var(--bg-subtle)] border-b border-[var(--border-default)]">
                         {/* Details Block */}
                         <div className="space-y-3 mb-5">
                           <div>
-                            <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Contact</p>
+                            <p className="caption">Contact</p>
                             <p className="text-sm text-gray-900">{appt.customer_email} • {appt.customer_phone || 'No phone'}</p>
                           </div>
                           <div>
-                            <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-400">Staff</p>
+                            <p className="caption">Staff</p>
                             <p className="text-sm text-gray-900">{appt.staff ? `${appt.staff.first_name} ${appt.staff.last_name}` : 'Unassigned'}</p>
                           </div>
                           <div>
                             <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1">Services</p>
                             <div className="flex flex-wrap gap-1.5">
                               {appt.appointment_services.map((s: any) => (
-                                <span key={s.service.id} className="text-xs px-2 py-1 bg-white border border-gray-200 text-gray-700 rounded-md">
+                                <span key={s.service.id} className="badge badge-gray">
                                   {s.service.name}
                                 </span>
                               ))}
@@ -1280,30 +1548,30 @@ export default function AdminPage() {
                         {(appt.status !== 'completed' && appt.status !== 'cancelled') ? (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
                             {(appt.status === 'pending' || appt.status === 'no_show') && (
-                              <button className="h-11 rounded-xl text-sm font-medium w-full bg-black text-white hover:bg-gray-800 transition-colors" onClick={() => updateStatus(appt.id, 'confirmed')} disabled={updatingId === appt.id}>
+                              <button className="btn-black" onClick={() => updateStatus(appt.id, 'confirmed')} disabled={updatingId === appt.id}>
                                 {updatingId === appt.id ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Confirm'}
                               </button>
                             )}
                             {appt.status === 'confirmed' && (
-                              <button className="h-11 rounded-xl text-sm font-medium w-full bg-black text-white hover:bg-gray-800 transition-colors" onClick={() => updateStatus(appt.id, 'completed')} disabled={updatingId === appt.id}>
+                              <button className="btn-black" onClick={() => updateStatus(appt.id, 'completed')} disabled={updatingId === appt.id}>
                                 {updatingId === appt.id ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Complete'}
                               </button>
                             )}
-                            <button className="h-11 rounded-xl text-sm font-medium w-full border border-gray-200 bg-white text-gray-900 hover:bg-gray-50 transition-colors" onClick={() => updateStatus(appt.id, 'cancelled')} disabled={updatingId === appt.id}>
+                            <button className="btn-secondary w-full" onClick={() => updateStatus(appt.id, 'cancelled')} disabled={updatingId === appt.id}>
                               Cancel
                             </button>
                           </div>
                         ) : (
-                          <div className="mb-5 py-2.5 px-4 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-sm font-medium text-gray-500">
+                          <div className="mb-5 py-2.5 px-4 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl flex items-center justify-center text-sm font-medium text-[var(--text-secondary)]">
                             Appointment {appt.status === 'completed' ? 'completed' : 'cancelled'}
                           </div>
                         )}
 
                         {/* Secondary Actions */}
                         <div className="space-y-3 pt-4 border-t border-gray-200">
-                          <p className="text-xs font-medium text-gray-500">More actions</p>
+                          <p className="text-xs font-medium text-[var(--text-secondary)]">More actions</p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <button className="h-10 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 flex justify-center items-center gap-2 hover:bg-gray-50 bg-white transition-colors" onClick={() => openApptEdit(appt)}>
+                            <button className="btn-secondary btn-sm" onClick={() => openApptEdit(appt)}>
                               <Pencil size={14} /> Edit Details
                             </button>
                             
@@ -1317,8 +1585,8 @@ export default function AdminPage() {
                               <>
                                 <button 
                                   type="button"
-                                  className="h-10 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 flex justify-center items-center gap-2 hover:bg-gray-50 bg-white transition-colors" 
-                                  onClick={(e) => sendReminder(e, appt.id, 'email')} 
+                                  className="btn-secondary btn-sm"
+                                  onClick={(e) => sendReminder(e, appt.id, 'email')}
                                   disabled={reminderState !== null}
                                 >
                                   {reminderState?.id === appt.id && reminderState?.channel === 'email' ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
@@ -1327,8 +1595,8 @@ export default function AdminPage() {
                                 {appt.customer_phone && (
                                   <button 
                                     type="button"
-                                    className="h-10 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 flex justify-center items-center gap-2 hover:bg-gray-50 bg-white transition-colors" 
-                                    onClick={(e) => sendReminder(e, appt.id, 'sms')} 
+                                    className="btn-secondary btn-sm"
+                                    onClick={(e) => sendReminder(e, appt.id, 'sms')}
                                     disabled={reminderState !== null}
                                   >
                                     {reminderState?.id === appt.id && reminderState?.channel === 'sms' ? <Loader2 size={14} className="animate-spin" /> : <MessageSquare size={14} />}
@@ -1360,12 +1628,12 @@ export default function AdminPage() {
 
         {/* ── AVAILABILITY ── */}
         {tab === 'availability' && (
-          <div className="slide-up space-y-5">
+          <div className="slide-up mx-auto w-full max-w-5xl space-y-6 py-4 md:py-6">
             <div>
-              <h2 className="text-[18px] font-semibold text-[var(--text-primary)]">Business hours</h2>
-              <p className="text-[13px] text-[var(--text-secondary)] mt-0.5">Set when customers can book appointments</p>
+              <h2 className="h3">Business hours</h2>
+              <p className="body-sm mt-0.5">Set when customers can book appointments</p>
             </div>
-            <div className="card overflow-hidden" style={{ padding: 0 }}>
+            <div className="card-flush">
               {hours.map((h, i) => (
                 <div key={h.day_of_week} className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-4 ${i < hours.length - 1 ? 'border-b border-[var(--border-default)]' : ''}`}
                   style={{ opacity: h.open ? 1 : 0.5 }}>
@@ -1396,55 +1664,55 @@ export default function AdminPage() {
 
         {/* ── SERVICES ── */}
         {tab === 'services' && (
-          <div className="slide-up space-y-5">
+          <div className="slide-up mx-auto w-full max-w-6xl space-y-6 py-4 md:py-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-[18px] font-semibold text-[var(--text-primary)]">Services</h2>
-                <p className="text-[13px] text-[var(--text-secondary)] mt-0.5">Manage what customers can book</p>
+                <h2 className="h3">Services</h2>
+                <p className="body-sm mt-0.5">Manage what customers can book</p>
               </div>
               {showForm ? (
-                <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors" onClick={() => setShowForm(false)}>
+                <button className="btn-secondary" onClick={() => setShowForm(false)}>
                   Cancel
                 </button>
               ) : (
-                <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors" onClick={openCreate}>
+                <button className="btn-black !w-auto" onClick={openCreate}>
                   <Plus size={16} /> Add Service
                 </button>
               )}
             </div>
 
             {showForm && (
-              <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm space-y-4">
+              <div className="card space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">{editId ? 'Edit service' : 'New service'}</h3>
+                  <h3 className="h3">{editId ? 'Edit service' : 'New service'}</h3>
                   <button className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors" onClick={() => setShowForm(false)}><X size={18} /></button>
                 </div>
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1.5">Service name *</label>
-                    <input className="h-11 w-full rounded-xl border border-gray-200 px-3 text-sm focus:border-gray-400 focus:ring-0 outline-none transition-colors" placeholder="e.g. Gel Manicure" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                    <label className="input-label">Service name *</label>
+                    <input className="input-field" placeholder="e.g. Gel Manicure" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                   </div>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1.5">Duration (mins) *</label>
-                      <input className="h-11 w-full rounded-xl border border-gray-200 px-3 text-sm focus:border-gray-400 focus:ring-0 outline-none transition-colors" type="number" step={5} value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} />
+                      <label className="input-label">Duration (mins) *</label>
+                      <input className="input-field" type="number" step={5} value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1.5">Price ($) *</label>
-                      <input className="h-11 w-full rounded-xl border border-gray-200 px-3 text-sm focus:border-gray-400 focus:ring-0 outline-none transition-colors" type="number" step={0.01} value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
+                      <label className="input-label">Price ($) *</label>
+                      <input className="input-field" type="number" step={0.01} value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
                     </div>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1.5">Description</label>
-                    <textarea className="min-h-[88px] w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:ring-0 outline-none transition-colors resize-none" placeholder="Optional details" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+                    <label className="input-label">Description</label>
+                    <textarea className="input-field min-h-[88px] resize-none" placeholder="Optional details" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
                   </div>
                   
                   {formError && <p className="text-sm text-red-600 bg-red-50 border border-red-100 p-2.5 rounded-lg">{formError}</p>}
                   
-                  <button className="h-11 w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2" onClick={handleServiceSubmit} disabled={formSaving}>
+                  <button className="btn-primary" onClick={handleServiceSubmit} disabled={formSaving}>
                     {formSaving ? <Loader2 size={18} className="animate-spin" /> : 'Save service'}
                   </button>
                 </div>
@@ -1456,12 +1724,12 @@ export default function AdminPage() {
             ) : services.length === 0 ? (
               <div className="card text-center py-12">
                 <p className="font-medium text-[15px] text-[var(--text-primary)]">Create your first service to start taking bookings.</p>
-                <button className="inline-flex items-center gap-2 px-4 py-2 mt-4 rounded-lg bg-black text-white text-[13px] font-medium" onClick={openCreate}>
+                <button className="btn-black !w-auto mt-4" onClick={openCreate}>
                   <Plus size={16} /> Add Service
                 </button>
               </div>
             ) : (
-              <div className="rounded-2xl border border-[var(--border-default)] bg-white shadow-sm divide-y divide-[var(--border-default)]">
+              <div className="card-flush divide-y divide-[var(--border-default)]">
                 {services.map((svc) => (
                   <div key={svc.id} className="flex items-center justify-between gap-3 py-4 px-4">
                     {/* LEFT */}
@@ -1528,7 +1796,7 @@ export default function AdminPage() {
         {/* ── STAFF ── */}
         {/* ── STAFF ── */}
         {tab === 'staff' && (
-          <div className="slide-up space-y-6">
+          <div className="slide-up mx-auto w-full max-w-6xl space-y-6 py-4 md:py-6">
 
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1538,8 +1806,8 @@ export default function AdminPage() {
               </div>
               {!showAddStaff && (
                 <button
-                  onClick={() => router.push('/admin/staff/new')}
-                  className="btn-black !w-auto !py-2.5 !px-5 flex items-center gap-2"
+                  onClick={() => router.push(staffFormUrl)}
+                  className="btn-black !w-auto"
                 >
                   <Plus size={18} /> Add Staff
                 </button>
@@ -1745,7 +2013,7 @@ export default function AdminPage() {
                         setAddStaffFirstNameTouched(false);
                         setAddStaffLastNameTouched(false);
                       }}
-                      className="flex-1 h-10 rounded-lg border border-gray-200 bg-white text-[14px] font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="btn-secondary flex-1"
                     >
                       Cancel
                     </button>
@@ -1754,7 +2022,7 @@ export default function AdminPage() {
                       id="add-staff-submit-btn"
                       onClick={handleAddStaff}
                       disabled={addStaffLoading || !addStaffForm.first_name.trim()}
-                      className="flex-1 h-10 rounded-lg bg-black text-white text-[14px] font-semibold hover:bg-gray-900 transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="btn-black flex-1"
                     >
                       {addStaffLoading ? (
                         <><Loader2 size={15} className="animate-spin" /> Adding&hellip;</>
@@ -1779,14 +2047,14 @@ export default function AdminPage() {
                   <p className="text-[13px] text-[var(--text-secondary)] mt-1 max-w-[240px] mx-auto">Add your first staff member so customers can book with them.</p>
                 </div>
                 <button 
-                  onClick={() => router.push('/admin/staff/new')} 
-                  className="btn-black !w-auto !py-2.5 !px-6"
+                  onClick={() => router.push(staffFormUrl)}
+                  className="btn-black !w-auto"
                 >
                   <Plus size={16} className="mr-2" /> Add Staff
                 </button>
               </div>
             ) : (
-              <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+              <div className="card-flush">
                 <div className="divide-y divide-[var(--border-default)]">
                   {allStaff.map(s => (
                     <div key={s.id} className="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-5 hover:bg-[var(--bg-subtle)] transition-colors">
@@ -1809,13 +2077,13 @@ export default function AdminPage() {
                       <div className="flex items-center gap-2 sm:shrink-0 ml-[52px] sm:ml-0">
                         <button
                           onClick={() => { setSelectedStaffId(s.id); loadStaffDetails(s.id); }}
-                          className="btn-secondary !py-1.5 !px-3 !text-xs"
+                          className="btn-secondary btn-sm"
                         >
                           Schedule
                         </button>
                         <button
                           onClick={() => handleToggleStaffActive(s.id, s.is_active)}
-                          className="btn-ghost !py-1.5 !px-3 !text-xs"
+                          className="btn-ghost btn-sm"
                         >
                           {s.is_active ? 'Deactivate' : 'Activate'}
                         </button>
@@ -1847,7 +2115,7 @@ export default function AdminPage() {
                   {/* Schedule */}
                   <div className="space-y-4">
                     <p className="section-label">Working Hours</p>
-                    <div className="card" style={{ padding: 0 }}>
+                    <div className="card-flush">
                       <div className="divide-y divide-[var(--border-default)]">
                         {staffHours.map((h) => (
                           <div key={h.day_of_week} className="px-4 py-3 flex items-center justify-between gap-4">
@@ -1913,7 +2181,7 @@ export default function AdminPage() {
 
                     {!staffSaved && (
                       <button 
-                        className="btn-black !py-3 shadow-sm" 
+                        className="btn-black shadow-sm" 
                         onClick={handleSaveStaff} 
                         disabled={staffSaving}
                       >
