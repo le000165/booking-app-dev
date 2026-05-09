@@ -4,7 +4,7 @@ import AdminDashboardClient from '@/components/admin/AdminDashboardClient';
 
 function AdminFallback() {
   return (
-    <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center">
+    <div className="min-h-screen bg-white flex items-center justify-center">
       <Loader2 size={24} className="animate-spin text-[var(--text-muted)]" />
     </div>
   );

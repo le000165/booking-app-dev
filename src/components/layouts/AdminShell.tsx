@@ -45,7 +45,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     () => getCurrentSection(pathname, tabParam),
     [pathname, tabParam]
   );
-
   useEffect(() => {
     let cancelled = false;
 

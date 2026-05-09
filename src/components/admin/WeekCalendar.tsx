@@ -30,9 +30,11 @@ interface WeekCalendarProps {
 
 const START_HOUR  = 6;
 const END_HOUR    = 21;
-const HOUR_HEIGHT = 64;
-const GRID_OFFSET = 16;
-const TIME_COLUMN_WIDTH = 68;
+const HOUR_HEIGHT = 54;
+const GRID_OFFSET = 8;
+const TIME_COLUMN_WIDTH = 62;
+const GRID_BORDER = '#d8dde3';
+const GRID_MINOR_BORDER = '#edf0f3';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const STAFF_COLOR_PALETTE = [
@@ -256,6 +258,10 @@ export default function WeekCalendar({
     () => Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i),
     []
   );
+  const halfHours = useMemo(
+    () => Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i + 0.5),
+    []
+  );
 
   const apptsByDay = useMemo(() => {
     const map: Record<number, Appointment[]> = {};
@@ -332,19 +338,18 @@ export default function WeekCalendar({
     return Math.max(15, (end - start) / 60000) * (HOUR_HEIGHT / 60);
   }
 
-  const gridHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET + 20;
+  const gridHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET + 12;
   const gridMinWidth = Math.max(640, TIME_COLUMN_WIDTH + visibleDays.length * 180);
-  const sideBySideLaneHeight = 34;
+  const sideBySideLaneHeight = 30;
   const sideBySideLanes = [...sideBySideStaff, ...(hasUnassigned ? [{ id: '__unassigned__', first_name: 'Unassigned', last_name: '' }] : [])];
   const sideBySideGridHeight = gridHeight + sideBySideLaneHeight;
   const sideBySideMinWidth = Math.max(780, TIME_COLUMN_WIDTH + visibleDays.length * Math.max(220, sideBySideLanes.length * 120));
   const isMonthView = view === 'month';
   const monthMonth = startOfMonth(anchorDate);
-  const showCenteredDayHeader = view === 'day' && displayMode === 'sideBySide';
   const showDayStrip = view === 'day' && displayMode !== 'sideBySide';
   const dayStrip = dayStripDates.length > 0 ? (
-    <div className="shrink-0 overflow-x-auto border-b border-[#e5e7eb] bg-white">
-      <div className="flex min-w-max gap-1 px-3 py-2 sm:px-4">
+    <div className="shrink-0 overflow-x-auto border-b border-[#d8dde3] bg-white">
+      <div className="flex min-w-max gap-1 px-3 py-1 sm:px-4">
         {dayStripDates.map(date => {
           const dateKey = formatLocalDateKey(date);
           const isSelected = dateKey === selectedDayKey;
@@ -355,10 +360,10 @@ export default function WeekCalendar({
               key={dateKey}
               type="button"
               onClick={() => onDateSelect?.(startOfLocalDay(date))}
-              className={`flex min-w-[68px] flex-col items-center rounded-xl border px-3 py-2 text-center transition-colors ${
+              className={`flex min-w-[64px] flex-col items-center rounded-md border px-3 py-1 text-center transition-colors ${
                 isSelected
                   ? 'border-gray-900 bg-gray-900 text-white'
-                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                  : 'border-[#d8dde3] bg-white text-gray-600 hover:bg-gray-50'
               }`}
               aria-pressed={isSelected}
             >
@@ -379,7 +384,7 @@ export default function WeekCalendar({
   ) : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#fbfcfe]">
+    <div className="flex h-full min-h-0 flex-col bg-white">
       {!isMonthView && (
         <>
           {showDayStrip ? dayStrip : null}
@@ -458,7 +463,7 @@ export default function WeekCalendar({
           </div>
 
           {displayMode === 'sideBySide' ? (
-            <div className="hidden min-h-0 flex-1 overflow-auto bg-[#fbfcfe] sm:block">
+            <div className="hidden min-h-0 flex-1 overflow-auto bg-white sm:block">
               {sideBySideLanes.length === 0 ? (
                 <div className="flex h-full items-center justify-center px-6 py-20 text-center">
                   <div className="max-w-sm">
@@ -468,33 +473,17 @@ export default function WeekCalendar({
                 </div>
               ) : (
                 <div className="flex min-h-full flex-col" style={{ minWidth: sideBySideMinWidth }}>
-                  {showCenteredDayHeader && (
-                    <div className="sticky top-0 z-30 grid border-b border-[#e5e7eb] bg-white" style={{ gridTemplateColumns: `${TIME_COLUMN_WIDTH}px repeat(${sideBySideLanes.length}, minmax(0, 1fr))` }}>
-                      <div className="h-[68px] border-r border-[#e5e7eb] bg-white" />
-                      <div className="col-span-full flex items-center justify-center border-l border-[#e5e7eb] bg-white py-4">
-                        <div className="text-center">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#4b5563]">
-                            {DAY_NAMES[selectedDate?.getDay() ?? anchorDate.getDay()]}
-                          </p>
-                          <p className="mt-1 text-[36px] font-semibold leading-none text-[#111827]">
-                            {selectedDate?.getDate() ?? anchorDate.getDate()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   {view !== 'day' && (
-                    <div className="sticky top-0 z-20 flex border-b border-[#e5e7eb] bg-white">
+                    <div className="sticky top-0 z-20 flex border-b border-[#d8dde3] bg-white">
                       <div className="shrink-0" style={{ width: TIME_COLUMN_WIDTH }} />
                       {visibleDays.map((day, i) => {
                         const isToday = visibleDayKeys[i] === todayKey;
                         return (
                           <div
                             key={i}
-                            className={`flex-1 min-w-0 border-l border-[#e5e7eb] px-2 py-3 text-center ${isToday ? 'bg-gray-50' : ''}`}
+                            className={`flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-2 text-center ${isToday ? 'bg-gray-50' : ''}`}
                           >
-                            <p className={`text-[10px] font-medium uppercase tracking-[0.12em] ${isToday ? 'text-gray-900' : 'text-gray-500'}`}>
+                            <p className={`text-[10px] font-medium uppercase tracking-[0.1em] ${isToday ? 'text-gray-900' : 'text-gray-500'}`}>
                               {DAY_NAMES[day.getDay()]}
                             </p>
                             <p className={`mt-1 text-[15px] font-semibold leading-none ${isToday ? 'text-gray-900' : 'text-gray-900'}`}>
@@ -509,14 +498,14 @@ export default function WeekCalendar({
                   <div className="min-h-0 flex-1 overflow-y-auto">
                     <div className="flex">
                       <div className="relative shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH, height: sideBySideGridHeight }}>
-                        <div className="h-[34px]" />
+                        <div className="h-[30px]" />
                         {hours.map(h => (
                           <div
                             key={h}
-                            className="absolute left-0 right-0 flex items-start justify-end pr-3"
-                            style={{ top: sideBySideLaneHeight + (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET - 8, height: HOUR_HEIGHT }}
+                            className="absolute left-0 right-0 flex items-start justify-end border-t pr-2.5"
+                            style={{ top: sideBySideLaneHeight + (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET - 8, height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
                           >
-                            <span className="text-[10px] font-medium leading-none text-[#97a0af]">
+                            <span className="text-[10px] font-normal leading-none text-[#7d8794]">
                               {formatHour(h)}
                             </span>
                           </div>
@@ -530,15 +519,15 @@ export default function WeekCalendar({
                         return (
                           <div
                             key={dayIdx}
-                            className={`relative flex-1 min-w-0 border-l border-[#e5e7eb] ${isToday ? 'bg-gray-50/60' : 'bg-white'}`}
-                            style={{ height: sideBySideGridHeight }}
+                            className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-gray-50/50' : 'bg-white'}`}
+                            style={{ height: sideBySideGridHeight, borderColor: GRID_BORDER }}
                           >
                             <div
-                              className="grid border-b border-[#e5e7eb] bg-white text-center"
-                              style={{ gridTemplateColumns: `repeat(${sideBySideLanes.length}, minmax(0, 1fr))` }}
+                              className="grid border-b bg-white text-center"
+                              style={{ gridTemplateColumns: `repeat(${sideBySideLanes.length}, minmax(0, 1fr))`, borderColor: GRID_BORDER }}
                             >
                               {sideBySideLanes.map(lane => (
-                                <div key={lane.id} className="min-w-0 px-3 py-3 text-[11px] font-medium text-[#4b5563]">
+                                <div key={lane.id} className="min-w-0 px-3 py-2 text-[11px] font-semibold text-[#313842]">
                                   <p className="truncate whitespace-nowrap">
                                     {lane.id === '__unassigned__' ? 'Unassigned' : `${lane.first_name} ${lane.last_name}`}
                                   </p>
@@ -556,19 +545,27 @@ export default function WeekCalendar({
                                 return (
                                   <div
                                     key={lane.id}
-                                    className={`relative flex-1 min-w-0 ${laneIdx > 0 ? 'border-l border-[#e5e7eb]' : ''}`}
+                                    className="relative min-w-0 flex-1 border-l first:border-l-0"
+                                    style={{ borderColor: GRID_BORDER }}
                                   >
+                                    {halfHours.map(h => (
+                                      <div
+                                        key={h}
+                                        className="absolute left-0 right-0 border-t"
+                                        style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET, borderColor: GRID_MINOR_BORDER }}
+                                      />
+                                    ))}
                                     {hours.map(h => (
                                       <div
                                         key={h}
-                                        className="absolute left-0 right-0 border-t border-[#edf1f6]"
-                                        style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET }}
+                                        className="absolute left-0 right-0 border-t"
+                                        style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET, borderColor: GRID_BORDER }}
                                       />
                                     ))}
 
                                     {laneAppointments.map(appt => {
                                       const top = apptTop(appt);
-                                      const height = Math.max(apptHeight(appt), 40);
+                                      const height = Math.max(apptHeight(appt), 34);
                                       return renderTimedAppointmentCard(appt, top, height, onAppointmentClick);
                                     })}
                                   </div>
@@ -584,33 +581,41 @@ export default function WeekCalendar({
               )}
             </div>
           ) : (
-          <div className="hidden min-h-0 flex-1 overflow-auto bg-[#fbfcfe] sm:block">
+          <div className="hidden min-h-0 flex-1 overflow-auto bg-white sm:block">
               <div className="flex min-h-full flex-col" style={{ minWidth: gridMinWidth }}>
                 {view === 'day' && (
-                  <div className="sticky top-0 z-30 border-b border-[#e5e7eb] bg-white px-4 py-3 text-center">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#4b5563]">
-                      {DAY_NAMES[selectedDate?.getDay() ?? anchorDate.getDay()]}
-                    </p>
-                    <p className="mt-1 text-[36px] font-semibold leading-none text-[#111827]">
-                      {selectedDate?.getDate() ?? anchorDate.getDate()}
-                    </p>
-                  </div>
-                )}
-
-                {view !== 'day' && (
-                  <div className="sticky top-0 z-20 flex border-b border-[#e5e7eb] bg-white">
+                  <div className="sticky top-0 z-20 flex border-b border-[#d8dde3] bg-white">
                     <div className="shrink-0" style={{ width: TIME_COLUMN_WIDTH }} />
                     {visibleDays.map((day, i) => {
                       const isToday = visibleDayKeys[i] === todayKey;
                       return (
                         <div
                           key={i}
-                          className={`flex-1 min-w-0 border-l border-[#e5e7eb] px-2 py-3 text-center ${isToday ? 'bg-gray-50' : ''}`}
+                          className={`flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-2 text-center ${isToday ? 'bg-gray-50' : ''}`}
                         >
-                          <p className={`text-[10px] font-medium uppercase tracking-[0.12em] ${isToday ? 'text-gray-900' : 'text-gray-500'}`}>
+                          <p className={`text-[10px] font-medium uppercase tracking-[0.1em] ${isToday ? 'text-gray-900' : 'text-gray-500'}`}>
+                            {DAY_NAMES[day.getDay()]} {String(day.getMonth() + 1).padStart(2, '0')}/{String(day.getDate()).padStart(2, '0')}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {view !== 'day' && (
+                  <div className="sticky top-0 z-20 flex border-b border-[#d8dde3] bg-white">
+                    <div className="shrink-0" style={{ width: TIME_COLUMN_WIDTH }} />
+                    {visibleDays.map((day, i) => {
+                      const isToday = visibleDayKeys[i] === todayKey;
+                      return (
+                        <div
+                          key={i}
+                          className={`flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-2 text-center ${isToday ? 'bg-gray-50' : ''}`}
+                        >
+                          <p className={`text-[10px] font-medium uppercase tracking-[0.1em] ${isToday ? 'text-gray-900' : 'text-gray-500'}`}>
                             {DAY_NAMES[day.getDay()]}
                           </p>
-                          <p className={`mt-1 text-[15px] font-semibold leading-none ${isToday ? 'text-gray-900' : 'text-gray-900'}`}>
+                          <p className="mt-1 text-[14px] font-semibold leading-none text-gray-900">
                             {day.getDate()}
                           </p>
                         </div>
@@ -625,10 +630,10 @@ export default function WeekCalendar({
                       {hours.map(h => (
                         <div
                           key={h}
-                          className="absolute left-0 right-0 flex items-start justify-end pr-3"
-                          style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET - 8, height: HOUR_HEIGHT }}
+                          className="absolute left-0 right-0 flex items-start justify-end border-t pr-2.5"
+                          style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET - 8, height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
                         >
-                          <span className="text-[10px] font-medium leading-none text-[#97a0af]">
+                          <span className="text-[10px] font-normal leading-none text-[#7d8794]">
                             {formatHour(h)}
                           </span>
                         </div>
@@ -642,20 +647,27 @@ export default function WeekCalendar({
                       return (
                         <div
                           key={dayIdx}
-                          className={`relative flex-1 min-w-0 border-l border-[#e5e7eb] ${isToday ? 'bg-gray-50/60' : 'bg-white'}`}
-                          style={{ height: gridHeight }}
+                          className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-gray-50/50' : 'bg-white'}`}
+                          style={{ height: gridHeight, borderColor: GRID_BORDER }}
                         >
+                          {halfHours.map(h => (
+                            <div
+                              key={h}
+                              className="absolute left-0 right-0 border-t"
+                              style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET, borderColor: GRID_MINOR_BORDER }}
+                            />
+                          ))}
                           {hours.map(h => (
                             <div
                               key={h}
-                              className="absolute left-0 right-0 border-t border-[#edf1f6]"
-                              style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET }}
+                              className="absolute left-0 right-0 border-t"
+                              style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET, borderColor: GRID_BORDER }}
                             />
                           ))}
 
                           {dayAppts.map(appt => {
                             const top        = apptTop(appt);
-                            const height     = Math.max(apptHeight(appt), 40);
+                            const height     = Math.max(apptHeight(appt), 34);
                             return renderTimedAppointmentCard(appt, top, height, onAppointmentClick);
                           })}
                         </div>
@@ -680,7 +692,7 @@ export default function WeekCalendar({
           </div>
 
           <div className="min-h-0 flex-1 overflow-auto">
-            <div className="grid grid-cols-7 auto-rows-[minmax(88px,1fr)] sm:auto-rows-[minmax(120px,1fr)]">
+            <div className="grid grid-cols-7 auto-rows-[minmax(82px,1fr)] sm:auto-rows-[minmax(104px,1fr)]">
               {monthDays.map(day => {
                 const dayKey = formatLocalDateKey(day);
                 const inMonth = day.getMonth() === monthMonth.getMonth();
@@ -690,7 +702,7 @@ export default function WeekCalendar({
                 return (
                   <div
                     key={dayKey}
-                    className={`border-l border-b border-gray-200 p-2 ${inMonth ? 'bg-white' : 'bg-gray-50 text-gray-400'}`}
+                    className={`border-l border-b border-gray-200 p-1.5 ${inMonth ? 'bg-white' : 'bg-gray-50 text-gray-400'}`}
                   >
                     <div className="mb-1 flex items-start justify-between gap-2">
                       <span className={`text-[12px] font-semibold ${isToday ? 'text-gray-900' : inMonth ? 'text-gray-900' : 'text-gray-400'}`}>
