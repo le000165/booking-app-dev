@@ -107,7 +107,15 @@ function Label({ children, htmlFor, optional }: { children: React.ReactNode; htm
   );
 }
 
-function Input({ id, error, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { error?: string }) {
+function Input({
+  id,
+  error,
+  reserveErrorSpace = false,
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & {
+  error?: string;
+  reserveErrorSpace?: boolean;
+}) {
   return (
     <div>
       <input
@@ -119,7 +127,11 @@ function Input({ id, error, ...props }: React.InputHTMLAttributes<HTMLInputEleme
           ${error ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white hover:border-gray-300'}
           ${props.className ?? ''}`}
       />
-      {error && <p className="mt-1 text-[12px] text-red-500">{error}</p>}
+      {(error || reserveErrorSpace) && (
+        <p className="mt-1 min-h-[17px] text-[12px] text-red-500">
+          {error || ""}
+        </p>
+      )}
     </div>
   );
 }
@@ -159,6 +171,7 @@ function StepProfile({
             onChange={e => onChange({ first_name: e.target.value })}
             onBlur={() => setTouched('first_name')}
             error={firstErr}
+            reserveErrorSpace
             autoComplete="given-name"
             autoFocus
           />
@@ -170,6 +183,7 @@ function StepProfile({
             placeholder="Doe"
             value={form.last_name}
             onChange={e => onChange({ last_name: e.target.value })}
+            reserveErrorSpace
             autoComplete="family-name"
           />
         </div>

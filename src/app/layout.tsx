@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BookEasy – Simple Appointments",
-  description: "Book your appointment in seconds.",
+  title: "BookEasy — Appointment Booking Software for Service Businesses",
+  description: "Online booking, staff scheduling, and automated reminders for salons, spas, clinics, and consultants. Start free.",
 };
 
 export default function RootLayout({

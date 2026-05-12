@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   Clock,
   CheckCircle,
@@ -97,6 +98,11 @@ const DEFAULT_HOURS: DayHours[] = Array.from({ length: 7 }, (_, i) => ({
 
 type Tab = "appointments" | "availability" | "services" | "staff";
 
+const SERVICE_ACTION_MENU_WIDTH = 160;
+const SERVICE_ACTION_MENU_HEIGHT = 96;
+const SERVICE_ACTION_MENU_GAP = 6;
+const SERVICE_ACTION_MENU_MARGIN = 8;
+
 const STATUS_BADGE: Record<string, string> = {
   confirmed: "badge-green",
   completed: "badge-gray",
@@ -117,6 +123,12 @@ const EMPTY_FORM = {
   price: "",
   emoji: "",
   description: "",
+};
+
+type ServiceActionMenuState = {
+  serviceId: string;
+  top: number;
+  left: number;
 };
 
 function formatDateTime(iso: string) {
@@ -358,9 +370,9 @@ export default function AdminPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [formSaving, setFormSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [openServiceMenuId, setOpenServiceMenuId] = useState<string | null>(
-    null,
-  );
+  const [serviceActionMenu, setServiceActionMenu] =
+    useState<ServiceActionMenuState | null>(null);
+  const serviceActionMenuRef = useRef<HTMLDivElement | null>(null);
 
   // ── Staff Management ──
   const [allStaff, setAllStaff] = useState<any[]>([]);
@@ -385,6 +397,7 @@ export default function AdminPage() {
   const [addStaffFirstNameTouched, setAddStaffFirstNameTouched] =
     useState(false);
   const [addStaffLastNameTouched, setAddStaffLastNameTouched] = useState(false);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
   // ── Stats ──
   const [stats, setStats] = useState<any>(null);
@@ -1018,6 +1031,74 @@ export default function AdminPage() {
   };
 
   // ── Services Actions ──
+  const closeServiceActionMenu = useCallback(() => {
+    setServiceActionMenu(null);
+  }, []);
+
+  useEffect(() => {
+    if (!serviceActionMenu) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      if (target?.closest("[data-service-action-trigger='true']")) return;
+      if (
+        target &&
+        serviceActionMenuRef.current?.contains(target)
+      ) {
+        return;
+      }
+      closeServiceActionMenu();
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeServiceActionMenu();
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("scroll", closeServiceActionMenu, true);
+
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("scroll", closeServiceActionMenu, true);
+    };
+  }, [closeServiceActionMenu, serviceActionMenu]);
+
+  const toggleServiceActionMenu = (
+    serviceId: string,
+    trigger: HTMLButtonElement,
+  ) => {
+    if (serviceActionMenu?.serviceId === serviceId) {
+      closeServiceActionMenu();
+      return;
+    }
+
+    const rect = trigger.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const shouldOpenAbove =
+      spaceBelow < SERVICE_ACTION_MENU_HEIGHT + SERVICE_ACTION_MENU_GAP &&
+      rect.top > SERVICE_ACTION_MENU_HEIGHT + SERVICE_ACTION_MENU_GAP;
+    const preferredTop = shouldOpenAbove
+      ? rect.top - SERVICE_ACTION_MENU_HEIGHT - SERVICE_ACTION_MENU_GAP
+      : rect.bottom + SERVICE_ACTION_MENU_GAP;
+    const top = Math.min(
+      Math.max(SERVICE_ACTION_MENU_MARGIN, preferredTop),
+      window.innerHeight -
+        SERVICE_ACTION_MENU_HEIGHT -
+        SERVICE_ACTION_MENU_MARGIN,
+    );
+    const left = Math.min(
+      Math.max(
+        SERVICE_ACTION_MENU_MARGIN,
+        rect.right - SERVICE_ACTION_MENU_WIDTH,
+      ),
+      window.innerWidth - SERVICE_ACTION_MENU_WIDTH - SERVICE_ACTION_MENU_MARGIN,
+    );
+
+    setServiceActionMenu({ serviceId, top, left });
+  };
+
   const openCreate = () => {
     setEditId(null);
     setForm(EMPTY_FORM);
@@ -1106,6 +1187,11 @@ export default function AdminPage() {
     );
 
   const isCalendarWorkspace = tab === "appointments" && apptView === "calendar";
+  const activeServiceAction = serviceActionMenu
+    ? services.find((svc) => svc.id === serviceActionMenu.serviceId)
+    : null;
+  const serviceActionPortalTarget =
+    typeof document !== "undefined" ? document.body : null;
 
   return (
     <div
@@ -1271,6 +1357,245 @@ export default function AdminPage() {
           </div>
         </ResponsiveModal>
       )}
+
+      {/* Service Form Modal */}
+      <ResponsiveModal
+        open={showForm}
+        title={editId ? "Edit Service" : "Add Service"}
+        onClose={() => setShowForm(false)}
+        footer={
+          <div className="flex gap-2 w-full">
+            <button className="btn-secondary flex-1" onClick={() => setShowForm(false)}>
+              Cancel
+            </button>
+            <button
+              className="btn-primary flex-1"
+              onClick={handleServiceSubmit}
+              disabled={formSaving}
+            >
+              {formSaving ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : editId ? (
+                "Save changes"
+              ) : (
+                "Create service"
+              )}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="input-label">Service name *</label>
+            <input
+              className="input-field"
+              placeholder="e.g. Gel Manicure"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              autoFocus
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="input-label">Duration (mins) *</label>
+              <input
+                className="input-field"
+                type="number"
+                step={5}
+                value={form.duration}
+                onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="input-label">Price ($) *</label>
+              <input
+                className="input-field"
+                type="number"
+                step={0.01}
+                value={form.price}
+                onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="input-label">Description</label>
+            <textarea
+              className="input-field min-h-[88px] resize-none"
+              placeholder="Optional details"
+              value={form.description}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, description: e.target.value }))
+              }
+            />
+          </div>
+          {formError && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-100 p-2.5 rounded-lg">
+              {formError}
+            </p>
+          )}
+        </div>
+      </ResponsiveModal>
+
+      {/* Staff Schedule Modal */}
+      <ResponsiveModal
+        open={isScheduleModalOpen && !!selectedStaffId}
+        title={`Schedule — ${allStaff.find((s) => s.id === selectedStaffId)?.first_name ?? ""}`}
+        onClose={() => {
+          setIsScheduleModalOpen(false);
+          setSelectedStaffId(null);
+          setStaffSaved(false);
+        }}
+        footer={
+          <div className="flex gap-2 w-full">
+            <button
+              className="btn-secondary flex-1"
+              onClick={() => {
+                setIsScheduleModalOpen(false);
+                setSelectedStaffId(null);
+                setStaffSaved(false);
+              }}
+            >
+              Cancel
+            </button>
+            {staffSaved ? (
+              <div className="flex-1 py-2 bg-[var(--success-light)] text-[var(--success)] text-sm font-semibold rounded-lg flex items-center justify-center gap-2 border border-[var(--success-border)]">
+                <Check size={16} /> Saved
+              </div>
+            ) : (
+              <button
+                className="btn-black flex-1"
+                onClick={handleSaveStaff}
+                disabled={staffSaving}
+              >
+                {staffSaving ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  "Save changes"
+                )}
+              </button>
+            )}
+          </div>
+        }
+      >
+        <div className="space-y-6">
+          {/* Working Hours */}
+          <div className="space-y-3">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+              Working Hours
+            </p>
+            <div className="divide-y divide-[var(--border-default)] border border-[var(--border-default)] rounded-xl overflow-hidden">
+              {staffHours.map((h) => (
+                <div
+                  key={h.day_of_week}
+                  className="px-4 py-3 flex items-center gap-3 bg-white"
+                >
+                  <span className="text-sm font-medium w-9 shrink-0">
+                    {DAYS_SHORT[h.day_of_week]}
+                  </span>
+                  <div className="flex-1 flex items-center gap-2">
+                    {h.open ? (
+                      <>
+                        <input
+                          type="time"
+                          value={h.open_time}
+                          onChange={(e) => {
+                            setStaffHours((p) =>
+                              p.map((d) =>
+                                d.day_of_week === h.day_of_week
+                                  ? { ...d, open_time: e.target.value }
+                                  : d,
+                              ),
+                            );
+                            setStaffSaved(false);
+                          }}
+                          className="h-9 flex-1 min-w-0 rounded-lg border border-gray-200 bg-white px-2 text-[13px] text-gray-900 outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-400 hover:border-gray-300"
+                        />
+                        <span className="text-xs text-[var(--text-muted)] shrink-0">
+                          to
+                        </span>
+                        <input
+                          type="time"
+                          value={h.close_time}
+                          onChange={(e) => {
+                            setStaffHours((p) =>
+                              p.map((d) =>
+                                d.day_of_week === h.day_of_week
+                                  ? { ...d, close_time: e.target.value }
+                                  : d,
+                              ),
+                            );
+                            setStaffSaved(false);
+                          }}
+                          className="h-9 flex-1 min-w-0 rounded-lg border border-gray-200 bg-white px-2 text-[13px] text-gray-900 outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-400 hover:border-gray-300"
+                        />
+                      </>
+                    ) : (
+                      <span className="text-xs text-[var(--text-muted)]">
+                        Closed
+                      </span>
+                    )}
+                  </div>
+                  <label className="toggle shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={h.open}
+                      onChange={() => {
+                        setStaffHours((p) =>
+                          p.map((d) =>
+                            d.day_of_week === h.day_of_week
+                              ? { ...d, open: !d.open }
+                              : d,
+                          ),
+                        );
+                        setStaffSaved(false);
+                      }}
+                    />
+                    <span className="toggle-slider" />
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Assigned Services */}
+          <div className="space-y-3">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+              Assigned Services
+            </p>
+            {services.length === 0 ? (
+              <p className="text-xs text-[var(--text-muted)] py-4">
+                No services created yet.
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {services.map((s) => (
+                  <label
+                    key={s.id}
+                    className="flex items-center gap-3 cursor-pointer p-2.5 rounded-lg hover:bg-[var(--bg-subtle)] transition-colors border border-transparent hover:border-[var(--border-default)]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={staffServices.includes(s.id)}
+                      className="rounded border-[var(--border-strong)] text-black focus:ring-black"
+                      onChange={(e) => {
+                        setStaffServices((prev) =>
+                          e.target.checked
+                            ? [...prev, s.id]
+                            : prev.filter((id) => id !== s.id),
+                        );
+                        setStaffSaved(false);
+                      }}
+                    />
+                    <span className="text-sm text-[var(--text-primary)] min-w-0 truncate">
+                      {s.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </ResponsiveModal>
 
       <main className="w-full min-h-0 flex-1 md:h-full">
         {/* ── APPOINTMENTS ── */}
@@ -2115,7 +2440,7 @@ export default function AdminPage() {
                             {(appt.status === "pending" ||
                               appt.status === "no_show") && (
                               <button
-                                className="btn-black"
+                                className="btn-black btn-block"
                                 onClick={() =>
                                   updateStatus(appt.id, "confirmed")
                                 }
@@ -2133,7 +2458,7 @@ export default function AdminPage() {
                             )}
                             {appt.status === "confirmed" && (
                               <button
-                                className="btn-black"
+                                className="btn-black btn-block"
                                 onClick={() =>
                                   updateStatus(appt.id, "completed")
                                 }
@@ -2344,7 +2669,7 @@ export default function AdminPage() {
               ))}
             </div>
             <button
-              className={`btn-primary ${saved ? "!bg-[var(--success)]" : ""}`}
+              className={`btn-primary btn-block ${saved ? "!bg-[var(--success)]" : ""}`}
               onClick={handleSaveHours}
               disabled={saving}
             >
@@ -2361,106 +2686,10 @@ export default function AdminPage() {
                 <h2 className="h3">Services</h2>
                 <p className="body-sm mt-0.5">Manage what customers can book</p>
               </div>
-              {showForm ? (
-                <button
-                  className="btn-secondary"
-                  onClick={() => setShowForm(false)}
-                >
-                  Cancel
-                </button>
-              ) : (
-                <button className="btn-black !w-auto" onClick={openCreate}>
-                  <Plus size={16} /> Add Service
-                </button>
-              )}
+              <button className="btn-black !w-auto" onClick={openCreate}>
+                <Plus size={16} /> Add Service
+              </button>
             </div>
-
-            {showForm && (
-              <div className="card space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="h3">
-                    {editId ? "Edit service" : "New service"}
-                  </h3>
-                  <button
-                    className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-gray-50 transition-colors"
-                    onClick={() => setShowForm(false)}
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="input-label">Service name *</label>
-                    <input
-                      className="input-field"
-                      placeholder="e.g. Gel Manicure"
-                      value={form.name}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, name: e.target.value }))
-                      }
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="input-label">Duration (mins) *</label>
-                      <input
-                        className="input-field"
-                        type="number"
-                        step={5}
-                        value={form.duration}
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, duration: e.target.value }))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="input-label">Price ($) *</label>
-                      <input
-                        className="input-field"
-                        type="number"
-                        step={0.01}
-                        value={form.price}
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, price: e.target.value }))
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="input-label">Description</label>
-                    <textarea
-                      className="input-field min-h-[88px] resize-none"
-                      placeholder="Optional details"
-                      value={form.description}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, description: e.target.value }))
-                      }
-                    />
-                  </div>
-
-                  {formError && (
-                    <p className="text-sm text-red-600 bg-red-50 border border-red-100 p-2.5 rounded-lg">
-                      {formError}
-                    </p>
-                  )}
-
-                  <button
-                    className="btn-primary"
-                    onClick={handleServiceSubmit}
-                    disabled={formSaving}
-                  >
-                    {formSaving ? (
-                      <Loader2 size={18} className="animate-spin" />
-                    ) : (
-                      "Save service"
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
 
             {svcLoading ? (
               <div className="flex justify-center py-10">
@@ -2483,7 +2712,7 @@ export default function AdminPage() {
                 {services.map((svc) => (
                   <div
                     key={svc.id}
-                    className="flex items-center justify-between gap-3 py-4 px-4"
+                    className="flex items-center justify-between gap-3 px-4 py-3.5 sm:px-5"
                   >
                     {/* LEFT */}
                     <div className="min-w-0 flex-1">
@@ -2510,47 +2739,24 @@ export default function AdminPage() {
                         {svc.is_active ? "Active" : "Inactive"}
                       </button>
 
-                      <div className="relative">
+                      <div>
                         <button
                           className="p-1.5 rounded-md hover:bg-[var(--bg-subtle)] transition-colors text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                          onClick={() =>
-                            setOpenServiceMenuId((prev) =>
-                              prev === svc.id ? null : svc.id,
+                          onClick={(event) =>
+                            toggleServiceActionMenu(
+                              svc.id,
+                              event.currentTarget,
                             )
                           }
+                          data-service-action-trigger="true"
+                          aria-expanded={
+                            serviceActionMenu?.serviceId === svc.id
+                          }
+                          aria-haspopup="menu"
                           aria-label="Actions"
                         >
                           <MoreHorizontal size={18} />
                         </button>
-
-                        {openServiceMenuId === svc.id && (
-                          <>
-                            <div
-                              className="fixed inset-0 z-40"
-                              onClick={() => setOpenServiceMenuId(null)}
-                            />
-                            <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-xl shadow-lg border border-[var(--border-default)] py-1 z-50 overflow-hidden">
-                              <button
-                                className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-[var(--bg-subtle)] flex items-center gap-2 text-[var(--text-primary)]"
-                                onClick={() => {
-                                  openEdit(svc);
-                                  setOpenServiceMenuId(null);
-                                }}
-                              >
-                                <Pencil size={14} /> Edit service
-                              </button>
-                              <button
-                                className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-[var(--error-light)] flex items-center gap-2 text-[var(--error)]"
-                                onClick={() => {
-                                  deleteService(svc.id);
-                                  setOpenServiceMenuId(null);
-                                }}
-                              >
-                                <Trash2 size={14} /> Delete service
-                              </button>
-                            </div>
-                          </>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -2655,12 +2861,12 @@ export default function AdminPage() {
                             onBlur={() => setAddStaffFirstNameTouched(true)}
                             autoComplete="given-name"
                           />
-                          {addStaffFirstNameTouched &&
-                            !addStaffForm.first_name.trim() && (
-                              <p className="text-[12px] text-red-500 mt-1">
-                                Required
-                              </p>
-                            )}
+                          <p className="min-h-[17px] text-[12px] text-red-500 mt-1">
+                            {addStaffFirstNameTouched &&
+                            !addStaffForm.first_name.trim()
+                              ? "Required"
+                              : ""}
+                          </p>
                         </div>
                         <div>
                           <label className="block text-[13px] font-medium text-slate-700 mb-1.5">
@@ -2683,6 +2889,7 @@ export default function AdminPage() {
                             onBlur={() => setAddStaffLastNameTouched(true)}
                             autoComplete="family-name"
                           />
+                          <p className="min-h-[17px] text-[12px] text-red-500 mt-1" />
                         </div>
                       </div>
                     </div>
@@ -2974,6 +3181,7 @@ export default function AdminPage() {
                           onClick={() => {
                             setSelectedStaffId(s.id);
                             loadStaffDetails(s.id);
+                            setIsScheduleModalOpen(true);
                           }}
                           className="btn-secondary btn-sm"
                         >
@@ -2994,179 +3202,48 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* Selected Staff Schedule / Services panel */}
-            {selectedStaffId && (
-              <div className="space-y-6 slide-up">
-                <div className="divider" />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="h3">
-                      Settings for{" "}
-                      {
-                        allStaff.find((s) => s.id === selectedStaffId)
-                          ?.first_name
-                      }
-                    </h3>
-                    <p className="body-sm mt-0.5">
-                      Customize availability and assigned services
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setSelectedStaffId(null)}
-                    className="p-1.5 rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Schedule */}
-                  <div className="space-y-4">
-                    <p className="section-label">Working Hours</p>
-                    <div className="card-flush">
-                      <div className="divide-y divide-[var(--border-default)]">
-                        {staffHours.map((h) => (
-                          <div
-                            key={h.day_of_week}
-                            className="px-4 py-3 flex items-center justify-between gap-4"
-                          >
-                            <span className="text-sm font-medium w-9">
-                              {DAYS_SHORT[h.day_of_week]}
-                            </span>
-
-                            <div className="flex-1 flex items-center gap-2">
-                              {h.open ? (
-                                <>
-                                  <input
-                                    type="time"
-                                    value={h.open_time}
-                                    onChange={(e) => {
-                                      setStaffHours((p) =>
-                                        p.map((d) =>
-                                          d.day_of_week === h.day_of_week
-                                            ? {
-                                                ...d,
-                                                open_time: e.target.value,
-                                              }
-                                            : d,
-                                        ),
-                                      );
-                                      setStaffSaved(false);
-                                    }}
-                                    className="input-field !py-1 !px-2 !text-xs !w-24"
-                                  />
-                                  <span className="text-[var(--text-muted)] text-xs">
-                                    to
-                                  </span>
-                                  <input
-                                    type="time"
-                                    value={h.close_time}
-                                    onChange={(e) => {
-                                      setStaffHours((p) =>
-                                        p.map((d) =>
-                                          d.day_of_week === h.day_of_week
-                                            ? {
-                                                ...d,
-                                                close_time: e.target.value,
-                                              }
-                                            : d,
-                                        ),
-                                      );
-                                      setStaffSaved(false);
-                                    }}
-                                    className="input-field !py-1 !px-2 !text-xs !w-24"
-                                  />
-                                </>
-                              ) : (
-                                <span className="text-xs text-[var(--text-muted)]">
-                                  Closed
-                                </span>
-                              )}
-                            </div>
-
-                            <label className="toggle">
-                              <input
-                                type="checkbox"
-                                checked={h.open}
-                                onChange={() => {
-                                  setStaffHours((p) =>
-                                    p.map((d) =>
-                                      d.day_of_week === h.day_of_week
-                                        ? { ...d, open: !d.open }
-                                        : d,
-                                    ),
-                                  );
-                                  setStaffSaved(false);
-                                }}
-                              />
-                              <span className="toggle-slider" />
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Services */}
-                  <div className="space-y-4">
-                    <p className="section-label">Assigned Services</p>
-                    <div className="card space-y-2">
-                      {services.length === 0 ? (
-                        <p className="text-xs text-[var(--text-muted)] py-4">
-                          No services created yet.
-                        </p>
-                      ) : (
-                        services.map((s) => (
-                          <label
-                            key={s.id}
-                            className="flex items-center gap-3 cursor-pointer p-2.5 rounded-lg hover:bg-[var(--bg-subtle)] transition-colors border border-transparent hover:border-[var(--border-default)]"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={staffServices.includes(s.id)}
-                              className="rounded border-[var(--border-strong)] text-black focus:ring-black"
-                              onChange={(e) => {
-                                setStaffServices((prev) =>
-                                  e.target.checked
-                                    ? [...prev, s.id]
-                                    : prev.filter((id) => id !== s.id),
-                                );
-                                setStaffSaved(false);
-                              }}
-                            />
-                            <span className="text-sm text-[var(--text-primary)] min-w-0 truncate">
-                              {s.name}
-                            </span>
-                          </label>
-                        ))
-                      )}
-                    </div>
-
-                    {!staffSaved && (
-                      <button
-                        className="btn-black shadow-sm"
-                        onClick={handleSaveStaff}
-                        disabled={staffSaving}
-                      >
-                        {staffSaving ? (
-                          <Loader2 size={18} className="animate-spin" />
-                        ) : (
-                          "Save Changes"
-                        )}
-                      </button>
-                    )}
-                    {staffSaved && (
-                      <div className="w-full py-3 bg-[var(--success-light)] text-[var(--success)] text-sm font-semibold rounded-xl flex items-center justify-center gap-2 border border-[var(--success-border)]">
-                        <Check size={18} /> Changes Saved
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </main>
+      {activeServiceAction &&
+        serviceActionMenu &&
+        serviceActionPortalTarget &&
+        createPortal(
+          <div
+            ref={serviceActionMenuRef}
+            role="menu"
+            aria-label={`${activeServiceAction.name} actions`}
+            className="fixed w-40 bg-white rounded-xl shadow-lg border border-[var(--border-default)] py-1 z-[79] overflow-hidden"
+            style={{
+              top: serviceActionMenu.top,
+              left: serviceActionMenu.left,
+            }}
+          >
+            <button
+              type="button"
+              role="menuitem"
+              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-[var(--bg-subtle)] flex items-center gap-2 text-[var(--text-primary)]"
+              onClick={() => {
+                closeServiceActionMenu();
+                openEdit(activeServiceAction);
+              }}
+            >
+              <Pencil size={14} /> Edit service
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className="w-full text-left px-4 py-2.5 text-[13px] hover:bg-[var(--error-light)] flex items-center gap-2 text-[var(--error)]"
+              onClick={() => {
+                closeServiceActionMenu();
+                deleteService(activeServiceAction.id);
+              }}
+            >
+              <Trash2 size={14} /> Delete service
+            </button>
+          </div>,
+          serviceActionPortalTarget,
+        )}
     </div>
   );
 }

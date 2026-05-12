@@ -198,8 +198,10 @@
   background: var(--brand);
   color: #ffffff;
   padding: 13px 20px;
-  width: 100%;
+  width: auto;
+  min-height: 44px;
   font-size: 15px;
+  line-height: 1.2;
   font-weight: 600;
   border-radius: 8px;
   border: none;
@@ -222,8 +224,10 @@
   background: var(--text-primary);
   color: #ffffff;
   padding: 13px 20px;
-  width: 100%;
+  width: auto;
+  min-height: 44px;
   font-size: 15px;
+  line-height: 1.2;
   font-weight: 600;
   border-radius: 8px;
   border: none;
@@ -244,7 +248,9 @@
   background: var(--bg-surface);
   color: var(--text-primary);
   padding: 11px 18px;
+  min-height: 44px;
   font-size: 14px;
+  line-height: 1.2;
   font-weight: 500;
   border-radius: 8px;
   border: 1px solid var(--border-default);
@@ -283,7 +289,12 @@
 /* Size modifier — combine with any .btn-* variant: className="btn-secondary btn-sm" */
 .btn-sm {
   padding: 6px 12px;
+  min-height: 32px;
   font-size: 12px;
+}
+
+.btn-block {
+  width: 100%;
 }
 
 /* ── Inputs ──────────────────────────────────────────────────────────── */
@@ -686,7 +697,7 @@ input[type="time"].input-field { width: auto; }
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 60;
+  z-index: 75;
   border-top: 1px solid var(--border-default);
   background: rgba(255,255,255,0.95);
   backdrop-filter: blur(8px);
@@ -788,3 +799,24 @@ input[type="time"].input-field { width: auto; }
     border: 0;
   }
 }
+
+/* ── Homepage animations ───────────────────────────────────────────── */
+@keyframes hp-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes hp-blob {
+  0%, 100% { transform: scale(1) translate(0, 0);      opacity: 0.55; }
+  33%       { transform: scale(1.07) translate(18px, -25px); opacity: 0.70; }
+  66%       { transform: scale(0.94) translate(-12px, 12px);  opacity: 0.40; }
+}
+
+@keyframes hp-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.hp-float   { animation: hp-float   5.5s ease-in-out infinite; }
+.hp-blob    { animation: hp-blob   14s   ease-in-out infinite; }
+.hp-marquee { animation: hp-marquee 32s  linear      infinite; }
