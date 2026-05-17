@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import AdminDashboardClient from '@/components/admin/AdminDashboardClient';
 
-export default function AdminAppointmentsPage() {
+export default function AdminAppointmentsCalendarPage() {
   return (
     <Suspense
       fallback={

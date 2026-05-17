@@ -1,20 +1,41 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { CalendarDays, Clock3, LogOut, Menu, Settings, Users, X } from 'lucide-react';
+import { CalendarDays, ChevronDown, Clock3, LogOut, Menu, Settings, UserCircle2, Users, X, type LucideIcon } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
-const DESKTOP_NAV = [
-  { href: '/admin?tab=appointments&view=calendar', label: 'Appointments', icon: CalendarDays, key: 'appointments' },
-  { href: '/admin?tab=availability', label: 'Availability', icon: Clock3, key: 'availability' },
-  { href: '/admin?tab=services', label: 'Services', icon: Settings, key: 'services' },
-  { href: '/admin?tab=staff', label: 'Staff', icon: Users, key: 'staff' },
-];
-
 type AdminSection = 'appointments' | 'availability' | 'services' | 'staff';
+type AppointmentSection = 'overview' | 'calendar';
+type AdminNavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  key: AdminSection;
+  children?: {
+    href: string;
+    label: string;
+    key: AppointmentSection;
+  }[];
+};
+
+const ADMIN_NAV: AdminNavItem[] = [
+  {
+    href: '/admin/appointments',
+    label: 'Appointments',
+    icon: CalendarDays,
+    key: 'appointments',
+    children: [
+      { href: '/admin/appointments', label: 'Overview', key: 'overview' },
+      { href: '/admin/appointments/calendar', label: 'Calendar', key: 'calendar' },
+    ],
+  },
+  { href: '/admin/availability', label: 'Availability', icon: Clock3, key: 'availability' },
+  { href: '/admin/services', label: 'Services', icon: Settings, key: 'services' },
+  { href: '/admin/staff', label: 'Staff', icon: Users, key: 'staff' },
+];
 
 function getCurrentSection(pathname: string, tab: string | null): AdminSection {
   if (tab === 'availability' || pathname === '/admin/availability') return 'availability';
@@ -23,16 +44,24 @@ function getCurrentSection(pathname: string, tab: string | null): AdminSection {
   return 'appointments';
 }
 
+function getCurrentAppointmentSection(pathname: string, view: string | null): AppointmentSection {
+  if (
+    view === 'calendar' ||
+    pathname === '/admin/calendar' ||
+    pathname === '/admin/appointments/calendar'
+  ) {
+    return 'calendar';
+  }
+  return 'overview';
+}
+
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
   const supabase = createClient();
   const [businessName, setBusinessName] = useState('Dashboard');
-  const [bookingPath, setBookingPath] = useState('/book');
-  const [desktopSidebarExpanded, setDesktopSidebarExpanded] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tabParam = searchParams.get('tab');
   const viewParam = searchParams.get('view');
 
@@ -40,6 +69,28 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     () => getCurrentSection(pathname, tabParam),
     [pathname, tabParam]
   );
+  const currentAppointmentSection = useMemo(
+    () => getCurrentAppointmentSection(pathname, viewParam),
+    [pathname, viewParam]
+  );
+
+  // Click-based expand state for parent nav items with children.
+  // null = all collapsed. Uses the section key as the value.
+  //
+  // Syncs with top-level section changes:
+  //   - entering appointments from outside → auto-open
+  //   - leaving appointments → auto-close
+  // Clicking the parent while already in that section toggles without
+  // triggering the effect (section doesn't change on same-section click).
+  const [expandedKey, setExpandedKey] = useState<AdminSection | null>(null);
+
+  useEffect(() => {
+    if (currentSection === 'appointments') {
+      setExpandedKey('appointments');
+    } else {
+      setExpandedKey(null);
+    }
+  }, [currentSection]);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,9 +117,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
       if (!business || cancelled) return;
 
-      const slug = (business as { slug?: string }).slug;
       setBusinessName((business as { name?: string }).name || 'Dashboard');
-      setBookingPath(slug ? `/${slug}/book` : '/book');
     }
 
     loadBusinessDetails();
@@ -82,34 +131,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     await supabase.auth.signOut();
     router.push('/login');
   };
-
-  const clearDesktopCollapseTimer = () => {
-    if (collapseTimerRef.current) {
-      clearTimeout(collapseTimerRef.current);
-      collapseTimerRef.current = null;
-    }
-  };
-
-  const handleDesktopSidebarEnter = () => {
-    clearDesktopCollapseTimer();
-    setDesktopSidebarExpanded(true);
-  };
-
-  const handleDesktopSidebarLeave = () => {
-    clearDesktopCollapseTimer();
-    collapseTimerRef.current = setTimeout(() => {
-      setDesktopSidebarExpanded(false);
-      collapseTimerRef.current = null;
-    }, 140);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (collapseTimerRef.current) {
-        clearTimeout(collapseTimerRef.current);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (!mobileSidebarOpen) return;
@@ -136,20 +157,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     <>
       <div className="admin-sidebar-header">
         <div className="admin-brand-mark" aria-hidden="true">
-          {businessName.charAt(0).toUpperCase()}
+          <UserCircle2 size={18} strokeWidth={1.5} />
         </div>
         <div className="admin-brand-block">
-          <p className="admin-brand-eyebrow">Dashboard</p>
           <p className="admin-brand-title">{businessName}</p>
-          <Link
-            href={bookingPath}
-            className="admin-brand-link"
-            onClick={() => {
-              if (variant === 'mobile') setMobileSidebarOpen(false);
-            }}
-          >
-            {bookingPath}
-          </Link>
         </div>
         {variant === 'mobile' && (
           <button
@@ -164,23 +175,73 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       </div>
 
       <nav className="admin-nav" aria-label="Admin navigation">
-        {DESKTOP_NAV.map(item => {
+        {ADMIN_NAV.map(item => {
           const Icon = item.icon;
           const active = currentSection === item.key;
+          const isExpanded = expandedKey === item.key;
+          const childrenId = item.children ? `nav-${item.key}-children` : undefined;
+
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`admin-nav-item ${active ? 'active' : ''}`}
-              title={item.label}
-              aria-current={active ? 'page' : undefined}
-              onClick={() => {
-                if (variant === 'mobile') setMobileSidebarOpen(false);
-              }}
-            >
-              <Icon size={20} />
-              <span className="admin-nav-label">{item.label}</span>
-            </Link>
+            <div key={item.href} className="admin-nav-group">
+              {item.children ? (
+                // Parent items with a submenu: toggle-only, never navigate or close sidebar
+                <button
+                  type="button"
+                  className={`admin-nav-item w-full ${active ? 'active-parent' : ''}`}
+                  title={item.label}
+                  aria-expanded={isExpanded}
+                  aria-controls={childrenId}
+                  onClick={() => {
+                    setExpandedKey(prev => prev === item.key ? null : item.key);
+                  }}
+                >
+                  <Icon size={17} className="shrink-0" />
+                  <span className="admin-nav-label">{item.label}</span>
+                  <ChevronDown
+                    size={13}
+                    className="admin-nav-chevron"
+                    style={{
+                      transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                    }}
+                  />
+                </button>
+              ) : (
+                // Leaf items: navigate and close mobile sidebar
+                <Link
+                  href={item.href}
+                  className={`admin-nav-item ${active ? 'active' : ''}`}
+                  title={item.label}
+                  aria-current={active ? 'page' : undefined}
+                  onClick={() => {
+                    if (variant === 'mobile') setMobileSidebarOpen(false);
+                  }}
+                >
+                  <Icon size={17} className="shrink-0" />
+                  <span className="admin-nav-label">{item.label}</span>
+                </Link>
+              )}
+
+              {item.children && isExpanded && (
+                <div className="admin-nav-children" id={childrenId}>
+                  {item.children.map(child => {
+                    const childActive = currentAppointmentSection === child.key;
+                    return (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        className={`admin-nav-subitem ${childActive ? 'active' : ''}`}
+                        aria-current={childActive ? 'page' : undefined}
+                        onClick={() => {
+                          if (variant === 'mobile') setMobileSidebarOpen(false);
+                        }}
+                      >
+                        <span className="admin-nav-label">{child.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>
@@ -201,13 +262,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="admin-shell">
-      <aside
-        className={`admin-sidebar admin-sidebar-desktop hidden md:flex ${
-          desktopSidebarExpanded ? 'is-expanded' : ''
-        }`}
-        onMouseEnter={handleDesktopSidebarEnter}
-        onMouseLeave={handleDesktopSidebarLeave}
-      >
+      <aside className="admin-sidebar admin-sidebar-desktop hidden md:flex">
         {renderSidebarContent('desktop')}
       </aside>
 
@@ -238,8 +293,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             aria-label="Open navigation"
             aria-expanded={mobileSidebarOpen}
           >
-            <Menu size={19} />
+            <Menu size={18} />
           </button>
+          <span className="ml-3 text-[14px] font-semibold text-[var(--text-primary)] truncate">
+            {businessName}
+          </span>
         </div>
         {children}
       </div>

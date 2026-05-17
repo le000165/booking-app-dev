@@ -3,11 +3,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
-  Clock,
-  CheckCircle,
   XCircle,
   ChevronRight,
-  Settings,
   Calendar,
   Loader2,
   MoreHorizontal,
@@ -19,19 +16,14 @@ import {
   ChevronDown,
   User,
   Search,
-  Filter,
-  RotateCcw,
-  UserMinus,
-  Mail,
-  MessageSquare,
   ChevronLeft,
-  Link2,
   Copy,
   ExternalLink,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import WeekCalendar from "@/components/admin/WeekCalendar";
+import MobileAgenda from "@/components/admin/MobileAgenda";
 import SquareSelect from "@/components/ui/square-select";
 import ResponsiveModal from "@/components/ui/responsive-modal";
 
@@ -224,9 +216,22 @@ function getCalendarRange(view: CalendarView, anchorDate: Date) {
   return { start: startOfMonth(anchor), end: endOfMonth(anchor) };
 }
 
+function useIsMobile(breakpoint = 768): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 export default function AdminPage() {
   const supabase = createClient();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const viewParam = searchParams.get("view");
@@ -237,7 +242,12 @@ export default function AdminPage() {
       ? tabParam
       : "appointments";
   })();
-  const initialApptView = viewParam === "calendar" ? "calendar" : "overview";
+  const initialApptView =
+    viewParam === "calendar" ||
+    pathname === "/admin/calendar" ||
+    pathname === "/admin/appointments/calendar"
+      ? "calendar"
+      : "overview";
   const [businessId, setBusinessId] = useState("");
   const [businessSlug, setBusinessSlug] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -273,15 +283,14 @@ export default function AdminPage() {
     startOfLocalDay(new Date()),
   );
 
-  const showAppointmentList = () => {
-    setApptView("overview");
-    router.replace("/admin?tab=appointments", { scroll: false });
-  };
-
-  const showAppointmentCalendar = () => {
-    setApptView("calendar");
-    router.replace("/admin?tab=appointments&view=calendar", { scroll: false });
-  };
+  // ── Mobile Agenda ──
+  const isMobile = useIsMobile();
+  const [mobileAnchor, setMobileAnchor] = useState<Date>(() =>
+    startOfWeek(startOfLocalDay(new Date()))
+  );
+  const [mobileAppts, setMobileAppts] = useState<Appointment[]>([]);
+  const [mobileLoading, setMobileLoading] = useState(false);
+  const [mobileViewMode, setMobileViewMode] = useState<'calendar' | 'list'>('calendar');
 
   const calendarRange = useMemo(
     () => getCalendarRange(calendarView, calendarDate),
@@ -318,6 +327,19 @@ export default function AdminPage() {
   const goToday = () => {
     setCalendarDate(startOfLocalDay(new Date()));
   };
+
+  const mobileRange = useMemo(
+    () => ({ start: mobileAnchor, end: addDays(mobileAnchor, 6) }),
+    [mobileAnchor],
+  );
+  const mobileLabel = useMemo(
+    () => formatCalendarLabel("week", mobileRange.start, mobileRange.end),
+    [mobileRange.start, mobileRange.end],
+  );
+  const mobilePrev = () => setMobileAnchor((d) => addDays(d, -7));
+  const mobileNext = () => setMobileAnchor((d) => addDays(d, 7));
+  const mobileGoToday = () =>
+    setMobileAnchor(startOfWeek(startOfLocalDay(new Date())));
 
   // ── Filters ──
   const [dateRange, setDateRange] = useState({
@@ -405,18 +427,28 @@ export default function AdminPage() {
   const staffFormUrl = `/admin/staff/new?returnTo=${encodeURIComponent("/admin?tab=staff")}`;
 
   useEffect(() => {
-    const nextTab: Tab =
-      tabParam === "availability" ||
-      tabParam === "services" ||
-      tabParam === "staff"
-        ? tabParam
-        : "appointments";
+    let nextTab: Tab = "appointments";
+
+    if (pathname === "/admin/availability" || tabParam === "availability") {
+      nextTab = "availability";
+    } else if (pathname === "/admin/services" || tabParam === "services") {
+      nextTab = "services";
+    } else if (pathname === "/admin/staff" || tabParam === "staff") {
+      nextTab = "staff";
+    }
+
     setTab(nextTab);
-  }, [tabParam]);
+  }, [pathname, tabParam]);
 
   useEffect(() => {
-    setApptView(viewParam === "calendar" ? "calendar" : "overview");
-  }, [viewParam]);
+    setApptView(
+      viewParam === "calendar" ||
+        pathname === "/admin/calendar" ||
+        pathname === "/admin/appointments/calendar"
+        ? "calendar"
+        : "overview",
+    );
+  }, [pathname, viewParam]);
 
   // ── Date Helpers ──
   const setToday = () => {
@@ -529,6 +561,29 @@ export default function AdminPage() {
   useEffect(() => {
     if (apptView === "calendar" && businessId) loadCalendarAppts();
   }, [apptView, calendarRange, businessId, loadCalendarAppts]);
+
+  const loadMobileAppts = useCallback(async () => {
+    if (!businessId) return;
+    setMobileLoading(true);
+    try {
+      const params = new URLSearchParams({
+        business_id: businessId,
+        from: mobileRange.start.toISOString(),
+        to: endOfLocalDay(mobileRange.end).toISOString(),
+      });
+      const res = await fetch(`/api/appointments?${params.toString()}`);
+      const data = await res.json();
+      setMobileAppts(data.appointments || []);
+    } catch (err) {
+      console.error("[ADMIN][MOBILE_AGENDA]", err);
+    } finally {
+      setMobileLoading(false);
+    }
+  }, [businessId, mobileRange]);
+
+  useEffect(() => {
+    if (apptView === "calendar" && isMobile && businessId) loadMobileAppts();
+  }, [apptView, isMobile, mobileRange, businessId, loadMobileAppts]);
 
   const loadServices = useCallback(async () => {
     if (!businessId) return;
@@ -1503,7 +1558,7 @@ export default function AdminPage() {
                             );
                             setStaffSaved(false);
                           }}
-                          className="h-9 flex-1 min-w-0 rounded-lg border border-[#E7E5E4] bg-white px-2 text-[13px] text-[#111827] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] hover:border-[#D4D2CF]"
+                          className="h-9 flex-1 min-w-0 rounded-lg border border-[#E7E5E4] bg-white px-2 text-[13px] text-[#111827] outline-none focus:ring-2 focus:ring-black/5 focus:border-[#374151] hover:border-[#D4D2CF]"
                         />
                         <span className="text-xs text-[var(--text-muted)] shrink-0">
                           to
@@ -1521,7 +1576,7 @@ export default function AdminPage() {
                             );
                             setStaffSaved(false);
                           }}
-                          className="h-9 flex-1 min-w-0 rounded-lg border border-[#E7E5E4] bg-white px-2 text-[13px] text-[#111827] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] hover:border-[#D4D2CF]"
+                          className="h-9 flex-1 min-w-0 rounded-lg border border-[#E7E5E4] bg-white px-2 text-[13px] text-[#111827] outline-none focus:ring-2 focus:ring-black/5 focus:border-[#374151] hover:border-[#D4D2CF]"
                         />
                       </>
                     ) : (
@@ -1598,184 +1653,253 @@ export default function AdminPage() {
           <div className="slide-up flex min-h-full flex-1 flex-col gap-4 bg-transparent md:min-h-0">
             {apptView === "calendar" ? (
               <div className="flex min-h-0 w-full flex-1 flex-col gap-4 py-4 md:py-0">
-                <div className="flex shrink-0 flex-col gap-2 rounded-lg border border-[var(--border-default)] bg-white px-4 py-4 shadow-none">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center bg-[#F0EFED] rounded-lg p-0.5 shrink-0">
+                {isMobile ? (
+                  /* ── Mobile toolbar: two-row stacked layout ── */
+                  <div className="shrink-0 rounded-lg border border-[var(--border-default)] bg-white">
+                    {/* Row 1: date label (primary) + Create (primary action) */}
+                    <div className="flex items-center justify-between gap-2 border-b border-[var(--border-default)] px-3 py-2.5">
+                      <span className="truncate text-[14px] font-semibold text-[var(--text-primary)]">
+                        {mobileViewMode === 'list' ? mobileLabel : calLabel}
+                      </span>
                       <button
-                        onClick={showAppointmentList}
-                        className="px-3 py-1.5 rounded-md text-[13px] font-medium text-[#6B7280] hover:text-[#374151] transition-colors"
+                        onClick={openApptCreate}
+                        className="admin-toolbar-primary-btn shrink-0"
                       >
-                        List
+                        Create
                       </button>
+                    </div>
+                    {/* Row 2: secondary controls — scrolls horizontally if needed */}
+                    <div className="overflow-x-auto">
+                      <div className="flex min-w-max items-center gap-1 px-2.5 py-2">
+                        {/* Nav arrows + Today */}
+                        <button
+                          onClick={mobileViewMode === 'list' ? mobilePrev : prevPeriod}
+                          aria-label="Previous period"
+                          className="admin-toolbar-nav-btn"
+                        >
+                          <ChevronLeft size={15} />
+                        </button>
+                        <button
+                          onClick={mobileViewMode === 'list' ? mobileGoToday : goToday}
+                          className="admin-toolbar-secondary-btn"
+                        >
+                          Today
+                        </button>
+                        <button
+                          onClick={mobileViewMode === 'list' ? mobileNext : nextPeriod}
+                          aria-label="Next period"
+                          className="admin-toolbar-nav-btn"
+                        >
+                          <ChevronRight size={15} />
+                        </button>
+
+                        <div className="mx-1 h-4 w-px shrink-0 bg-[var(--border-default)]" />
+
+                        {/* View selector — calendar mode only */}
+                        {mobileViewMode === 'calendar' && (
+                          <>
+                            {CALENDAR_VIEW_OPTIONS.map(opt => (
+                              <button
+                                key={opt.value}
+                                onClick={() => setCalendarView(opt.value)}
+                                className={`admin-toolbar-secondary-btn ${calendarView === opt.value ? 'active' : ''}`}
+                              >
+                                {opt.value === 'fiveDay' ? '5d' : opt.label}
+                              </button>
+                            ))}
+                            <div className="mx-1 h-4 w-px shrink-0 bg-[var(--border-default)]" />
+                          </>
+                        )}
+
+                        {/* Calendar ↔ List toggle */}
+                        <button
+                          onClick={() => setMobileViewMode(v => v === 'calendar' ? 'list' : 'calendar')}
+                          className={`admin-toolbar-secondary-btn ${mobileViewMode === 'list' ? 'active' : ''}`}
+                        >
+                          {mobileViewMode === 'calendar' ? 'List' : 'Calendar'}
+                        </button>
+
+                        {/* Settings / Filter */}
+                        <button
+                          onClick={() => {
+                            setPendingFilter((f) => ({
+                              ...f,
+                              staff: filterStaff,
+                              status: filterStatus,
+                              search: searchTerm,
+                            }));
+                            setShowFilterPanel(true);
+                          }}
+                          className={`admin-toolbar-secondary-btn ${
+                            filterStaff || filterStatus !== "all" || searchTerm ? "active" : ""
+                          }`}
+                        >
+                          Settings
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* ── Desktop toolbar: full controls ── */
+                  <div className="flex shrink-0 items-center gap-2 rounded-lg border border-[var(--border-default)] bg-white px-3 py-2.5 shadow-none overflow-x-auto">
+                    <div className="flex items-center gap-0.5 shrink-0">
                       <button
-                        onClick={showAppointmentCalendar}
-                        className="px-3 py-1.5 rounded-md text-[13px] font-medium bg-white shadow-sm text-[#111827] transition-colors"
+                        onClick={prevPeriod}
+                        aria-label="Previous period"
+                        className="admin-toolbar-nav-btn"
                       >
-                        Calendar
+                        <ChevronLeft size={15} />
+                      </button>
+                      <span className="text-[13px] font-medium text-[var(--text-primary)] min-w-[130px] text-center px-1 whitespace-nowrap">
+                        {calLabel}
+                      </span>
+                      <button
+                        onClick={nextPeriod}
+                        aria-label="Next period"
+                        className="admin-toolbar-nav-btn"
+                      >
+                        <ChevronRight size={15} />
                       </button>
                     </div>
 
                     <button
-                      id="appt-settings-btn"
-                      onClick={() => {
-                        setPendingFilter((f) => ({
-                          ...f,
-                          staff: filterStaff,
-                          status: filterStatus,
-                          search: searchTerm,
-                        }));
-                        setShowFilterPanel(true);
-                      }}
-                      className={`flex items-center gap-1.5 h-9 px-3 rounded-lg border text-[13px] font-medium transition-colors ${
-                        filterStaff || filterStatus !== "all" || searchTerm
-                          ? "border-[#111827] bg-[#111827] text-white"
-                          : "border-[#E7E5E4] bg-white text-[#374151] hover:bg-[#F5F5F3] hover:border-[#D4D2CF]"
-                      }`}
-                      title="Appointment attributes"
-                    >
-                      <Settings size={15} />
-                      <span className="hidden sm:inline">Settings</span>
-                      {(filterStaff ||
-                        filterStatus !== "all" ||
-                        searchTerm) && (
-                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white text-[#111827] text-[10px] font-bold leading-none">
-                          {
-                            [
-                              filterStaff,
-                              filterStatus !== "all",
-                              !!searchTerm,
-                            ].filter(Boolean).length
-                          }
-                        </span>
-                      )}
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                    <button
-                      onClick={prevPeriod}
-                      className="p-1.5 rounded-lg border border-[#E7E5E4] hover:bg-[#F5F5F3] transition-colors"
-                    >
-                      <ChevronLeft size={15} className="text-[#6B7280]" />
-                    </button>
-                    <button
                       onClick={goToday}
-                      className="px-2.5 h-8 rounded-lg border border-[#E7E5E4] text-[13px] font-medium text-[#374151] hover:bg-[#F5F5F3] transition-colors"
+                      className="admin-toolbar-secondary-btn shrink-0"
                     >
                       Today
                     </button>
-                    <button
-                      onClick={nextPeriod}
-                      className="p-1.5 rounded-lg border border-[#E7E5E4] hover:bg-[#F5F5F3] transition-colors"
-                    >
-                      <ChevronRight size={15} className="text-[#6B7280]" />
-                    </button>
-                    <span className="text-[14px] font-medium text-[#374151] hidden sm:block">
-                      {calLabel}
-                    </span>
+
+                    <div className="w-px h-4 bg-[var(--border-default)] shrink-0 mx-0.5" />
+
                     <SquareSelect
                       label="Range"
                       value={calendarView}
-                      onChange={(value) =>
-                        setCalendarView(value as CalendarView)
-                      }
+                      onChange={(value) => setCalendarView(value as CalendarView)}
                       options={CALENDAR_VIEW_OPTIONS}
-                      className="w-[145px] shrink-0"
+                      className="w-[130px] shrink-0"
                     />
                     <SquareSelect
                       label="View"
                       value={calendarDisplayMode}
-                      onChange={(value) =>
-                        setCalendarDisplayMode(value as CalendarDisplayMode)
-                      }
+                      onChange={(value) => setCalendarDisplayMode(value as CalendarDisplayMode)}
                       options={CALENDAR_DISPLAY_OPTIONS}
-                      className="w-[170px] shrink-0"
+                      className="w-[155px] shrink-0"
                     />
-                    <button
-                      className="p-1.5 rounded-lg border border-[#E7E5E4] hover:bg-[#F5F5F3] transition-colors text-[#6B7280]"
-                      onClick={loadCalendarAppts}
-                      title="Refresh"
-                    >
-                      <RotateCcw size={14} />
-                    </button>
-                    <button
-                      onClick={openApptCreate}
-                      className="ml-auto inline-flex h-8 shrink-0 items-center gap-2 rounded-lg bg-[#111827] px-3 text-[13px] font-semibold text-white hover:bg-[#111827] transition-colors"
-                    >
-                      <Plus size={14} />
-                      Create
-                    </button>
-                  </div>
-                </div>
 
-                <div className="h-[620px] min-h-0 overflow-hidden rounded-lg border border-[var(--border-default)] bg-white md:h-auto md:flex-1">
-                  {onlyMeMissingTeamMember ? (
-                    <div className="flex h-full items-center justify-center py-24 text-center">
-                      <div className="max-w-sm">
-                        <p className="text-[16px] font-semibold text-[#111827]">
-                          No appointments assigned to you
-                        </p>
-                        <p className="mt-1 text-[13px] text-[#6B7280]">
-                          We could not find a team member record for the current
-                          user, so this view cannot be filtered yet.
-                        </p>
-                      </div>
+                    <div className="flex items-center gap-1.5 ml-auto shrink-0">
+                      <button
+                        onClick={() => {
+                          setPendingFilter((f) => ({
+                            ...f,
+                            staff: filterStaff,
+                            status: filterStatus,
+                            search: searchTerm,
+                          }));
+                          setShowFilterPanel(true);
+                        }}
+                        className={`admin-toolbar-secondary-btn ${
+                          filterStaff || filterStatus !== "all" || searchTerm ? "active" : ""
+                        }`}
+                      >
+                        Settings
+                      </button>
+                      <button
+                        onClick={openApptCreate}
+                        className="admin-toolbar-primary-btn"
+                      >
+                        Create
+                      </button>
                     </div>
-                  ) : sideBySideMissingStaff ? (
-                    <div className="flex h-full items-center justify-center py-24 text-center">
-                      <div className="max-w-sm">
-                        <p className="text-[16px] font-semibold text-[#111827]">
-                          No staff members found
-                        </p>
-                        <p className="mt-1 text-[13px] text-[#6B7280]">
-                          Add staff members to use the side-by-side schedule
-                          view.
-                        </p>
-                      </div>
-                    </div>
-                  ) : calLoading ? (
-                    <div className="flex h-full items-center justify-center py-24">
-                      <Loader2
-                        size={22}
-                        className="animate-spin text-[#6B7280]"
-                      />
-                    </div>
-                  ) : (
-                    <WeekCalendar
-                      appointments={calendarAppointments}
-                      view={calendarView}
-                      anchorDate={calendarDate}
-                      selectedDate={calendarDate}
-                      displayMode={calendarDisplayMode}
-                      staffMembers={calendarSideBySideStaff}
-                      onDateSelect={setCalendarDate}
+                  </div>
+                )}
+
+                {isMobile && mobileViewMode === 'list' ? (
+                  /* ── Mobile list / agenda fallback ── */
+                  <div className="overflow-hidden rounded-lg border border-[var(--border-default)] bg-white">
+                    <MobileAgenda
+                      appointments={mobileAppts}
+                      loading={mobileLoading}
                       onAppointmentClick={(appt) => {
                         setExpandedId(appt.id);
                         openApptEdit(appt);
                       }}
                     />
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  /* ── Calendar grid (mobile + desktop) ── */
+                  /* overflow:clip preserves border-radius clipping on mobile without
+                     setting overflow-x/y:hidden, which would block iOS touch scroll */
+                  <div
+                    className="h-[calc(100svh-160px)] min-h-[420px] rounded-lg border border-[var(--border-default)] bg-white md:h-auto md:flex-1 md:rounded-none md:border-y md:border-r md:border-l-0"
+                    style={{ overflow: 'clip' }}
+                  >
+                    {onlyMeMissingTeamMember ? (
+                      <div className="flex h-full items-center justify-center py-24 text-center">
+                        <div className="max-w-sm">
+                          <p className="text-[16px] font-semibold text-[#111827]">
+                            No appointments assigned to you
+                          </p>
+                          <p className="mt-1 text-[13px] text-[#6B7280]">
+                            We could not find a team member record for the current
+                            user, so this view cannot be filtered yet.
+                          </p>
+                        </div>
+                      </div>
+                    ) : sideBySideMissingStaff ? (
+                      <div className="flex h-full items-center justify-center py-24 text-center">
+                        <div className="max-w-sm">
+                          <p className="text-[16px] font-semibold text-[#111827]">
+                            No staff members found
+                          </p>
+                          <p className="mt-1 text-[13px] text-[#6B7280]">
+                            Add staff members to use the side-by-side schedule
+                            view.
+                          </p>
+                        </div>
+                      </div>
+                    ) : calLoading ? (
+                      <div className="flex h-full items-center justify-center py-24">
+                        <Loader2
+                          size={22}
+                          className="animate-spin text-[#6B7280]"
+                        />
+                      </div>
+                    ) : (
+                      <WeekCalendar
+                        appointments={calendarAppointments}
+                        view={calendarView}
+                        anchorDate={calendarDate}
+                        selectedDate={calendarDate}
+                        displayMode={calendarDisplayMode}
+                        staffMembers={calendarSideBySideStaff}
+                        businessHours={hours}
+                        onDateSelect={setCalendarDate}
+                        onAppointmentClick={(appt) => {
+                          setExpandedId(appt.id);
+                          openApptEdit(appt);
+                        }}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="flex w-full flex-col gap-4 py-4 md:py-0">
+              <div className="flex w-full flex-col gap-3 py-4 md:py-0 mx-auto max-w-[900px]">
                 {/* ── Public Booking Link Card ── */}
                 {businessSlug && bookingUrl && (
-                  <div className="flex flex-col gap-4 rounded-lg border border-[var(--border-default)] bg-white px-4 py-4 shadow-none sm:flex-row sm:items-center">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-9 h-9 rounded-lg bg-[var(--brand-light)] flex items-center justify-center shrink-0">
-                        <Link2 size={18} className="text-[var(--brand)]" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-semibold text-[var(--text-primary)]">
-                          Your public booking link
-                        </p>
-                        <p className="text-[12px] text-[#6B7280] truncate mt-0.5 font-mono">
-                          {bookingUrl}
-                        </p>
+                  <div className="flex items-center justify-between gap-4 rounded-lg border border-[var(--border-default)] bg-white px-4 py-3 shadow-none">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[var(--success)] shrink-0" />
+                      <div className="flex items-baseline gap-0 min-w-0 overflow-hidden font-mono text-[12px]">
+                        <span className="text-[var(--text-muted)] truncate shrink-[2] min-w-0">
+                          frontbeach.vercel.com
+                        </span>
+                        <span className="text-[var(--text-muted)] shrink-0">/</span>
+                        <span className="font-semibold text-[var(--text-primary)] shrink-0">{businessSlug}</span>
+                        <span className="text-[var(--text-muted)] shrink-0">/book</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0 sm:ml-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         id="copy-booking-link-btn"
                         onClick={() => {
@@ -1784,78 +1908,61 @@ export default function AdminPage() {
                             setTimeout(() => setLinkCopied(false), 2000);
                           });
                         }}
-                        className="btn-secondary btn-sm"
+                        className="admin-toolbar-secondary-btn"
                       >
                         {linkCopied ? (
-                          <Check size={13} className="text-[var(--success)]" />
+                          <Check size={12} className="text-[var(--success)]" />
                         ) : (
-                          <Copy size={13} />
+                          <Copy size={12} />
                         )}
-                        {linkCopied ? "Copied!" : "Copy"}
+                        {linkCopied ? "Copied" : "Copy link"}
                       </button>
                       <a
                         id="open-booking-link-btn"
                         href={bookingUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn-secondary btn-sm"
+                        className="admin-toolbar-secondary-btn"
                       >
-                        <ExternalLink size={13} /> Open
+                        <ExternalLink size={12} /> Open
                       </a>
                     </div>
                   </div>
                 )}
 
                 {/* Dashboard Stats */}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                  <div className="rounded-lg border border-[var(--border-default)] bg-white px-4 py-4 shadow-none">
-                    <p className="text-[12px] uppercase tracking-wider font-semibold text-[#6B7280] mb-1">
-                      Today's Bookings
-                    </p>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                  <div className="rounded-lg border border-[var(--border-default)] bg-white px-5 py-4 shadow-none">
+                    <p className="caption mb-2.5">Today's Bookings</p>
                     {statsLoading ? (
-                      <Loader2
-                        size={18}
-                        className="animate-spin text-[#6B7280]"
-                      />
+                      <Loader2 size={16} className="animate-spin text-[var(--text-muted)]" />
                     ) : (
-                      <p className="text-[24px] font-semibold text-[var(--text-primary)]">
+                      <p className="text-[28px] font-semibold tracking-tight leading-none text-[var(--text-primary)]">
                         {stats?.todayBookingCount || 0}
                       </p>
                     )}
                   </div>
-                  <div className="rounded-lg border border-[var(--border-default)] bg-white px-4 py-4 shadow-none">
-                    <p className="text-[12px] uppercase tracking-wider font-semibold text-[#6B7280] mb-1">
-                      Revenue Today
-                    </p>
+                  <div className="rounded-lg border border-[var(--border-default)] bg-white px-5 py-4 shadow-none">
+                    <p className="caption mb-2.5">Revenue Today</p>
                     {statsLoading ? (
-                      <Loader2
-                        size={18}
-                        className="animate-spin text-[#6B7280]"
-                      />
+                      <Loader2 size={16} className="animate-spin text-[var(--text-muted)]" />
                     ) : (
-                      <p className="text-[24px] font-semibold text-[var(--text-primary)]">
+                      <p className="text-[28px] font-semibold tracking-tight leading-none text-[var(--text-primary)]">
                         ${(stats?.revenueToday || 0).toFixed(2)}
                       </p>
                     )}
                   </div>
-                  <div className="rounded-lg border border-[var(--border-default)] bg-white px-4 py-4 shadow-none">
-                    <p className="text-[12px] uppercase tracking-wider font-semibold text-[#6B7280] mb-1">
-                      Next Appointment
-                    </p>
+                  <div className="rounded-lg border border-[var(--border-default)] bg-white px-5 py-4 shadow-none">
+                    <p className="caption mb-2.5">Next Appointment</p>
                     {statsLoading ? (
-                      <Loader2
-                        size={18}
-                        className="animate-spin text-[#6B7280]"
-                      />
+                      <Loader2 size={16} className="animate-spin text-[var(--text-muted)]" />
                     ) : stats?.nextUpcomingAppointment ? (
                       <div>
-                        <p className="text-[15px] font-semibold text-[var(--text-primary)] truncate">
+                        <p className="text-[15px] font-semibold leading-tight text-[var(--text-primary)] truncate">
                           {stats.nextUpcomingAppointment.customer_name}
                         </p>
-                        <p className="text-[13px] text-[#6B7280] mt-0.5">
-                          {new Date(
-                            stats.nextUpcomingAppointment.appointment_time,
-                          ).toLocaleTimeString("en-US", {
+                        <p className="text-[12px] text-[var(--text-secondary)] mt-1">
+                          {new Date(stats.nextUpcomingAppointment.appointment_time).toLocaleTimeString("en-US", {
                             hour: "numeric",
                             minute: "2-digit",
                             hour12: true,
@@ -1866,36 +1973,69 @@ export default function AdminPage() {
                         </p>
                       </div>
                     ) : (
-                      <p className="text-[14px] text-[#6B7280] mt-1">
-                        None scheduled
-                      </p>
+                      <p className="text-[13px] text-[var(--text-muted)]">None scheduled</p>
                     )}
                   </div>
                 </div>
 
-                {/* ── Square-style Toolbar ── */}
-                <div className="flex flex-col gap-2 rounded-lg border border-[var(--border-default)] bg-white px-4 py-4 shadow-none">
-                  {/* Row 1: view tabs (left) + settings gear (right) */}
-                  <div className="flex items-center justify-between gap-3">
-                    {/* View toggle pill */}
-                    <div className="flex items-center bg-[#F0EFED] rounded-lg p-0.5 shrink-0">
-                      <button
-                        onClick={showAppointmentList}
-                        className="px-3 py-1.5 rounded-md text-[13px] font-medium bg-white shadow-sm text-[#111827] transition-colors"
-                      >
-                        List
-                      </button>
-                      <button
-                        onClick={showAppointmentCalendar}
-                        className="px-3 py-1.5 rounded-md text-[13px] font-medium text-[#6B7280] hover:text-[#374151] transition-colors"
-                      >
-                        Calendar
-                      </button>
-                    </div>
+                <div className="flex items-center gap-2 rounded-lg border border-[var(--border-default)] bg-white px-3 py-2.5 shadow-none flex-wrap">
+                  <button
+                    onClick={setToday}
+                    className={`admin-toolbar-secondary-btn ${
+                      dateRange.from === new Date().toISOString().split("T")[0] &&
+                      dateRange.to === new Date().toISOString().split("T")[0]
+                        ? "active"
+                        : ""
+                    }`}
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={setThisWeek}
+                    className="admin-toolbar-secondary-btn"
+                  >
+                    This week
+                  </button>
 
-                    {/* Settings gear — opens full-screen attributes panel */}
+                  {filterStatus !== "all" && (
+                    <span className="inline-flex items-center gap-1 h-[30px] pl-2.5 pr-1.5 rounded-md bg-[#F0EFED] text-[#374151] text-[12px] font-medium">
+                      {STATUS_LABELS[filterStatus] || filterStatus}
+                      <button
+                        onClick={() => setFilterStatus("all")}
+                        className="hover:text-[#111827] p-0.5"
+                        aria-label="Clear status filter"
+                      >
+                        <X size={10} />
+                      </button>
+                    </span>
+                  )}
+                  {filterStaff && (
+                    <span className="inline-flex items-center gap-1 h-[30px] pl-2.5 pr-1.5 rounded-md bg-[#F0EFED] text-[#374151] text-[12px] font-medium">
+                      {employees.find((e) => e.id === filterStaff)?.first_name ?? "Staff"}
+                      <button
+                        onClick={() => setFilterStaff("")}
+                        className="hover:text-[#111827] p-0.5"
+                        aria-label="Clear staff filter"
+                      >
+                        <X size={10} />
+                      </button>
+                    </span>
+                  )}
+                  {searchTerm && (
+                    <span className="inline-flex items-center gap-1 h-[30px] pl-2.5 pr-1.5 rounded-md bg-[#F0EFED] text-[#374151] text-[12px] font-medium">
+                      &ldquo;{searchTerm}&rdquo;
+                      <button
+                        onClick={() => setSearchTerm("")}
+                        className="hover:text-[#111827] p-0.5"
+                        aria-label="Clear search"
+                      >
+                        <X size={10} />
+                      </button>
+                    </span>
+                  )}
+
+                  <div className="flex items-center gap-1.5 ml-auto">
                     <button
-                      id="appt-settings-btn"
                       onClick={() => {
                         setPendingFilter((f) => ({
                           ...f,
@@ -1905,141 +2045,19 @@ export default function AdminPage() {
                         }));
                         setShowFilterPanel(true);
                       }}
-                      className={`flex items-center gap-1.5 h-9 px-3 rounded-lg border text-[13px] font-medium transition-colors ${
-                        filterStaff || filterStatus !== "all" || searchTerm
-                          ? "border-[#111827] bg-[#111827] text-white"
-                          : "border-[#E7E5E4] bg-white text-[#374151] hover:bg-[#F5F5F3] hover:border-[#D4D2CF]"
+                      className={`admin-toolbar-secondary-btn ${
+                        filterStaff || filterStatus !== "all" || searchTerm ? "active" : ""
                       }`}
-                      title="Appointment attributes"
                     >
-                      <Settings size={15} />
-                      <span className="hidden sm:inline">Settings</span>
-                      {(filterStaff ||
-                        filterStatus !== "all" ||
-                        searchTerm) && (
-                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white text-[#111827] text-[10px] font-bold leading-none">
-                          {
-                            [
-                              filterStaff,
-                              filterStatus !== "all",
-                              !!searchTerm,
-                            ].filter(Boolean).length
-                          }
-                        </span>
-                      )}
+                      Settings
+                    </button>
+                    <button
+                      onClick={openApptCreate}
+                      className="admin-toolbar-primary-btn"
+                    >
+                      Create
                     </button>
                   </div>
-
-                  {/* Row 2: Date shortcuts (list) or Calendar nav (calendar) */}
-                  {apptView === "overview" ? (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        onClick={setToday}
-                        className={`h-8 px-3 rounded-lg border text-[13px] font-medium transition-colors ${
-                          dateRange.from ===
-                            new Date().toISOString().split("T")[0] &&
-                          dateRange.to ===
-                            new Date().toISOString().split("T")[0]
-                            ? "bg-[#111827] text-white border-[#111827]"
-                            : "bg-white text-[#374151] border-[#E7E5E4] hover:bg-[#F5F5F3]"
-                        }`}
-                      >
-                        Today
-                      </button>
-                      <button
-                        onClick={setThisWeek}
-                        className="h-8 px-3 rounded-lg border border-[#E7E5E4] bg-white text-[#374151] text-[13px] font-medium hover:bg-[#F5F5F3] transition-colors"
-                      >
-                        This week
-                      </button>
-
-                      {/* Active filter chips — dismissible inline */}
-                      {filterStatus !== "all" && (
-                        <span className="inline-flex items-center gap-1 h-7 pl-2 pr-1.5 rounded-md bg-[#F0EFED] text-[#374151] text-[12px] font-medium">
-                          {STATUS_LABELS[filterStatus] || filterStatus}
-                          <button
-                            onClick={() => setFilterStatus("all")}
-                            className="hover:text-[#111827]"
-                          >
-                            <X size={11} />
-                          </button>
-                        </span>
-                      )}
-                      {filterStaff && (
-                        <span className="inline-flex items-center gap-1 h-7 pl-2 pr-1.5 rounded-md bg-[#F0EFED] text-[#374151] text-[12px] font-medium">
-                          {employees.find((e) => e.id === filterStaff)
-                            ?.first_name ?? "Staff"}
-                          <button
-                            onClick={() => setFilterStaff("")}
-                            className="hover:text-[#111827]"
-                          >
-                            <X size={11} />
-                          </button>
-                        </span>
-                      )}
-                      {searchTerm && (
-                        <span className="inline-flex items-center gap-1 h-7 pl-2 pr-1.5 rounded-md bg-[#F0EFED] text-[#374151] text-[12px] font-medium">
-                          &ldquo;{searchTerm}&rdquo;
-                          <button
-                            onClick={() => setSearchTerm("")}
-                            className="hover:text-[#111827]"
-                          >
-                            <X size={11} />
-                          </button>
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    /* Calendar nav */
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                      <button
-                        onClick={prevPeriod}
-                        className="p-1.5 rounded-lg border border-[#E7E5E4] hover:bg-[#F5F5F3] transition-colors"
-                      >
-                        <ChevronLeft size={15} className="text-[#6B7280]" />
-                      </button>
-                      <button
-                        onClick={goToday}
-                        className="px-2.5 h-8 rounded-lg border border-[#E7E5E4] text-[13px] font-medium text-[#374151] hover:bg-[#F5F5F3] transition-colors"
-                      >
-                        Today
-                      </button>
-                      <button
-                        onClick={nextPeriod}
-                        className="p-1.5 rounded-lg border border-[#E7E5E4] hover:bg-[#F5F5F3] transition-colors"
-                      >
-                        <ChevronRight size={15} className="text-[#6B7280]" />
-                      </button>
-                      <span className="text-[14px] font-medium text-[#374151] hidden sm:block">
-                        {calLabel}
-                      </span>
-                      <SquareSelect
-                        label="Range"
-                        value={calendarView}
-                        onChange={(value) =>
-                          setCalendarView(value as CalendarView)
-                        }
-                        options={CALENDAR_VIEW_OPTIONS}
-                        className="w-[145px] shrink-0"
-                      />
-                      <SquareSelect
-                        label="View"
-                        value={calendarDisplayMode}
-                        onChange={(value) =>
-                          setCalendarDisplayMode(value as CalendarDisplayMode)
-                        }
-                        options={CALENDAR_DISPLAY_OPTIONS}
-                        className="w-[170px] shrink-0"
-                      />
-                      <button
-                        className="p-1.5 rounded-lg border border-[#E7E5E4] hover:bg-[#F5F5F3] transition-colors text-[#6B7280]"
-                        onClick={loadCalendarAppts}
-                        title="Refresh"
-                      >
-                        <RotateCcw size={14} />
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -2066,7 +2084,7 @@ export default function AdminPage() {
                       Appointment attributes
                     </p>
 
-                    {/* Right: Save */}
+                    {/* Right: Apply */}
                     <button
                       type="button"
                       onClick={() => {
@@ -2075,9 +2093,9 @@ export default function AdminPage() {
                         setSearchTerm(pendingFilter.search);
                         setShowFilterPanel(false);
                       }}
-                      className="h-9 px-4 rounded-lg bg-[#2563EB] text-white text-[13px] font-semibold hover:bg-[#1D4ED8] transition-colors"
+                      className="admin-toolbar-primary-btn !h-9"
                     >
-                      Save
+                      Apply
                     </button>
                   </div>
                 </header>
@@ -2217,7 +2235,7 @@ export default function AdminPage() {
                                   staff: e.target.value,
                                 }))
                               }
-                              className="h-11 w-full appearance-none rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] pl-4 pr-8 text-[14px] text-[#111827] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] transition-all cursor-pointer"
+                              className="h-11 w-full appearance-none rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] pl-4 pr-8 text-[14px] text-[#111827] outline-none focus:ring-2 focus:ring-black/5 focus:border-[#374151] transition-all cursor-pointer"
                             >
                               <option value="">All staff</option>
                               {employees.map((emp) => (
@@ -2248,7 +2266,7 @@ export default function AdminPage() {
                                 status: e.target.value,
                               }))
                             }
-                            className="h-11 w-full appearance-none rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] pl-4 pr-8 text-[14px] text-[#111827] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] transition-all cursor-pointer"
+                            className="h-11 w-full appearance-none rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] pl-4 pr-8 text-[14px] text-[#111827] outline-none focus:ring-2 focus:ring-black/5 focus:border-[#374151] transition-all cursor-pointer"
                           >
                             <option value="all">All statuses</option>
                             <option value="confirmed">Confirmed</option>
@@ -2283,7 +2301,7 @@ export default function AdminPage() {
                                 search: e.target.value,
                               }))
                             }
-                            className="h-11 w-full rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] pl-10 pr-4 text-[14px] text-[#111827] placeholder-[#9CA3AF] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] transition-all"
+                            className="h-11 w-full rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] pl-10 pr-4 text-[14px] text-[#111827] placeholder-[#9CA3AF] outline-none focus:ring-2 focus:ring-black/5 focus:border-[#374151] transition-all"
                           />
                           {pendingFilter.search && (
                             <button
@@ -2324,14 +2342,16 @@ export default function AdminPage() {
             )}
 
             {/* ── OVERVIEW / LIST VIEW ── */}
-            {apptView === "overview" && apptLoading ? (
+            {apptView === "overview" && (
+              <div className="w-full mx-auto max-w-[900px]">
+            {apptLoading ? (
               <div className="flex justify-center py-16">
                 <Loader2
                   size={22}
                   className="animate-spin text-[var(--text-muted)]"
                 />
               </div>
-            ) : apptView === "overview" && appointments.length === 0 ? (
+            ) : appointments.length === 0 ? (
               <div className="rounded-lg border border-[var(--border-default)] bg-white px-6 py-12 text-center shadow-none">
                 <Calendar
                   size={28}
@@ -2344,12 +2364,12 @@ export default function AdminPage() {
                   Try adjusting your filters.
                 </p>
               </div>
-            ) : apptView === "overview" ? (
+            ) : (
               <div className="overflow-hidden rounded-lg border border-[var(--border-default)] bg-white">
                 {appointments.map((appt, i) => (
                   <div key={appt.id}>
                     <button
-                      className="w-full flex items-start gap-3 px-4 py-4 text-left hover:bg-[#F5F5F3] transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--bg-hover)] transition-colors"
                       style={{
                         borderBottom:
                           i < appointments.length - 1 && expandedId !== appt.id
@@ -2362,7 +2382,7 @@ export default function AdminPage() {
                         )
                       }
                     >
-                      <div className="avatar avatar-md shrink-0 mt-0.5">
+                      <div className="avatar avatar-sm shrink-0">
                         {appt.customer_name?.[0]?.toUpperCase() || "?"}
                       </div>
 
@@ -2406,9 +2426,9 @@ export default function AdminPage() {
                     </button>
 
                     {expandedId === appt.id && (
-                      <div className="border-b border-[var(--border-default)] bg-white px-4 pb-4 pt-3">
+                      <div className="border-b border-[var(--border-default)] bg-white px-4 pb-4 pt-2">
                         {/* Details Block */}
-                        <div className="space-y-3 mb-5">
+                        <div className="space-y-2.5 mb-4">
                           <div>
                             <p className="caption">Contact</p>
                             <p className="text-sm text-[#111827]">
@@ -2444,21 +2464,16 @@ export default function AdminPage() {
                         {/* Primary Actions */}
                         {appt.status !== "completed" &&
                         appt.status !== "cancelled" ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
+                          <div className="flex flex-wrap items-center gap-2 mb-4">
                             {(appt.status === "pending" ||
                               appt.status === "no_show") && (
                               <button
-                                className="btn-black btn-block"
-                                onClick={() =>
-                                  updateStatus(appt.id, "confirmed")
-                                }
+                                className="btn-black btn-sm"
+                                onClick={() => updateStatus(appt.id, "confirmed")}
                                 disabled={updatingId === appt.id}
                               >
                                 {updatingId === appt.id ? (
-                                  <Loader2
-                                    size={16}
-                                    className="animate-spin mx-auto"
-                                  />
+                                  <Loader2 size={13} className="animate-spin" />
                                 ) : (
                                   "Confirm"
                                 )}
@@ -2466,24 +2481,19 @@ export default function AdminPage() {
                             )}
                             {appt.status === "confirmed" && (
                               <button
-                                className="btn-black btn-block"
-                                onClick={() =>
-                                  updateStatus(appt.id, "completed")
-                                }
+                                className="btn-black btn-sm"
+                                onClick={() => updateStatus(appt.id, "completed")}
                                 disabled={updatingId === appt.id}
                               >
                                 {updatingId === appt.id ? (
-                                  <Loader2
-                                    size={16}
-                                    className="animate-spin mx-auto"
-                                  />
+                                  <Loader2 size={13} className="animate-spin" />
                                 ) : (
                                   "Complete"
                                 )}
                               </button>
                             )}
                             <button
-                              className="btn-secondary w-full"
+                              className="btn-secondary btn-sm"
                               onClick={() => updateStatus(appt.id, "cancelled")}
                               disabled={updatingId === appt.id}
                             >
@@ -2491,38 +2501,30 @@ export default function AdminPage() {
                             </button>
                           </div>
                         ) : (
-                          <div className="mb-5 py-2.5 px-4 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg flex items-center justify-center text-sm font-medium text-[var(--text-secondary)]">
-                            Appointment{" "}
-                            {appt.status === "completed"
-                              ? "completed"
-                              : "cancelled"}
+                          <div className="mb-4 py-2 px-3 bg-[var(--bg-subtle)] border border-[var(--border-default)] rounded-lg flex items-center text-[12px] font-medium text-[var(--text-secondary)]">
+                            Appointment {appt.status === "completed" ? "completed" : "cancelled"}
                           </div>
                         )}
 
                         {/* Secondary Actions */}
-                        <div className="space-y-3 pt-4 border-t border-[#E7E5E4]">
-                          <p className="text-xs font-medium text-[var(--text-secondary)]">
-                            More actions
-                          </p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="pt-3 border-t border-[var(--border-default)]">
+                          <div className="flex flex-wrap gap-1.5">
                             <button
                               className="btn-secondary btn-sm"
                               onClick={() => openApptEdit(appt)}
                             >
-                              <Pencil size={14} /> Edit Details
+                              Edit
                             </button>
 
                             {appt.status !== "no_show" &&
                               appt.status !== "completed" &&
                               appt.status !== "cancelled" && (
                                 <button
-                                  className="h-10 rounded-lg border border-[#E7E5E4] text-sm font-medium text-orange-600 flex justify-center items-center gap-2 hover:bg-orange-50 bg-white transition-colors"
-                                  onClick={() =>
-                                    updateStatus(appt.id, "no_show")
-                                  }
+                                  className="btn-secondary btn-sm !text-orange-600 !border-orange-200 hover:!bg-orange-50"
+                                  onClick={() => updateStatus(appt.id, "no_show")}
                                   disabled={updatingId === appt.id}
                                 >
-                                  Mark No Show
+                                  No Show
                                 </button>
                               )}
 
@@ -2532,41 +2534,27 @@ export default function AdminPage() {
                                   <button
                                     type="button"
                                     className="btn-secondary btn-sm"
-                                    onClick={(e) =>
-                                      sendReminder(e, appt.id, "email")
-                                    }
+                                    onClick={(e) => sendReminder(e, appt.id, "email")}
                                     disabled={reminderState !== null}
                                   >
                                     {reminderState?.id === appt.id &&
                                     reminderState?.channel === "email" ? (
-                                      <Loader2
-                                        size={14}
-                                        className="animate-spin"
-                                      />
-                                    ) : (
-                                      <Mail size={14} />
-                                    )}
-                                    Email Reminder
+                                      <Loader2 size={12} className="animate-spin" />
+                                    ) : null}
+                                    Email
                                   </button>
                                   {appt.customer_phone && (
                                     <button
                                       type="button"
                                       className="btn-secondary btn-sm"
-                                      onClick={(e) =>
-                                        sendReminder(e, appt.id, "sms")
-                                      }
+                                      onClick={(e) => sendReminder(e, appt.id, "sms")}
                                       disabled={reminderState !== null}
                                     >
                                       {reminderState?.id === appt.id &&
                                       reminderState?.channel === "sms" ? (
-                                        <Loader2
-                                          size={14}
-                                          className="animate-spin"
-                                        />
-                                      ) : (
-                                        <MessageSquare size={14} />
-                                      )}
-                                      SMS Reminder
+                                        <Loader2 size={12} className="animate-spin" />
+                                      ) : null}
+                                      SMS
                                     </button>
                                   )}
                                 </>
@@ -2575,7 +2563,7 @@ export default function AdminPage() {
 
                           {reminderMessage?.id === appt.id && (
                             <div
-                              className={`text-xs p-2.5 rounded-lg border mt-2 ${
+                              className={`text-[11px] p-2 rounded-md border mt-2 ${
                                 reminderMessage.type === "success"
                                   ? "bg-green-50 border-green-200 text-green-700"
                                   : "bg-red-50 border-red-200 text-red-700"
@@ -2590,16 +2578,18 @@ export default function AdminPage() {
                   </div>
                 ))}
               </div>
-            ) : null}
+            )}
+              </div>
+            )}
           </div>
         )}
 
         {/* ── AVAILABILITY ── */}
         {tab === "availability" && (
-          <div className="slide-up mx-auto w-full max-w-5xl space-y-6 py-4 md:py-0">
+          <div className="slide-up mx-auto w-full max-w-[600px] space-y-5 py-4 md:py-0">
             <div>
               <h2 className="h3">Business hours</h2>
-              <p className="body-sm mt-0.5">
+              <p className="body-sm mt-0.5 text-[var(--text-secondary)]">
                 Set when customers can book appointments
               </p>
             </div>
@@ -2607,15 +2597,14 @@ export default function AdminPage() {
               {hours.map((h, i) => (
                 <div
                   key={h.day_of_week}
-                  className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-4 ${i < hours.length - 1 ? "border-b border-[var(--border-default)]" : ""}`}
-                  style={{ opacity: h.open ? 1 : 0.5 }}
+                  className={`flex items-center gap-3 px-5 py-3.5 ${i < hours.length - 1 ? "border-b border-[var(--border-default)]" : ""}`}
                 >
-                  <span className="w-9 shrink-0 text-[13px] font-medium text-[var(--text-secondary)]">
+                  <span className={`w-8 shrink-0 text-[13px] font-medium ${h.open ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>
                     {DAYS_SHORT[h.day_of_week]}
                   </span>
-                  <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-center gap-2 min-w-0 w-full">
+                  <div className="flex-1 flex items-center gap-2 min-w-0">
                     {h.open ? (
-                      <div className="flex flex-col sm:flex-row gap-2 sm:items-center w-full min-w-0">
+                      <>
                         <input
                           type="time"
                           value={h.open_time}
@@ -2629,11 +2618,9 @@ export default function AdminPage() {
                             );
                             setSaved(false);
                           }}
-                          className="input-field w-full min-w-0 max-w-full text-[13px] py-1.5 px-2"
+                          className="input-field flex-1 min-w-0 text-[13px] py-1.5 px-2.5 h-9"
                         />
-                        <span className="hidden sm:block text-[12px] text-[var(--text-muted)] shrink-0">
-                          to
-                        </span>
+                        <span className="text-[12px] text-[var(--text-muted)] shrink-0">—</span>
                         <input
                           type="time"
                           value={h.close_time}
@@ -2647,13 +2634,11 @@ export default function AdminPage() {
                             );
                             setSaved(false);
                           }}
-                          className="input-field w-full min-w-0 max-w-full text-[13px] py-1.5 px-2"
+                          className="input-field flex-1 min-w-0 text-[13px] py-1.5 px-2.5 h-9"
                         />
-                      </div>
+                      </>
                     ) : (
-                      <span className="text-[13px] text-[var(--text-muted)] truncate py-1.5">
-                        Closed
-                      </span>
+                      <span className="text-[12px] text-[var(--text-muted)] font-medium tracking-wide">Closed</span>
                     )}
                   </div>
                   <label className="toggle shrink-0">
@@ -2676,19 +2661,21 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
-            <button
-              className={`btn-primary btn-block ${saved ? "!bg-[var(--success)]" : ""}`}
-              onClick={handleSaveHours}
-              disabled={saving}
-            >
-              {saving ? "Saving…" : saved ? "Saved" : "Save hours"}
-            </button>
+            <div className="flex justify-end">
+              <button
+                className={`btn-black !w-auto ${saved ? "!bg-[var(--success)] !border-[var(--success)]" : ""}`}
+                onClick={handleSaveHours}
+                disabled={saving}
+              >
+                {saving ? "Saving…" : saved ? "Saved" : "Update hours"}
+              </button>
+            </div>
           </div>
         )}
 
         {/* ── SERVICES ── */}
         {tab === "services" && (
-          <div className="slide-up mx-auto w-full max-w-6xl space-y-6 py-4 md:py-0">
+          <div className="slide-up mx-auto w-full max-w-[900px] space-y-5 py-4 md:py-0">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="h3">Services</h2>
@@ -2777,7 +2764,7 @@ export default function AdminPage() {
         {/* ── STAFF ── */}
         {/* ── STAFF ── */}
         {tab === "staff" && (
-          <div className="slide-up mx-auto w-full max-w-6xl space-y-6 py-4 md:py-0">
+          <div className="slide-up mx-auto w-full max-w-[900px] space-y-5 py-4 md:py-0">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -2851,7 +2838,7 @@ export default function AdminPage() {
                           <input
                             id="add-staff-first-name"
                             className={`h-10 w-full rounded-lg border px-3 text-[14px] text-[#111827] placeholder-[#9CA3AF] outline-none transition-all
-                              focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB]
+                              focus:ring-2 focus:ring-black/5 focus:border-[#374151]
                               ${
                                 addStaffFirstNameTouched &&
                                 !addStaffForm.first_name.trim()
@@ -2885,7 +2872,7 @@ export default function AdminPage() {
                           </label>
                           <input
                             id="add-staff-last-name"
-                            className="h-10 w-full rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] px-3 text-[14px] text-[#111827] placeholder-[#9CA3AF] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] transition-all"
+                            className="h-10 w-full rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] px-3 text-[14px] text-[#111827] placeholder-[#9CA3AF] outline-none focus:ring-2 focus:ring-black/5 focus:border-[#374151] transition-all"
                             placeholder="Doe"
                             value={addStaffForm.last_name}
                             onChange={(e) =>
@@ -2917,7 +2904,7 @@ export default function AdminPage() {
                         <input
                           id="add-staff-email"
                           type="email"
-                          className="h-10 w-full rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] px-3 text-[14px] text-[#111827] placeholder-[#9CA3AF] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] transition-all"
+                          className="h-10 w-full rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] px-3 text-[14px] text-[#111827] placeholder-[#9CA3AF] outline-none focus:ring-2 focus:ring-black/5 focus:border-[#374151] transition-all"
                           placeholder="jane@example.com"
                           value={addStaffForm.email}
                           onChange={(e) =>
@@ -2939,7 +2926,7 @@ export default function AdminPage() {
                         <input
                           id="add-staff-phone"
                           type="tel"
-                          className="h-10 w-full rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] px-3 text-[14px] text-[#111827] placeholder-[#9CA3AF] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] transition-all"
+                          className="h-10 w-full rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] px-3 text-[14px] text-[#111827] placeholder-[#9CA3AF] outline-none focus:ring-2 focus:ring-black/5 focus:border-[#374151] transition-all"
                           placeholder="555-000-0000"
                           value={addStaffForm.phone}
                           onChange={(e) =>
@@ -2977,7 +2964,7 @@ export default function AdminPage() {
                                 role: e.target.value,
                               }))
                             }
-                            className="h-10 w-full appearance-none rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] pl-3 pr-8 text-[14px] text-[#111827] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] transition-all cursor-pointer"
+                            className="h-10 w-full appearance-none rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] pl-3 pr-8 text-[14px] text-[#111827] outline-none focus:ring-2 focus:ring-black/5 focus:border-[#374151] transition-all cursor-pointer"
                           >
                             <option value="staff">Staff</option>
                             <option value="admin">Admin</option>
@@ -3154,10 +3141,10 @@ export default function AdminPage() {
                   {allStaff.map((s) => (
                     <div
                       key={s.id}
-                      className="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-5 hover:bg-[var(--bg-subtle)] transition-colors"
+                      className="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-4 hover:bg-[var(--bg-hover)] transition-colors"
                     >
-                      <div className="flex items-center gap-4 flex-1 min-w-0">
-                        <div className="avatar avatar-md">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="avatar avatar-sm">
                           {s.first_name?.[0]}
                           {s.last_name?.[0]}
                         </div>
@@ -3184,7 +3171,7 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 sm:shrink-0 ml-[52px] sm:ml-0">
+                      <div className="flex items-center gap-2 sm:shrink-0 ml-[44px] sm:ml-0">
                         <button
                           onClick={() => {
                             setSelectedStaffId(s.id);

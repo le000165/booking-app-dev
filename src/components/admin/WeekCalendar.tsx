@@ -17,6 +17,13 @@ interface Appointment {
   }[];
 }
 
+interface BusinessHour {
+  day_of_week: number;
+  open: boolean;
+  open_time: string;
+  close_time: string;
+}
+
 interface WeekCalendarProps {
   appointments: Appointment[];
   view: 'day' | 'fiveDay' | 'week' | 'month';
@@ -24,18 +31,22 @@ interface WeekCalendarProps {
   selectedDate?: Date;
   displayMode: 'combined' | 'onlyMe' | 'sideBySide';
   staffMembers: { id: string; first_name: string; last_name: string }[];
+  businessHours?: BusinessHour[];
   onDateSelect?: (date: Date) => void;
   onAppointmentClick: (appt: Appointment) => void;
 }
 
 const START_HOUR  = 0;
 const END_HOUR    = 24;
-const HOUR_HEIGHT = 72;
+const MINUTES_PER_SLOT = 15;
+const SLOT_HEIGHT = 22;
+const HOUR_HEIGHT = SLOT_HEIGHT * (60 / MINUTES_PER_SLOT);
 const GRID_OFFSET = 8;
 const TIME_COLUMN_WIDTH = 62;
 const DEFAULT_SCROLL_HOUR = 6;
 const GRID_BORDER = '#E7E5E4';
 const GRID_MINOR_BORDER = '#F0EFED';
+const GRID_SUBDIVISION_BORDER = '#F8F7F5';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const STAFF_COLOR_PALETTE = [
@@ -55,6 +66,23 @@ function formatHour(h: number) {
   if (hour < 12) return `${hour} AM`;
   if (hour === 12) return '12 PM';
   return `${hour - 12} PM`;
+}
+
+function timeToMinutes(time: string) {
+  const [hour = '0', minute = '0'] = time.split(':');
+  return Number(hour) * 60 + Number(minute);
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function minutesToGridTop(minutes: number) {
+  return GRID_OFFSET + (minutes - START_HOUR * 60) * (SLOT_HEIGHT / MINUTES_PER_SLOT);
+}
+
+function durationToGridHeight(minutes: number) {
+  return Math.max(MINUTES_PER_SLOT, minutes) * (SLOT_HEIGHT / MINUTES_PER_SLOT);
 }
 
 /** Local-date key for equality comparison — never uses UTC/toISOString. */
@@ -180,6 +208,7 @@ export default function WeekCalendar({
   selectedDate,
   displayMode,
   staffMembers,
+  businessHours = [],
   onDateSelect,
   onAppointmentClick,
 }: WeekCalendarProps) {
@@ -219,7 +248,7 @@ export default function WeekCalendar({
 
     scrollContainer.scrollTop = Math.max(
       0,
-      (DEFAULT_SCROLL_HOUR - START_HOUR) * HOUR_HEIGHT
+      minutesToGridTop(DEFAULT_SCROLL_HOUR * 60) - GRID_OFFSET
     );
   }, [displayMode, view, visibleRangeKey]);
 
@@ -230,16 +259,19 @@ export default function WeekCalendar({
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
   }, [anchorDate, selectedDate, view]);
 
-  const hours = useMemo(
-    () => Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i),
-    []
-  );
   const timeSlotHours = useMemo(
     () => Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i),
     []
   );
   const halfHours = useMemo(
     () => Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i + 0.5),
+    []
+  );
+  const quarterHours = useMemo(
+    () =>
+      Array.from({ length: (END_HOUR - START_HOUR) * 2 }, (_, i) =>
+        START_HOUR + Math.floor(i / 2) + (i % 2 === 0 ? 0.25 : 0.75)
+      ),
     []
   );
 
@@ -307,7 +339,7 @@ export default function WeekCalendar({
 
   function apptTop(appt: Appointment): number {
     const d = new Date(appt.start_time);
-    return Math.max(0, (d.getHours() - START_HOUR) * 60 + d.getMinutes()) * (HOUR_HEIGHT / 60) + GRID_OFFSET;
+    return minutesToGridTop(Math.max(START_HOUR * 60, d.getHours() * 60 + d.getMinutes()));
   }
 
   function apptHeight(appt: Appointment): number {
@@ -315,7 +347,41 @@ export default function WeekCalendar({
     const end   = appt.end_time
       ? new Date(appt.end_time).getTime()
       : start + 60 * 60 * 1000;
-    return Math.max(15, (end - start) / 60000) * (HOUR_HEIGHT / 60);
+    return durationToGridHeight((end - start) / 60000);
+  }
+
+  function closedHourSegments(day: Date) {
+    const dayHours = businessHours.find(h => h.day_of_week === day.getDay());
+    const dayHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT;
+
+    if (!dayHours?.open) {
+      return [{ top: GRID_OFFSET, height: dayHeight }];
+    }
+
+    const openMinutes = clamp(timeToMinutes(dayHours.open_time), START_HOUR * 60, END_HOUR * 60);
+    const closeMinutes = clamp(timeToMinutes(dayHours.close_time), START_HOUR * 60, END_HOUR * 60);
+
+    if (closeMinutes <= openMinutes) {
+      return [{ top: GRID_OFFSET, height: dayHeight }];
+    }
+
+    const openTop = minutesToGridTop(openMinutes);
+    const closeTop = minutesToGridTop(closeMinutes);
+
+    return [
+      { top: GRID_OFFSET, height: Math.max(0, openTop - GRID_OFFSET) },
+      { top: closeTop, height: Math.max(0, GRID_OFFSET + dayHeight - closeTop) },
+    ].filter(segment => segment.height > 0);
+  }
+
+  function renderClosedHours(day: Date) {
+    return closedHourSegments(day).map((segment, index) => (
+      <div
+        key={`${formatLocalDateKey(day)}-${index}`}
+        className="pointer-events-none absolute left-0 right-0 bg-[#F5F5F3]/70"
+        style={{ top: segment.top, height: segment.height }}
+      />
+    ));
   }
 
   const gridHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET;
@@ -367,80 +433,8 @@ export default function WeekCalendar({
         <>
           {showDayStrip ? dayStrip : null}
 
-          <div className="divide-y divide-gray-100 overflow-y-auto sm:hidden">
-            {visibleDays.map((day, dayIdx) => {
-              const dayAppts = apptsByDay[dayIdx] || [];
-              const isToday = visibleDayKeys[dayIdx] === todayKey;
-
-              return (
-                <section key={dayIdx} className={isToday ? 'bg-[#EFF6FF]/40' : undefined}>
-                  <div className="flex items-center justify-between px-4 py-3">
-                    <div>
-                      <p className={`text-[12px] font-semibold uppercase tracking-wide ${isToday ? 'text-[#2563EB]' : 'text-[#6B7280]'}`}>
-                        {DAY_NAMES[day.getDay()]}
-                      </p>
-                      <p className="text-[16px] font-semibold text-[#111827]">
-                        {day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </p>
-                    </div>
-                    <span className="rounded-md bg-[#F5F5F3] px-2 py-1 text-[11px] font-medium text-[#6B7280] ring-1 ring-[#E7E5E4]">
-                      {dayAppts.length} {dayAppts.length === 1 ? 'booking' : 'bookings'}
-                    </span>
-                  </div>
-
-                  <div className="space-y-2 px-4 pb-4">
-                    {dayAppts.length === 0 ? (
-                      <p className="rounded-lg border border-dashed border-[#E7E5E4] bg-white px-3 py-4 text-center text-[13px] text-[#9CA3AF]">
-                        No appointments
-                      </p>
-                    ) : dayAppts.map(appt => {
-                      const services = appt.appointment_services.map(s => s.service.name).join(', ');
-                      const staff = formatStaffName(appt.staff);
-                      const tone = getStaffTone(appt.staff?.id ?? appt.assigned_employee_id);
-                      const timeRange = `${new Date(appt.start_time).toLocaleTimeString('en-US', {
-                        hour: 'numeric', minute: '2-digit', hour12: true,
-                      })} - ${new Date(appt.end_time).toLocaleTimeString('en-US', {
-                        hour: 'numeric', minute: '2-digit', hour12: true,
-                      })}`;
-
-                      return (
-                        <button
-                          key={appt.id}
-                          type="button"
-                          onClick={() => onAppointmentClick(appt)}
-                          className="w-full rounded-lg border p-3.5 text-left transition-colors hover:brightness-[0.98]"
-                          style={{
-                            backgroundColor: tone.bg,
-                            borderColor: tone.border,
-                            color: tone.text,
-                            boxShadow: `inset 3px 0 0 ${tone.accent}`,
-                          }}
-                          title={`${appt.customer_name} • ${services || 'No services'} • ${staff} • ${timeRange}`}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="truncate text-[15px] font-semibold">{appt.customer_name}</p>
-                              <p className="mt-1 text-[12px] font-medium opacity-80">{timeRange}</p>
-                            </div>
-                            <span
-                              className="rounded px-1.5 py-0.5 text-[11px] font-semibold"
-                              style={{ backgroundColor: tone.accent, color: '#fff' }}
-                            >
-                              {formatStaffInitials(appt.staff)}
-                            </span>
-                          </div>
-                          {services && <p className="mt-2 truncate text-[13px] opacity-85">{services}</p>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </section>
-              );
-            })}
-          </div>
-
           {displayMode === 'sideBySide' ? (
-            <div className="hidden min-h-0 flex-1 overflow-x-auto overflow-y-hidden bg-white sm:block">
+            <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden bg-white">
               {sideBySideLanes.length === 0 ? (
                 <div className="flex h-full items-center justify-center px-6 py-20 text-center">
                   <div className="max-w-sm">
@@ -498,12 +492,26 @@ export default function WeekCalendar({
 
                   <div ref={sideBySideScrollRef} className="min-h-0 flex-1 overflow-y-auto">
                     <div className="flex">
-                      <div className="sticky left-0 z-10 shrink-0 border-b bg-white" style={{ width: TIME_COLUMN_WIDTH, height: gridHeight, borderColor: GRID_BORDER }}>
+                      <div className="sticky left-0 z-10 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH, height: gridHeight }}>
+                        {quarterHours.map(h => (
+                          <div
+                            key={h}
+                            className="absolute left-0 right-0 border-t"
+                            style={{ top: minutesToGridTop(h * 60), borderColor: GRID_SUBDIVISION_BORDER }}
+                          />
+                        ))}
+                        {halfHours.map(h => (
+                          <div
+                            key={h}
+                            className="absolute left-0 right-0 border-t"
+                            style={{ top: minutesToGridTop(h * 60), borderColor: GRID_MINOR_BORDER }}
+                          />
+                        ))}
                         {timeSlotHours.map(h => (
                           <div
                             key={h}
                             className="absolute left-0 right-0 flex items-start justify-end border-t pr-2.5"
-                            style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET, height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
+                            style={{ top: minutesToGridTop(h * 60), height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
                           >
                             <span className="translate-y-[6px]">
                               <span className="inline-block bg-white px-1 text-[13px] font-medium leading-none text-[#9CA3AF]">
@@ -521,9 +529,10 @@ export default function WeekCalendar({
                         return (
                           <div
                             key={dayIdx}
-                            className={`relative flex-1 min-w-0 border-b border-l ${isToday ? 'bg-[#EFF6FF]/30' : 'bg-white'}`}
+                            className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-[#EFF6FF]/30' : 'bg-white'}`}
                             style={{ height: gridHeight, borderColor: GRID_BORDER }}
                           >
+                            {renderClosedHours(day)}
                             <div className="flex h-full">
                               {sideBySideLanes.map((lane, laneIdx) => {
                                 const laneAppointments = dayAppts.filter(appt => {
@@ -537,18 +546,25 @@ export default function WeekCalendar({
                                     className="relative min-w-0 flex-1 border-l first:border-l-0"
                                     style={{ borderColor: GRID_BORDER }}
                                   >
+                                    {quarterHours.map(h => (
+                                      <div
+                                        key={h}
+                                        className="absolute left-0 right-0 border-t"
+                                        style={{ top: minutesToGridTop(h * 60), borderColor: GRID_SUBDIVISION_BORDER }}
+                                      />
+                                    ))}
                                     {halfHours.map(h => (
                                       <div
                                         key={h}
                                         className="absolute left-0 right-0 border-t"
-                                        style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET, borderColor: GRID_MINOR_BORDER }}
+                                        style={{ top: minutesToGridTop(h * 60), borderColor: GRID_MINOR_BORDER }}
                                       />
                                     ))}
-                                    {hours.map(h => (
+                                    {timeSlotHours.map(h => (
                                       <div
                                         key={h}
                                         className="absolute left-0 right-0 border-t"
-                                        style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET, borderColor: GRID_BORDER }}
+                                        style={{ top: minutesToGridTop(h * 60), borderColor: GRID_BORDER }}
                                       />
                                     ))}
 
@@ -570,8 +586,12 @@ export default function WeekCalendar({
               )}
             </div>
           ) : (
-          <div className="hidden min-h-0 flex-1 overflow-x-auto overflow-y-hidden bg-white sm:block">
-              <div className="flex h-full min-h-0 flex-col" style={{ minWidth: gridMinWidth }}>
+          <div
+              ref={scheduleScrollRef}
+              className="min-h-0 flex-1 overflow-auto bg-white"
+              style={{ touchAction: 'pan-x pan-y' }}
+            >
+              <div className="flex min-h-0 flex-col" style={{ minWidth: gridMinWidth }}>
                 {view !== 'day' && (
                   <div className="sticky top-0 z-20 flex border-b border-[#d8dde3] bg-white">
                     <div className="sticky left-0 z-30 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH }} />
@@ -593,12 +613,26 @@ export default function WeekCalendar({
 
                 <div ref={scheduleScrollRef} className="min-h-0 flex-1 overflow-y-auto">
                   <div className="flex">
-                    <div className="sticky left-0 z-10 shrink-0 border-b bg-white" style={{ width: TIME_COLUMN_WIDTH, height: gridHeight, borderColor: GRID_BORDER }}>
+                    <div className="sticky left-0 z-10 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH, height: gridHeight }}>
+                      {quarterHours.map(h => (
+                        <div
+                          key={h}
+                          className="absolute left-0 right-0 border-t"
+                          style={{ top: minutesToGridTop(h * 60), borderColor: GRID_SUBDIVISION_BORDER }}
+                        />
+                      ))}
+                      {halfHours.map(h => (
+                        <div
+                          key={h}
+                          className="absolute left-0 right-0 border-t"
+                          style={{ top: minutesToGridTop(h * 60), borderColor: GRID_MINOR_BORDER }}
+                        />
+                      ))}
                       {timeSlotHours.map(h => (
                         <div
                           key={h}
                           className="absolute left-0 right-0 flex items-start justify-end border-t pr-2.5"
-                          style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET, height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
+                          style={{ top: minutesToGridTop(h * 60), height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
                         >
                           <span className="translate-y-[6px]">
                             <span className="inline-block bg-white px-1 text-[13px] font-medium leading-none text-[#9CA3AF]">
@@ -616,21 +650,29 @@ export default function WeekCalendar({
                       return (
                         <div
                           key={dayIdx}
-                          className={`relative flex-1 min-w-0 border-b border-l ${isToday ? 'bg-[#EFF6FF]/30' : 'bg-white'}`}
+                          className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-[#EFF6FF]/30' : 'bg-white'}`}
                           style={{ height: gridHeight, borderColor: GRID_BORDER }}
                         >
+                          {renderClosedHours(visibleDays[dayIdx])}
+                          {quarterHours.map(h => (
+                            <div
+                              key={h}
+                              className="absolute left-0 right-0 border-t"
+                              style={{ top: minutesToGridTop(h * 60), borderColor: GRID_SUBDIVISION_BORDER }}
+                            />
+                          ))}
                           {halfHours.map(h => (
                             <div
                               key={h}
                               className="absolute left-0 right-0 border-t"
-                              style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET, borderColor: GRID_MINOR_BORDER }}
+                              style={{ top: minutesToGridTop(h * 60), borderColor: GRID_MINOR_BORDER }}
                             />
                           ))}
-                          {hours.map(h => (
+                          {timeSlotHours.map(h => (
                             <div
                               key={h}
                               className="absolute left-0 right-0 border-t"
-                              style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET, borderColor: GRID_BORDER }}
+                              style={{ top: minutesToGridTop(h * 60), borderColor: GRID_BORDER }}
                             />
                           ))}
 
