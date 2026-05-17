@@ -1,0 +1,10 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FrontBeach favicon">
+  <!-- Simplified mark for small sizes — thicker strokes for legibility at 16–32px -->
+  <rect width="32" height="32" rx="7" fill="#0F172A"/>
+  <!-- Vertical stroke -->
+  <rect x="8" y="8" width="5" height="16" rx="1.5" fill="#FFFFFF"/>
+  <!-- Mid bar -->
+  <rect x="8" y="16" width="11" height="4" rx="1" fill="#FFFFFF"/>
+  <!-- Cyan horizon bar -->
+  <rect x="8" y="8" width="16" height="5" rx="1.5" fill="#06B6D4"/>
+</svg>

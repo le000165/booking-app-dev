@@ -70,7 +70,7 @@ export default function SquareSelect({
     const rect = triggerRef.current.getBoundingClientRect();
     const menuWidth = Math.max(rect.width, 240);
     const margin = 12;
-    const gap = 8;
+    const gap = 6;
     const menuHeight = menuRef.current?.offsetHeight ?? 0;
 
     let left = rect.left;
@@ -212,7 +212,8 @@ export default function SquareSelect({
       tabIndex={-1}
       onKeyDown={handleMenuKeyDown}
       className={cn(
-        'fixed z-[70] rounded-2xl border border-gray-100 bg-white p-2 shadow-xl',
+        'fixed z-[70] rounded-lg border border-[#E7E5E4] bg-white p-1.5',
+        'shadow-[0_4px_6px_-1px_rgba(0,0,0,0.06),_0_2px_4px_-1px_rgba(0,0,0,0.03)]',
         'max-h-[min(320px,calc(100vh-24px))] overflow-y-auto',
         menuClassName
       )}
@@ -238,18 +239,18 @@ export default function SquareSelect({
             onMouseEnter={() => setActiveIndex(index)}
             onClick={() => chooseValue(option.value)}
             className={cn(
-              'flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors',
-              'focus:outline-none focus:ring-2 focus:ring-black/10',
-              isSelected || isActive ? 'bg-gray-100' : 'hover:bg-gray-100'
+              'flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors',
+              'focus:outline-none focus:ring-2 focus:ring-[rgba(37,99,235,0.15)]',
+              isSelected || isActive ? 'bg-[#F0EFED]' : 'hover:bg-[#F0EFED]'
             )}
           >
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[14px] font-medium text-gray-900">{option.label}</p>
+              <p className="truncate text-[13px] font-medium text-[#111827]">{option.label}</p>
               {option.description && (
-                <p className="mt-0.5 truncate text-[12px] text-gray-500">{option.description}</p>
+                <p className="mt-0.5 truncate text-[12px] text-[#6B7280]">{option.description}</p>
               )}
             </div>
-            {isSelected && <Check size={15} className="shrink-0 text-gray-900" />}
+            {isSelected && <Check size={14} className="shrink-0 text-[#2563EB]" />}
           </button>
         );
       })}
@@ -269,21 +270,24 @@ export default function SquareSelect({
         onClick={() => setOpen(prev => !prev)}
         onKeyDown={handleTriggerKeyDown}
         className={cn(
-          'inline-flex h-10 min-w-0 items-center justify-between gap-3 rounded-full border border-gray-300 bg-white px-4 py-2 text-left shadow-sm transition-colors',
-          'hover:border-gray-400 hover:bg-gray-50',
-          open && 'border-black ring-1 ring-black/10',
-          disabled && 'cursor-not-allowed opacity-60 hover:border-gray-300 hover:bg-white',
+          'inline-flex h-10 min-w-0 items-center justify-between gap-3 rounded-lg border border-[#E7E5E4] bg-white px-3.5 py-2 text-left shadow-xs transition-colors',
+          'hover:border-[#D4D2CF] hover:bg-[#F9F9F7]',
+          open && 'border-[#2563EB] ring-2 ring-[rgba(37,99,235,0.12)]',
+          disabled && 'cursor-not-allowed opacity-60 hover:border-[#E7E5E4] hover:bg-white',
           className,
           triggerClassName
         )}
       >
         <div className="min-w-0">
-          <p className="text-[11px] font-medium leading-none text-gray-500">{label}</p>
-          <p className="truncate text-[13px] font-semibold leading-tight text-gray-900">
+          <p className="text-[11px] font-medium leading-none text-[#9CA3AF]">{label}</p>
+          <p className="truncate text-[13px] font-semibold leading-tight text-[#111827]">
             {selectedOption?.label ?? 'Select'}
           </p>
         </div>
-        <ChevronDown size={15} className={cn('shrink-0 text-gray-400 transition-transform', open && 'rotate-180 text-gray-900')} />
+        <ChevronDown
+          size={14}
+          className={cn('shrink-0 text-[#9CA3AF] transition-transform', open && 'rotate-180 text-[#6B7280]')}
+        />
       </button>
       {panel}
     </>

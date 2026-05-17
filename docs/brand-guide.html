@@ -1,0 +1,1884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FrontBeach — Brand Guide v1.0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* Core brand colors */
+      --navy:        #0F172A;
+      --cyan:        #06B6D4;
+      --white:       #FFFFFF;
+      --gray-50:     #F8FAFC;
+      --gray-100:    #F1F5F9;
+      --gray-200:    #E2E8F0;
+      --gray-300:    #CBD5E1;
+      --gray-400:    #94A3B8;
+      --gray-500:    #64748B;
+      --gray-600:    #475569;
+      --gray-700:    #334155;
+      --gray-800:    #1E293B;
+      --gray-900:    #0F172A;
+
+      /* Semantic tokens */
+      --color-primary:       var(--navy);
+      --color-accent:        var(--cyan);
+      --color-bg:            var(--white);
+      --color-surface:       var(--gray-50);
+      --color-border:        var(--gray-200);
+      --color-text-primary:  var(--gray-900);
+      --color-text-secondary:var(--gray-500);
+      --color-text-muted:    var(--gray-400);
+
+      /* Typography */
+      --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+      /* Spacing scale (4px base) */
+      --space-1:  4px;
+      --space-2:  8px;
+      --space-3:  12px;
+      --space-4:  16px;
+      --space-5:  20px;
+      --space-6:  24px;
+      --space-8:  32px;
+      --space-10: 40px;
+      --space-12: 48px;
+      --space-16: 64px;
+      --space-20: 80px;
+      --space-24: 96px;
+
+      /* Border radius */
+      --radius-sm:  4px;
+      --radius-md:  8px;
+      --radius-lg:  12px;
+      --radius-xl:  16px;
+      --radius-2xl: 20px;
+      --radius-full: 9999px;
+
+      /* Shadows */
+      --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+      --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+      --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.06), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+    }
+
+    html { font-size: 16px; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--gray-50);
+      color: var(--color-text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ─── Layout ─────────────────────────────────────── */
+    .guide-header {
+      background: var(--navy);
+      color: #fff;
+      padding: var(--space-20) var(--space-16);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: var(--space-6);
+    }
+    .guide-header .version-tag {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      background: rgba(6,182,212,0.1);
+      border: 1px solid rgba(6,182,212,0.2);
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+    }
+    .guide-header h1 {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+      color: #fff;
+    }
+    .guide-header h1 span { color: var(--cyan); }
+    .guide-header p {
+      font-size: 16px;
+      color: var(--gray-400);
+      max-width: 480px;
+      line-height: 1.7;
+    }
+
+    .guide-nav {
+      background: var(--white);
+      border-bottom: 1px solid var(--color-border);
+      padding: 0 var(--space-16);
+      display: flex;
+      gap: var(--space-1);
+      overflow-x: auto;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .guide-nav a {
+      display: block;
+      padding: var(--space-4) var(--space-3);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-500);
+      text-decoration: none;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .guide-nav a:hover { color: var(--navy); border-bottom-color: var(--gray-300); }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 var(--space-8); }
+
+    .section {
+      padding: var(--space-20) 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .section:last-child { border-bottom: none; }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: var(--space-2);
+    }
+    .section-title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--navy);
+      margin-bottom: var(--space-2);
+    }
+    .section-desc {
+      font-size: 15px;
+      color: var(--gray-500);
+      margin-bottom: var(--space-10);
+      max-width: 560px;
+      line-height: 1.7;
+    }
+
+    /* ─── Grid helpers ───────────────────────────────── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-4); }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
+    .flex-row { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+    .flex-col { display: flex; flex-direction: column; gap: var(--space-4); }
+
+    /* ─── Cards ──────────────────────────────────────── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      box-shadow: var(--shadow-xs);
+    }
+    .card-dark {
+      background: var(--navy);
+      border-color: var(--gray-800);
+    }
+    .card-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      margin-bottom: var(--space-4);
+    }
+    .card-dark .card-label { color: var(--gray-600); }
+
+    /* ─── Logo display ───────────────────────────────── */
+    .logo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+    .logo-cell {
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-8) var(--space-6);
+      gap: var(--space-4);
+      border: 1px solid var(--color-border);
+    }
+    .logo-cell-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--gray-400);
+    }
+    .on-light { background: var(--white); }
+    .on-gray  { background: var(--gray-100); }
+    .on-dark  { background: var(--navy); border-color: var(--gray-800); }
+    .on-dark .logo-cell-label { color: var(--gray-600); }
+
+    /* ─── Logo SVG inline ────────────────────────────── */
+    .mark-xl svg { width: 56px; height: 56px; }
+    .mark-lg svg { width: 40px; height: 40px; }
+    .mark-md svg { width: 32px; height: 32px; }
+    .mark-sm svg { width: 24px; height: 24px; }
+    .mark-xs svg { width: 16px; height: 16px; }
+
+    .wordmark {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .wordmark-text {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.4px;
+      color: var(--navy);
+      line-height: 1;
+    }
+    .wordmark-text.on-dark-text { color: #fff; }
+    .wordmark-text.mono-text { color: var(--navy); }
+
+    /* ─── Icon Mark SVG (inline) ─────────────────────── */
+    .fb-mark {
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .fb-mark svg { display: block; }
+
+    /* ─── Color swatches ─────────────────────────────── */
+    .swatch-group { display: flex; flex-direction: column; gap: var(--space-2); }
+    .swatch {
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.07);
+    }
+    .swatch-color { height: 72px; }
+    .swatch-info {
+      background: var(--white);
+      padding: var(--space-3) var(--space-4);
+    }
+    .swatch-name { font-size: 13px; font-weight: 600; color: var(--gray-800); }
+    .swatch-hex  { font-size: 12px; color: var(--gray-500); font-family: var(--font-mono); }
+
+    .semantic-colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-3); margin-top: var(--space-6); }
+    .semantic-swatch {
+      background: var(--white);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .semantic-swatch-bar { height: 8px; }
+    .semantic-swatch-info { padding: var(--space-3) var(--space-4); }
+    .semantic-swatch-name { font-size: 12px; font-weight: 600; color: var(--gray-700); }
+    .semantic-swatch-use  { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+
+    /* ─── Typography specimens ───────────────────────── */
+    .type-specimen {
+      background: var(--white);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      margin-bottom: var(--space-4);
+    }
+    .type-meta { font-size: 11px; color: var(--gray-400); font-family: var(--font-mono); margin-bottom: var(--space-3); }
+    .type-sample-sm   { font-size: 13px; }
+    .type-sample-base { font-size: 15px; }
+    .type-sample-lg   { font-size: 18px; }
+    .type-sample-xl   { font-size: 24px; font-weight: 600; letter-spacing: -0.4px; }
+    .type-sample-2xl  { font-size: 32px; font-weight: 700; letter-spacing: -0.8px; }
+    .type-sample-3xl  { font-size: 40px; font-weight: 800; letter-spacing: -1.2px; }
+    .type-sample-4xl  { font-size: 48px; font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; }
+
+    .type-scale-row {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-6);
+      padding: var(--space-4) 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .type-scale-row:last-child { border-bottom: none; }
+    .type-scale-meta { font-size: 11px; color: var(--gray-400); font-family: var(--font-mono); min-width: 140px; }
+
+    /* ─── Spacing scale ──────────────────────────────── */
+    .spacing-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      padding: 10px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .spacing-bar {
+      background: var(--cyan);
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .spacing-meta { font-size: 12px; color: var(--gray-500); font-family: var(--font-mono); min-width: 80px; }
+    .spacing-use  { font-size: 12px; color: var(--gray-400); }
+
+    /* ─── Radius samples ─────────────────────────────── */
+    .radius-demo {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-6);
+      align-items: flex-end;
+    }
+    .radius-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-3);
+    }
+    .radius-square {
+      width: 56px;
+      height: 56px;
+      background: var(--navy);
+    }
+    .radius-label { font-size: 11px; color: var(--gray-500); font-family: var(--font-mono); text-align: center; }
+
+    /* ─── Buttons ────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--navy);
+      color: var(--white);
+      padding: 10px var(--space-4);
+      border-radius: var(--radius-md);
+    }
+    .btn-primary:hover { background: var(--gray-800); }
+    .btn-accent {
+      background: var(--cyan);
+      color: var(--white);
+      padding: 10px var(--space-4);
+      border-radius: var(--radius-md);
+    }
+    .btn-accent:hover { background: #0EA5C9; }
+    .btn-secondary {
+      background: var(--white);
+      color: var(--navy);
+      padding: 10px var(--space-4);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-300);
+    }
+    .btn-secondary:hover { border-color: var(--gray-400); background: var(--gray-50); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--gray-600);
+      padding: 10px var(--space-4);
+      border-radius: var(--radius-md);
+    }
+    .btn-ghost:hover { background: var(--gray-100); color: var(--navy); }
+    .btn-danger {
+      background: #FEF2F2;
+      color: #DC2626;
+      padding: 10px var(--space-4);
+      border-radius: var(--radius-md);
+      border: 1px solid #FECACA;
+    }
+
+    .btn-sm {
+      font-size: 12px;
+      padding: 6px var(--space-3);
+      border-radius: var(--radius-sm);
+    }
+    .btn-lg {
+      font-size: 16px;
+      padding: 14px var(--space-6);
+      border-radius: var(--radius-lg);
+    }
+
+    /* ─── Badges ─────────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      padding: 3px 9px;
+      border-radius: var(--radius-full);
+    }
+    .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .badge-confirmed  { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
+    .badge-confirmed .badge-dot  { background: #10B981; }
+    .badge-pending    { background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A; }
+    .badge-pending .badge-dot    { background: #F59E0B; }
+    .badge-cancelled  { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+    .badge-cancelled .badge-dot  { background: #EF4444; }
+    .badge-completed  { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
+    .badge-completed .badge-dot  { background: #3B82F6; }
+
+    /* ─── Form elements ──────────────────────────────── */
+    .input-demo {
+      background: var(--white);
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md);
+      padding: 10px var(--space-4);
+      font-size: 14px;
+      font-family: var(--font-sans);
+      color: var(--navy);
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input-demo::placeholder { color: var(--gray-400); }
+    .input-focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+    .input-error {
+      border-color: #EF4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.10);
+    }
+    .form-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-700);
+      display: block;
+      margin-bottom: 6px;
+    }
+    .form-hint { font-size: 12px; color: var(--gray-400); margin-top: 5px; }
+    .form-error { font-size: 12px; color: #DC2626; margin-top: 5px; }
+    .form-group { margin-bottom: var(--space-5); }
+
+    /* ─── Dashboard patterns ─────────────────────────── */
+    .dash-preview {
+      background: var(--gray-50);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+    .dash-topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--color-border);
+      padding: 0 var(--space-6);
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .dash-layout { display: flex; height: 360px; }
+    .dash-sidebar {
+      width: 220px;
+      background: var(--white);
+      border-right: 1px solid var(--color-border);
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    .dash-sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+    }
+    .dash-sidebar-item.active {
+      background: var(--gray-100);
+      color: var(--navy);
+    }
+    .dash-sidebar-item .si-icon {
+      width: 16px; height: 16px;
+      background: var(--gray-300);
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .dash-sidebar-item.active .si-icon { background: var(--navy); }
+    .dash-sidebar-divider {
+      height: 1px;
+      background: var(--color-border);
+      margin: var(--space-2) 0;
+    }
+    .dash-content { flex: 1; padding: var(--space-6); overflow: hidden; }
+
+    .stat-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); margin-bottom: var(--space-6); }
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+    .stat-card-label { font-size: 11px; color: var(--gray-500); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-card-value { font-size: 22px; font-weight: 700; color: var(--navy); letter-spacing: -0.5px; margin-top: 4px; }
+    .stat-card-change { font-size: 11px; color: #059669; margin-top: 3px; }
+
+    .table-preview {
+      background: var(--white);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .table-header {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: var(--space-4);
+      padding: var(--space-3) var(--space-4);
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .table-header span { font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; }
+    .table-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: var(--space-4);
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--gray-50);
+      align-items: center;
+    }
+    .table-row:last-child { border-bottom: none; }
+    .table-row span { font-size: 13px; color: var(--gray-700); }
+    .table-row .name { font-weight: 500; color: var(--navy); }
+
+    /* ─── Sidebar collapsed ──────────────────────────── */
+    .sidebar-collapsed {
+      width: 56px;
+      background: var(--white);
+      border-right: 1px solid var(--color-border);
+      padding: var(--space-3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-1);
+    }
+    .sc-icon {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .sc-icon.active { background: var(--gray-100); }
+    .sc-icon svg { width: 18px; height: 18px; opacity: 0.6; }
+    .sc-icon.active svg { opacity: 1; }
+    .sc-divider { height: 1px; width: 24px; background: var(--color-border); margin: 4px 0; }
+
+    /* ─── Navigation examples ────────────────────────── */
+    .nav-demo {
+      background: var(--white);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: var(--space-4);
+    }
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      padding: 0 var(--space-6);
+      height: 56px;
+      border-bottom: 1px solid var(--color-border);
+      gap: var(--space-2);
+    }
+    .nav-bar-dark {
+      background: var(--navy);
+      border-color: var(--gray-800);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      margin-left: var(--space-6);
+    }
+    .nav-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-500);
+      padding: 6px var(--space-3);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+    .nav-link:hover { color: var(--navy); background: var(--gray-100); }
+    .nav-link.active { color: var(--navy); background: var(--gray-100); }
+    .nav-link-dark { color: var(--gray-400); }
+    .nav-link-dark:hover { color: #fff; background: var(--gray-800); }
+    .nav-link-dark.active { color: #fff; background: var(--gray-800); }
+    .nav-spacer { flex: 1; }
+    .nav-actions { display: flex; align-items: center; gap: var(--space-2); }
+    .nav-avatar {
+      width: 30px; height: 30px;
+      border-radius: var(--radius-full);
+      background: var(--navy);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600; color: var(--white);
+    }
+    .nav-avatar-dark { background: var(--gray-700); }
+    .nav-notif {
+      width: 30px; height: 30px;
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .nav-notif:hover { background: var(--gray-100); }
+    .nav-notif-dark:hover { background: var(--gray-800); }
+
+    /* ─── Social / app icon ──────────────────────────── */
+    .app-icon-row { display: flex; align-items: flex-end; gap: var(--space-6); flex-wrap: wrap; }
+    .app-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-3);
+    }
+    .app-icon-label { font-size: 11px; color: var(--gray-400); text-align: center; }
+    .app-icon svg, .app-icon img { display: block; border-radius: inherit; }
+
+    /* ─── Do/Don't ───────────────────────────────────── */
+    .do-dont { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+    .do-card {
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      border: 1px solid #A7F3D0;
+      background: #ECFDF5;
+    }
+    .dont-card {
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      border: 1px solid #FECACA;
+      background: #FEF2F2;
+    }
+    .do-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #059669; margin-bottom: var(--space-3); }
+    .dont-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #DC2626; margin-bottom: var(--space-3); }
+    .do-dont li { font-size: 13px; color: var(--gray-700); margin-bottom: 6px; padding-left: 12px; position: relative; list-style: none; }
+    .do-dont li::before { content: ''; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; border-radius: 50%; }
+    .do-card li::before { background: #10B981; }
+    .dont-card li::before { background: #EF4444; }
+
+    /* ─── Motion tokens ──────────────────────────────── */
+    .motion-token {
+      background: var(--white);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+    .motion-demo {
+      width: 32px; height: 32px;
+      background: var(--cyan);
+      border-radius: var(--radius-sm);
+    }
+    .motion-meta { font-size: 12px; }
+    .motion-name { font-weight: 600; color: var(--navy); }
+    .motion-value { font-family: var(--font-mono); color: var(--gray-500); margin-top: 2px; }
+    .motion-use { color: var(--gray-400); margin-top: 2px; }
+
+    /* ─── Code blocks ────────────────────────────────── */
+    .code-block {
+      background: var(--navy);
+      color: #E2E8F0;
+      border-radius: var(--radius-lg);
+      padding: var(--space-5) var(--space-6);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.7;
+      overflow-x: auto;
+      margin-top: var(--space-4);
+    }
+    .code-block .comment { color: #475569; }
+    .code-block .prop { color: #7DD3FC; }
+    .code-block .val { color: #86EFAC; }
+    .code-block .str { color: #FCA5A5; }
+
+    /* ─── Footer ─────────────────────────────────────── */
+    .guide-footer {
+      background: var(--navy);
+      color: var(--gray-500);
+      text-align: center;
+      padding: var(--space-10);
+      font-size: 13px;
+    }
+    .guide-footer a { color: var(--cyan); text-decoration: none; }
+
+    /* ─── Print hint ─────────────────────────────────── */
+    .print-note {
+      background: var(--gray-100);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-4);
+      font-size: 12px;
+      color: var(--gray-500);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─────────────────────────────────────────────────────
+     HEADER
+───────────────────────────────────────────────────────── -->
+<header class="guide-header">
+  <!-- Inline mark at header -->
+  <div class="flex-row" style="justify-content:center; gap:14px;">
+    <span class="fb-mark mark-xl">
+      <svg width="56" height="56" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="40" height="40" rx="8" fill="#0F172A" stroke="#1E293B" stroke-width="1"/>
+        <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+        <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+        <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+      </svg>
+    </span>
+    <span class="wordmark-text on-dark-text" style="font-size:28px; letter-spacing:-0.6px;">FrontBeach</span>
+  </div>
+  <span class="version-tag">Brand Guide — v1.0 — 2026</span>
+  <h1>Visual Identity<br/><span>Design System</span></h1>
+  <p>A comprehensive brand system for a modern, production-ready booking and scheduling SaaS platform.</p>
+</header>
+
+<!-- ─────────────────────────────────────────────────────
+     STICKY NAV
+───────────────────────────────────────────────────────── -->
+<nav class="guide-nav">
+  <a href="#logos">Logo System</a>
+  <a href="#colors">Colors</a>
+  <a href="#typography">Typography</a>
+  <a href="#spacing">Spacing</a>
+  <a href="#components">Components</a>
+  <a href="#dashboard">Dashboard</a>
+  <a href="#navigation">Navigation</a>
+  <a href="#icons">App Icons</a>
+  <a href="#motion">Motion</a>
+  <a href="#tokens">Design Tokens</a>
+  <a href="#guidelines">Guidelines</a>
+</nav>
+
+<main>
+
+<!-- ─────────────────────────────────────────────────────
+     1. LOGO SYSTEM
+───────────────────────────────────────────────────────── -->
+<section class="section" id="logos">
+  <div class="container">
+    <div class="section-label">01 — Logo System</div>
+    <div class="section-title">The FrontBeach Mark</div>
+    <div class="section-desc">The icon mark is a geometric "F" — the "Horizon F" — where the cyan top bar acts as the brand's signature horizon line. The mark should never be distorted, recolored outside the approved palette, or placed on busy backgrounds.</div>
+
+    <!-- Primary logos -->
+    <div class="logo-grid">
+      <div class="logo-cell on-light">
+        <div class="wordmark">
+          <span class="fb-mark mark-lg">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="40" height="40" rx="8" fill="#0F172A"/>
+              <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+              <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+              <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+            </svg>
+          </span>
+          <span class="wordmark-text">FrontBeach</span>
+        </div>
+        <span class="logo-cell-label">Primary — Light</span>
+      </div>
+
+      <div class="logo-cell on-dark">
+        <div class="wordmark">
+          <span class="fb-mark mark-lg">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="40" height="40" rx="8" fill="#0F172A" stroke="#1E293B" stroke-width="1"/>
+              <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+              <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+              <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+            </svg>
+          </span>
+          <span class="wordmark-text on-dark-text">FrontBeach</span>
+        </div>
+        <span class="logo-cell-label">Primary — Dark Mode</span>
+      </div>
+
+      <div class="logo-cell on-gray">
+        <div class="wordmark">
+          <span class="fb-mark mark-lg">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="40" height="40" rx="8" fill="#0F172A"/>
+              <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+              <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+              <!-- Mono: all white, no cyan -->
+              <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#FFFFFF"/>
+            </svg>
+          </span>
+          <span class="wordmark-text mono-text">FrontBeach</span>
+        </div>
+        <span class="logo-cell-label">Monochrome</span>
+      </div>
+    </div>
+
+    <!-- Icon mark sizes -->
+    <div style="margin-top:var(--space-8);">
+      <div class="card-label" style="margin-bottom:var(--space-4);">Icon Mark — Scale Range</div>
+      <div class="card">
+        <div class="flex-row" style="align-items:flex-end; gap:var(--space-6);">
+          <div class="app-icon">
+            <svg width="80" height="80" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="40" height="40" rx="8" fill="#0F172A"/>
+              <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+              <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+              <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+            </svg>
+            <span class="app-icon-label">80px</span>
+          </div>
+          <div class="app-icon">
+            <svg width="56" height="56" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="40" height="40" rx="8" fill="#0F172A"/>
+              <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+              <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+              <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+            </svg>
+            <span class="app-icon-label">56px</span>
+          </div>
+          <div class="app-icon">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="40" height="40" rx="8" fill="#0F172A"/>
+              <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+              <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+              <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+            </svg>
+            <span class="app-icon-label">40px</span>
+          </div>
+          <div class="app-icon">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="7" fill="#0F172A"/>
+              <rect x="8" y="8" width="5" height="16" rx="1.5" fill="#FFFFFF"/>
+              <rect x="8" y="16" width="11" height="4" rx="1" fill="#FFFFFF"/>
+              <rect x="8" y="8" width="16" height="5" rx="1.5" fill="#06B6D4"/>
+            </svg>
+            <span class="app-icon-label">32px</span>
+          </div>
+          <div class="app-icon">
+            <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="7" fill="#0F172A"/>
+              <rect x="8" y="8" width="5" height="16" rx="1.5" fill="#FFFFFF"/>
+              <rect x="8" y="16" width="11" height="4" rx="1" fill="#FFFFFF"/>
+              <rect x="8" y="8" width="16" height="5" rx="1.5" fill="#06B6D4"/>
+            </svg>
+            <span class="app-icon-label">24px</span>
+          </div>
+          <div class="app-icon">
+            <svg width="16" height="16" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="7" fill="#0F172A"/>
+              <rect x="8" y="8" width="5" height="16" rx="1.5" fill="#FFFFFF"/>
+              <rect x="8" y="16" width="11" height="4" rx="1" fill="#FFFFFF"/>
+              <rect x="8" y="8" width="16" height="5" rx="1.5" fill="#06B6D4"/>
+            </svg>
+            <span class="app-icon-label">16px favicon</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clear space rule -->
+    <div style="margin-top:var(--space-6);">
+      <div class="card-label" style="margin-bottom:var(--space-4);">Clear Space Rule — 1× mark height on all sides</div>
+      <div class="card" style="display:inline-flex; position:relative; padding: 40px;">
+        <div style="position:absolute; inset:0; border: 1.5px dashed #CBD5E1; border-radius:12px; pointer-events:none;"></div>
+        <div style="position:absolute; inset:0; border: 1.5px dashed #E2E8F0; margin:8px; border-radius:10px; pointer-events:none;"></div>
+        <div class="wordmark">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="40" height="40" rx="8" fill="#0F172A"/>
+            <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+            <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+            <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+          </svg>
+          <span class="wordmark-text">FrontBeach</span>
+        </div>
+      </div>
+      <p style="font-size:12px; color:var(--gray-400); margin-top:8px;">Outer boundary = minimum clear space. Never crowd the logo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────
+     2. COLOR SYSTEM
+───────────────────────────────────────────────────────── -->
+<section class="section" id="colors">
+  <div class="container">
+    <div class="section-label">02 — Color System</div>
+    <div class="section-title">Brand Palette</div>
+    <div class="section-desc">Four core brand colors. Deep Navy anchors the UI with authority. Cyan Accent creates energy and CTAs. White and Soft Gray build open, breathable surfaces.</div>
+
+    <div class="grid-4" style="margin-bottom:var(--space-8);">
+      <div class="swatch-group">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#0F172A;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Deep Navy</div>
+            <div class="swatch-hex">#0F172A</div>
+          </div>
+        </div>
+        <p style="font-size:12px; color:var(--gray-400);">Logo background, primary text, sidebar, headings</p>
+      </div>
+      <div class="swatch-group">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#06B6D4;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Cyan Accent</div>
+            <div class="swatch-hex">#06B6D4</div>
+          </div>
+        </div>
+        <p style="font-size:12px; color:var(--gray-400);">CTAs, focus rings, active states, highlights</p>
+      </div>
+      <div class="swatch-group">
+        <div class="swatch" style="border:1px solid #E2E8F0;">
+          <div class="swatch-color" style="background:#FFFFFF; border-bottom:1px solid #E2E8F0;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Pure White</div>
+            <div class="swatch-hex">#FFFFFF</div>
+          </div>
+        </div>
+        <p style="font-size:12px; color:var(--gray-400);">Cards, modals, input backgrounds, main canvas</p>
+      </div>
+      <div class="swatch-group">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#F8FAFC;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Soft Gray</div>
+            <div class="swatch-hex">#F8FAFC</div>
+          </div>
+        </div>
+        <p style="font-size:12px; color:var(--gray-400);">Page background, table rows, sidebar bg</p>
+      </div>
+    </div>
+
+    <!-- Extended scale -->
+    <div class="card-label" style="margin-bottom:var(--space-4);">Extended Gray Scale — Slate 50–900</div>
+    <div class="card" style="padding:var(--space-4);">
+      <div style="display:flex; gap:4px; border-radius:8px; overflow:hidden;">
+        <div style="flex:1; height:40px; background:#F8FAFC;" title="#F8FAFC"></div>
+        <div style="flex:1; height:40px; background:#F1F5F9;" title="#F1F5F9"></div>
+        <div style="flex:1; height:40px; background:#E2E8F0;" title="#E2E8F0"></div>
+        <div style="flex:1; height:40px; background:#CBD5E1;" title="#CBD5E1"></div>
+        <div style="flex:1; height:40px; background:#94A3B8;" title="#94A3B8"></div>
+        <div style="flex:1; height:40px; background:#64748B;" title="#64748B"></div>
+        <div style="flex:1; height:40px; background:#475569;" title="#475569"></div>
+        <div style="flex:1; height:40px; background:#334155;" title="#334155"></div>
+        <div style="flex:1; height:40px; background:#1E293B;" title="#1E293B"></div>
+        <div style="flex:1; height:40px; background:#0F172A;" title="#0F172A"></div>
+      </div>
+      <div style="display:flex; gap:4px; margin-top:6px;">
+        <div style="flex:1; font-size:10px; color:var(--gray-400); font-family:var(--font-mono); text-align:center;">50</div>
+        <div style="flex:1; font-size:10px; color:var(--gray-400); font-family:var(--font-mono); text-align:center;">100</div>
+        <div style="flex:1; font-size:10px; color:var(--gray-400); font-family:var(--font-mono); text-align:center;">200</div>
+        <div style="flex:1; font-size:10px; color:var(--gray-400); font-family:var(--font-mono); text-align:center;">300</div>
+        <div style="flex:1; font-size:10px; color:var(--gray-400); font-family:var(--font-mono); text-align:center;">400</div>
+        <div style="flex:1; font-size:10px; color:var(--gray-400); font-family:var(--font-mono); text-align:center;">500</div>
+        <div style="flex:1; font-size:10px; color:var(--gray-400); font-family:var(--font-mono); text-align:center;">600</div>
+        <div style="flex:1; font-size:10px; color:var(--gray-400); font-family:var(--font-mono); text-align:center;">700</div>
+        <div style="flex:1; font-size:10px; color:var(--gray-400); font-family:var(--font-mono); text-align:center;">800</div>
+        <div style="flex:1; font-size:10px; color:var(--gray-400); font-family:var(--font-mono); text-align:center;">900</div>
+      </div>
+    </div>
+
+    <!-- Semantic colors -->
+    <div class="card-label" style="margin-top:var(--space-8); margin-bottom:var(--space-4);">Semantic Status Colors</div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:var(--space-3);">
+      <div class="semantic-swatch">
+        <div class="semantic-swatch-bar" style="background:#10B981;"></div>
+        <div class="semantic-swatch-info">
+          <div class="semantic-swatch-name">Confirmed / Success</div>
+          <div class="semantic-swatch-use">#10B981 · Emerald 500</div>
+        </div>
+      </div>
+      <div class="semantic-swatch">
+        <div class="semantic-swatch-bar" style="background:#F59E0B;"></div>
+        <div class="semantic-swatch-info">
+          <div class="semantic-swatch-name">Pending / Warning</div>
+          <div class="semantic-swatch-use">#F59E0B · Amber 400</div>
+        </div>
+      </div>
+      <div class="semantic-swatch">
+        <div class="semantic-swatch-bar" style="background:#EF4444;"></div>
+        <div class="semantic-swatch-info">
+          <div class="semantic-swatch-name">Cancelled / Error</div>
+          <div class="semantic-swatch-use">#EF4444 · Red 500</div>
+        </div>
+      </div>
+      <div class="semantic-swatch">
+        <div class="semantic-swatch-bar" style="background:#3B82F6;"></div>
+        <div class="semantic-swatch-info">
+          <div class="semantic-swatch-name">Completed / Info</div>
+          <div class="semantic-swatch-use">#3B82F6 · Blue 500</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────
+     3. TYPOGRAPHY
+───────────────────────────────────────────────────────── -->
+<section class="section" id="typography">
+  <div class="container">
+    <div class="section-label">03 — Typography</div>
+    <div class="section-title">Type System</div>
+    <div class="section-desc">Inter is the sole typeface. Its geometric precision, legibility at small sizes, and extensive weight range make it ideal for dashboard-heavy SaaS interfaces. JetBrains Mono for code and technical data.</div>
+
+    <div class="grid-2" style="gap:var(--space-6); margin-bottom:var(--space-8);">
+      <div class="card">
+        <div class="card-label">Primary — Inter</div>
+        <div style="font-size:40px; font-weight:700; letter-spacing:-1px; color:var(--navy); line-height:1.1; margin-bottom:var(--space-3);">Aa Bb Cc</div>
+        <div style="font-size:13px; color:var(--gray-500); line-height:1.7;">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br/>abcdefghijklmnopqrstuvwxyz<br/>0123456789 !@#$%&*().,;:?</div>
+        <div style="margin-top:var(--space-4); display:flex; gap:var(--space-3); flex-wrap:wrap;">
+          <span style="font-size:12px; color:var(--gray-500); font-weight:300;">Light</span>
+          <span style="font-size:12px; color:var(--gray-500); font-weight:400;">Regular</span>
+          <span style="font-size:12px; color:var(--gray-500); font-weight:500;">Medium</span>
+          <span style="font-size:12px; color:var(--gray-600); font-weight:600;">Semibold</span>
+          <span style="font-size:12px; color:var(--gray-700); font-weight:700;">Bold</span>
+          <span style="font-size:12px; color:var(--navy); font-weight:800;">Extrabold</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Monospace — JetBrains Mono</div>
+        <div style="font-size:32px; font-weight:500; font-family:var(--font-mono); letter-spacing:-0.5px; color:var(--navy); line-height:1.2; margin-bottom:var(--space-3);">Aa Bb 01</div>
+        <div style="font-size:12px; color:var(--gray-500); font-family:var(--font-mono); line-height:1.9;">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br/>0123456789 → ← ↑ ↓ == !== => {}</div>
+        <div style="margin-top:var(--space-4); font-size:12px; color:var(--gray-400);">Used for: hex values, API keys, booking IDs, code snippets, data fields</div>
+      </div>
+    </div>
+
+    <!-- Type scale -->
+    <div class="card-label" style="margin-bottom:var(--space-4);">Type Scale</div>
+    <div class="card" style="padding:0; overflow:hidden;">
+      <div class="type-scale-row" style="padding:var(--space-5) var(--space-6);">
+        <div class="type-scale-meta">Display<br/>800 · -2px</div>
+        <div style="font-size:48px; font-weight:800; letter-spacing:-2px; color:var(--navy); line-height:1.1;">Book smarter</div>
+      </div>
+      <div class="type-scale-row" style="padding:var(--space-5) var(--space-6);">
+        <div class="type-scale-meta">Heading 1<br/>700 · -1.2px</div>
+        <div style="font-size:36px; font-weight:700; letter-spacing:-1.2px; color:var(--navy);">Manage appointments</div>
+      </div>
+      <div class="type-scale-row" style="padding:var(--space-5) var(--space-6);">
+        <div class="type-scale-meta">Heading 2<br/>600 · -0.6px</div>
+        <div style="font-size:28px; font-weight:600; letter-spacing:-0.6px; color:var(--navy);">Upcoming schedule</div>
+      </div>
+      <div class="type-scale-row" style="padding:var(--space-5) var(--space-6);">
+        <div class="type-scale-meta">Heading 3<br/>600 · -0.3px</div>
+        <div style="font-size:22px; font-weight:600; letter-spacing:-0.3px; color:var(--navy);">Client details</div>
+      </div>
+      <div class="type-scale-row" style="padding:var(--space-4) var(--space-6);">
+        <div class="type-scale-meta">Heading 4<br/>600 · -0.2px</div>
+        <div style="font-size:18px; font-weight:600; letter-spacing:-0.2px; color:var(--navy);">Booking summary</div>
+      </div>
+      <div class="type-scale-row" style="padding:var(--space-4) var(--space-6);">
+        <div class="type-scale-meta">Body Large<br/>400 · 0px</div>
+        <div style="font-size:16px; color:var(--gray-700); line-height:1.6;">FrontBeach helps service businesses streamline bookings and run smarter operations.</div>
+      </div>
+      <div class="type-scale-row" style="padding:var(--space-4) var(--space-6);">
+        <div class="type-scale-meta">Body<br/>400 · 0px</div>
+        <div style="font-size:14px; color:var(--gray-600); line-height:1.65;">Manage your clients, schedule appointments, and grow your business.</div>
+      </div>
+      <div class="type-scale-row" style="padding:var(--space-4) var(--space-6);">
+        <div class="type-scale-meta">Small<br/>400 · 0px</div>
+        <div style="font-size:13px; color:var(--gray-500); line-height:1.6;">Last updated 2 minutes ago · 24 appointments this week</div>
+      </div>
+      <div class="type-scale-row" style="padding:var(--space-4) var(--space-6); border-bottom:none;">
+        <div class="type-scale-meta">Micro<br/>500 · +0.05em</div>
+        <div style="font-size:11px; font-weight:500; letter-spacing:0.05em; text-transform:uppercase; color:var(--gray-400);">STATUS · CONFIRMED · 10:30 AM</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────
+     4. SPACING
+───────────────────────────────────────────────────────── -->
+<section class="section" id="spacing">
+  <div class="container">
+    <div class="section-label">04 — Spacing &amp; Radius</div>
+    <div class="section-title">Spacing System</div>
+    <div class="section-desc">4px base grid. Consistent spacing creates visual rhythm and hierarchy without explicit rules for every edge case.</div>
+
+    <div class="grid-2" style="gap:var(--space-8);">
+      <div>
+        <div class="card-label" style="margin-bottom:var(--space-4);">Spacing Scale</div>
+        <div class="card" style="padding:0; overflow:hidden;">
+          <div class="spacing-row" style="padding:10px var(--space-5);">
+            <div class="spacing-meta">space-1 · 4px</div>
+            <div class="spacing-bar" style="width:4px;"></div>
+            <div class="spacing-use">Inline icon gap, micro nudge</div>
+          </div>
+          <div class="spacing-row" style="padding:10px var(--space-5);">
+            <div class="spacing-meta">space-2 · 8px</div>
+            <div class="spacing-bar" style="width:8px;"></div>
+            <div class="spacing-use">Badge padding, tag gap</div>
+          </div>
+          <div class="spacing-row" style="padding:10px var(--space-5);">
+            <div class="spacing-meta">space-3 · 12px</div>
+            <div class="spacing-bar" style="width:12px;"></div>
+            <div class="spacing-use">Button padding, list item gap</div>
+          </div>
+          <div class="spacing-row" style="padding:10px var(--space-5);">
+            <div class="spacing-meta">space-4 · 16px</div>
+            <div class="spacing-bar" style="width:16px;"></div>
+            <div class="spacing-use">Card padding, form field gap</div>
+          </div>
+          <div class="spacing-row" style="padding:10px var(--space-5);">
+            <div class="spacing-meta">space-5 · 20px</div>
+            <div class="spacing-bar" style="width:20px;"></div>
+            <div class="spacing-use">Section divider gap</div>
+          </div>
+          <div class="spacing-row" style="padding:10px var(--space-5);">
+            <div class="spacing-meta">space-6 · 24px</div>
+            <div class="spacing-bar" style="width:24px;"></div>
+            <div class="spacing-use">Card internal padding</div>
+          </div>
+          <div class="spacing-row" style="padding:10px var(--space-5);">
+            <div class="spacing-meta">space-8 · 32px</div>
+            <div class="spacing-bar" style="width:32px;"></div>
+            <div class="spacing-use">Section gap, panel padding</div>
+          </div>
+          <div class="spacing-row" style="padding:10px var(--space-5);">
+            <div class="spacing-meta">space-12 · 48px</div>
+            <div class="spacing-bar" style="width:48px;"></div>
+            <div class="spacing-use">Page section spacing</div>
+          </div>
+          <div class="spacing-row" style="padding:10px var(--space-5); border-bottom:none;">
+            <div class="spacing-meta">space-20 · 80px</div>
+            <div class="spacing-bar" style="width:80px;"></div>
+            <div class="spacing-use">Hero section padding</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card-label" style="margin-bottom:var(--space-4);">Border Radius Scale</div>
+        <div class="card">
+          <div class="radius-demo">
+            <div class="radius-box">
+              <div class="radius-square" style="border-radius:0;"></div>
+              <div class="radius-label">0<br/>none</div>
+            </div>
+            <div class="radius-box">
+              <div class="radius-square" style="border-radius:4px;"></div>
+              <div class="radius-label">4px<br/>sm</div>
+            </div>
+            <div class="radius-box">
+              <div class="radius-square" style="border-radius:8px;"></div>
+              <div class="radius-label">8px<br/>md ★</div>
+            </div>
+            <div class="radius-box">
+              <div class="radius-square" style="border-radius:12px;"></div>
+              <div class="radius-label">12px<br/>lg</div>
+            </div>
+            <div class="radius-box">
+              <div class="radius-square" style="border-radius:16px;"></div>
+              <div class="radius-label">16px<br/>xl</div>
+            </div>
+            <div class="radius-box">
+              <div class="radius-square" style="border-radius:20px;"></div>
+              <div class="radius-label">20px<br/>2xl</div>
+            </div>
+            <div class="radius-box">
+              <div class="radius-square" style="border-radius:9999px; width:56px; height:28px;"></div>
+              <div class="radius-label">full<br/>pill</div>
+            </div>
+          </div>
+          <p style="font-size:12px; color:var(--gray-400); margin-top:var(--space-5);">★ <strong>md (8px)</strong> is the default radius for buttons, inputs, and cards — the core unit of the brand's geometric aesthetic.</p>
+        </div>
+
+        <div style="margin-top:var(--space-6);">
+          <div class="card-label" style="margin-bottom:var(--space-4);">Shadow Scale</div>
+          <div class="card" style="display:flex; flex-direction:column; gap:var(--space-4);">
+            <div style="display:flex; align-items:center; gap:var(--space-4);">
+              <div style="width:48px; height:48px; background:var(--white); border-radius:var(--radius-md); box-shadow:var(--shadow-xs); border:1px solid var(--gray-100); flex-shrink:0;"></div>
+              <div><div style="font-size:12px; font-weight:600; color:var(--gray-700);">shadow-xs</div><div style="font-size:11px; color:var(--gray-400);">Subtle element depth, table rows on hover</div></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:var(--space-4);">
+              <div style="width:48px; height:48px; background:var(--white); border-radius:var(--radius-md); box-shadow:var(--shadow-sm); flex-shrink:0;"></div>
+              <div><div style="font-size:12px; font-weight:600; color:var(--gray-700);">shadow-sm</div><div style="font-size:11px; color:var(--gray-400);">Cards, inputs, dropdowns</div></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:var(--space-4);">
+              <div style="width:48px; height:48px; background:var(--white); border-radius:var(--radius-md); box-shadow:var(--shadow-md); flex-shrink:0;"></div>
+              <div><div style="font-size:12px; font-weight:600; color:var(--gray-700);">shadow-md</div><div style="font-size:11px; color:var(--gray-400);">Popovers, floating panels</div></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:var(--space-4);">
+              <div style="width:48px; height:48px; background:var(--white); border-radius:var(--radius-md); box-shadow:var(--shadow-lg); flex-shrink:0;"></div>
+              <div><div style="font-size:12px; font-weight:600; color:var(--gray-700);">shadow-lg</div><div style="font-size:11px; color:var(--gray-400);">Modals, command palette</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────
+     5. COMPONENTS
+───────────────────────────────────────────────────────── -->
+<section class="section" id="components">
+  <div class="container">
+    <div class="section-label">05 — Components</div>
+    <div class="section-title">Component Library</div>
+    <div class="section-desc">Consistent, purposeful components. Every variant has a deliberate role — use the minimum needed to achieve hierarchy.</div>
+
+    <!-- Buttons -->
+    <div class="card-label" style="margin-bottom:var(--space-4);">Buttons</div>
+    <div class="card" style="margin-bottom:var(--space-6);">
+      <div style="margin-bottom:var(--space-5);">
+        <div style="font-size:12px; color:var(--gray-400); margin-bottom:var(--space-3);">Standard sizes</div>
+        <div class="flex-row">
+          <button class="btn btn-primary btn-sm">Book now</button>
+          <button class="btn btn-primary">Book appointment</button>
+          <button class="btn btn-primary btn-lg">Get started free</button>
+        </div>
+      </div>
+      <div style="margin-bottom:var(--space-5);">
+        <div style="font-size:12px; color:var(--gray-400); margin-bottom:var(--space-3);">Variants</div>
+        <div class="flex-row">
+          <button class="btn btn-primary">Primary</button>
+          <button class="btn btn-accent">Accent CTA</button>
+          <button class="btn btn-secondary">Secondary</button>
+          <button class="btn btn-ghost">Ghost</button>
+          <button class="btn btn-danger">Cancel booking</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px; color:var(--gray-400); margin-bottom:var(--space-3);">With icon</div>
+        <div class="flex-row">
+          <button class="btn btn-primary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+            New booking
+          </button>
+          <button class="btn btn-secondary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-linecap="round"/></svg>
+            View calendar
+          </button>
+          <button class="btn btn-ghost">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Edit
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Badges -->
+    <div class="card-label" style="margin-bottom:var(--space-4);">Status Badges</div>
+    <div class="card" style="margin-bottom:var(--space-6);">
+      <div class="flex-row">
+        <span class="badge badge-confirmed"><span class="badge-dot"></span>Confirmed</span>
+        <span class="badge badge-pending"><span class="badge-dot"></span>Pending</span>
+        <span class="badge badge-cancelled"><span class="badge-dot"></span>Cancelled</span>
+        <span class="badge badge-completed"><span class="badge-dot"></span>Completed</span>
+        <span class="badge" style="background:var(--gray-100); color:var(--gray-600); border:1px solid var(--gray-200);">No-show</span>
+      </div>
+    </div>
+
+    <!-- Form elements -->
+    <div class="card-label" style="margin-bottom:var(--space-4);">Form Elements</div>
+    <div class="card" style="margin-bottom:var(--space-6);">
+      <div class="grid-2" style="gap:var(--space-6);">
+        <div>
+          <div class="form-group">
+            <label class="form-label">Client name</label>
+            <input class="input-demo" type="text" placeholder="Emma Johnson" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email address</label>
+            <input class="input-demo input-focus" type="email" value="emma@example.com" />
+            <div class="form-hint">We'll send a confirmation to this address</div>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Phone number</label>
+            <input class="input-demo input-error" type="tel" value="555-abc-123" />
+            <div class="form-error">Please enter a valid phone number</div>
+          </div>
+        </div>
+        <div>
+          <div class="form-group">
+            <label class="form-label">Select service</label>
+            <select class="input-demo" style="appearance:none; cursor:pointer;">
+              <option>Haircut &amp; Style — 45 min</option>
+              <option>Color Treatment — 90 min</option>
+              <option>Beard Trim — 20 min</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Preferred staff</label>
+            <select class="input-demo" style="appearance:none; cursor:pointer;">
+              <option>Any available</option>
+              <option>Jordan Smith</option>
+              <option>Alex Rivera</option>
+            </select>
+          </div>
+          <div style="margin-top:var(--space-5);">
+            <button class="btn btn-primary" style="width:100%; justify-content:center;">Confirm booking</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cards -->
+    <div class="card-label" style="margin-bottom:var(--space-4);">Cards</div>
+    <div class="grid-3">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:var(--space-4);">
+          <div>
+            <div style="font-size:13px; font-weight:600; color:var(--navy);">Emma Johnson</div>
+            <div style="font-size:12px; color:var(--gray-500);">Haircut &amp; Style</div>
+          </div>
+          <span class="badge badge-confirmed"><span class="badge-dot"></span>Confirmed</span>
+        </div>
+        <div style="font-size:13px; color:var(--gray-600);">Today · 2:30 PM</div>
+        <div style="font-size:12px; color:var(--gray-400);">Jordan Smith · 45 min</div>
+      </div>
+      <div class="card" style="border-color:var(--cyan); box-shadow:0 0 0 3px rgba(6,182,212,0.08);">
+        <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--cyan); margin-bottom:var(--space-3);">Selected</div>
+        <div style="font-size:13px; font-weight:600; color:var(--navy);">Marcus Williams</div>
+        <div style="font-size:12px; color:var(--gray-500); margin-bottom:var(--space-3);">Color Treatment</div>
+        <div style="font-size:13px; color:var(--gray-600);">Tomorrow · 10:00 AM</div>
+        <div style="font-size:12px; color:var(--gray-400);">Alex Rivera · 90 min</div>
+      </div>
+      <div class="card" style="background:var(--gray-50); border-style:dashed; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:var(--space-2); cursor:pointer; min-height:100px;">
+        <svg width="20" height="20" fill="none" stroke="var(--gray-400)" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+        <span style="font-size:13px; color:var(--gray-400); font-weight:500;">New booking</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────
+     6. DASHBOARD PATTERNS
+───────────────────────────────────────────────────────── -->
+<section class="section" id="dashboard">
+  <div class="container">
+    <div class="section-label">06 — Dashboard Patterns</div>
+    <div class="section-title">SaaS Dashboard Layout</div>
+    <div class="section-desc">Dashboard layout: white sidebar on white topbar on soft-gray workspace. The layout uses tight spacing with clear visual hierarchy. Borders, not shadows, define structure.</div>
+
+    <div class="dash-preview">
+      <!-- Top bar -->
+      <div class="dash-topbar">
+        <div class="wordmark">
+          <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="40" height="40" rx="8" fill="#0F172A"/>
+            <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+            <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+            <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+          </svg>
+          <span style="font-size:15px; font-weight:600; color:var(--navy); letter-spacing:-0.3px;">FrontBeach</span>
+        </div>
+        <div style="flex:1;"></div>
+        <div style="display:flex; align-items:center; gap:var(--space-3);">
+          <button class="btn btn-primary btn-sm">+ Booking</button>
+          <div style="width:28px; height:28px; border-radius:var(--radius-full); background:var(--navy); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; color:#fff;">JD</div>
+        </div>
+      </div>
+      <!-- Layout -->
+      <div class="dash-layout">
+        <div class="dash-sidebar">
+          <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--gray-400); padding:4px 10px; margin-bottom:4px;">Menu</div>
+          <div class="dash-sidebar-item active">
+            <div class="si-icon"></div>
+            Dashboard
+          </div>
+          <div class="dash-sidebar-item">
+            <div class="si-icon"></div>
+            Calendar
+          </div>
+          <div class="dash-sidebar-item">
+            <div class="si-icon"></div>
+            Bookings
+          </div>
+          <div class="dash-sidebar-item">
+            <div class="si-icon"></div>
+            Clients
+          </div>
+          <div class="dash-sidebar-item">
+            <div class="si-icon"></div>
+            Staff
+          </div>
+          <div class="dash-sidebar-divider"></div>
+          <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--gray-400); padding:4px 10px; margin-bottom:4px;">Business</div>
+          <div class="dash-sidebar-item">
+            <div class="si-icon"></div>
+            Services
+          </div>
+          <div class="dash-sidebar-item">
+            <div class="si-icon"></div>
+            Payments
+          </div>
+          <div class="dash-sidebar-item">
+            <div class="si-icon"></div>
+            Settings
+          </div>
+        </div>
+        <div class="dash-content">
+          <div style="font-size:15px; font-weight:600; color:var(--navy); letter-spacing:-0.2px; margin-bottom:var(--space-4);">Overview</div>
+          <div class="stat-cards">
+            <div class="stat-card">
+              <div class="stat-card-label">Today</div>
+              <div class="stat-card-value">12</div>
+              <div class="stat-card-change">↑ 3 vs yesterday</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-label">This Week</div>
+              <div class="stat-card-value">58</div>
+              <div class="stat-card-change">↑ 12% vs last wk</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-label">Revenue</div>
+              <div class="stat-card-value">$2.4k</div>
+              <div class="stat-card-change">↑ 8% vs last wk</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-label">No-shows</div>
+              <div class="stat-card-value" style="color:#EF4444;">2</div>
+              <div class="stat-card-change" style="color:var(--gray-400);">= same as last wk</div>
+            </div>
+          </div>
+          <div class="table-preview">
+            <div class="table-header">
+              <span>Client</span>
+              <span>Time</span>
+              <span>Service</span>
+              <span>Status</span>
+            </div>
+            <div class="table-row">
+              <span class="name">Emma Johnson</span>
+              <span>2:30 PM</span>
+              <span>Haircut</span>
+              <span class="badge badge-confirmed" style="font-size:10px; padding:2px 7px;"><span class="badge-dot"></span>Confirmed</span>
+            </div>
+            <div class="table-row">
+              <span class="name">Marcus W.</span>
+              <span>3:00 PM</span>
+              <span>Color</span>
+              <span class="badge badge-pending" style="font-size:10px; padding:2px 7px;"><span class="badge-dot"></span>Pending</span>
+            </div>
+            <div class="table-row">
+              <span class="name">Sarah Chen</span>
+              <span>4:15 PM</span>
+              <span>Styling</span>
+              <span class="badge badge-confirmed" style="font-size:10px; padding:2px 7px;"><span class="badge-dot"></span>Confirmed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar collapsed -->
+    <div style="margin-top:var(--space-8);">
+      <div class="card-label" style="margin-bottom:var(--space-4);">Sidebar — Collapsed Icon Mode</div>
+      <div style="display:flex; gap:var(--space-6); align-items:flex-start;">
+        <div style="display:flex; border:1px solid var(--color-border); border-radius:var(--radius-lg); overflow:hidden; height:300px;">
+          <div class="sidebar-collapsed">
+            <!-- Logo mark -->
+            <div style="width:36px; height:36px; margin-bottom:var(--space-3);">
+              <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="40" height="40" rx="8" fill="#0F172A"/>
+                <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+                <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+                <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+              </svg>
+            </div>
+            <div class="sc-divider"></div>
+            <div class="sc-icon active">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            </div>
+            <div class="sc-icon">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-linecap="round"/></svg>
+            </div>
+            <div class="sc-icon">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke-linecap="round"/></svg>
+            </div>
+            <div class="sc-icon">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke-linecap="round"/></svg>
+            </div>
+            <div class="sc-divider"></div>
+            <div class="sc-icon">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            </div>
+          </div>
+          <div style="width:260px; background:var(--gray-50); padding:var(--space-5); border-left:1px solid var(--color-border);">
+            <div style="font-size:13px; color:var(--gray-400); text-align:center; margin-top:80px;">Dashboard content area</div>
+          </div>
+        </div>
+        <div style="flex:1; font-size:13px; color:var(--gray-500); line-height:1.7;">
+          <p style="margin-bottom:var(--space-3);">The collapsed sidebar reduces to 56px — only icons remain. The FrontBeach mark replaces the full wordmark. Active state uses a filled background on the icon container.</p>
+          <p>Tooltips appear on hover to expose navigation labels. The mark remains fully legible at 36px thanks to the simplified geometry of the Horizon F.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────
+     7. NAVIGATION EXAMPLES
+───────────────────────────────────────────────────────── -->
+<section class="section" id="navigation">
+  <div class="container">
+    <div class="section-label">07 — Navigation</div>
+    <div class="section-title">Navbar Patterns</div>
+    <div class="section-desc">Two primary nav styles: white topbar for the dashboard app, and navy topbar for the public landing page. Keep nav items sparse — maximum 5 links.</div>
+
+    <!-- Landing page nav — white -->
+    <div class="card-label" style="margin-bottom:var(--space-3);">Landing Page — Light</div>
+    <div class="nav-demo" style="margin-bottom:var(--space-6);">
+      <div class="nav-bar">
+        <div class="wordmark">
+          <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="40" height="40" rx="8" fill="#0F172A"/>
+            <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+            <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+            <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+          </svg>
+          <span style="font-size:15px; font-weight:600; color:var(--navy); letter-spacing:-0.3px;">FrontBeach</span>
+        </div>
+        <div class="nav-links">
+          <div class="nav-link">Product</div>
+          <div class="nav-link">Pricing</div>
+          <div class="nav-link">Docs</div>
+          <div class="nav-link">Blog</div>
+        </div>
+        <div class="nav-spacer"></div>
+        <div class="nav-actions">
+          <button class="btn btn-ghost btn-sm">Sign in</button>
+          <button class="btn btn-primary btn-sm">Start free</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Landing page nav — dark -->
+    <div class="card-label" style="margin-bottom:var(--space-3);">Landing Page — Dark (Hero overlay)</div>
+    <div class="nav-demo" style="margin-bottom:var(--space-6);">
+      <div class="nav-bar nav-bar-dark">
+        <div class="wordmark">
+          <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="40" height="40" rx="8" fill="#1E293B"/>
+            <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+            <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+            <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+          </svg>
+          <span style="font-size:15px; font-weight:600; color:#fff; letter-spacing:-0.3px;">FrontBeach</span>
+        </div>
+        <div class="nav-links">
+          <div class="nav-link nav-link-dark">Product</div>
+          <div class="nav-link nav-link-dark">Pricing</div>
+          <div class="nav-link nav-link-dark">Docs</div>
+          <div class="nav-link nav-link-dark active">Blog</div>
+        </div>
+        <div class="nav-spacer"></div>
+        <div class="nav-actions">
+          <button class="btn btn-ghost btn-sm" style="color:#94A3B8;">Sign in</button>
+          <button class="btn btn-accent btn-sm">Start free</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard topbar -->
+    <div class="card-label" style="margin-bottom:var(--space-3);">Dashboard Topbar</div>
+    <div class="nav-demo">
+      <div class="nav-bar">
+        <div class="wordmark">
+          <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="40" height="40" rx="8" fill="#0F172A"/>
+            <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+            <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+            <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+          </svg>
+          <span style="font-size:15px; font-weight:600; color:var(--navy); letter-spacing:-0.3px;">FrontBeach</span>
+        </div>
+        <!-- Breadcrumb -->
+        <div style="display:flex; align-items:center; gap:8px; margin-left:var(--space-5); font-size:13px; color:var(--gray-400);">
+          <span>Riverside Salon</span>
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span style="color:var(--navy); font-weight:500;">Bookings</span>
+        </div>
+        <div class="nav-spacer"></div>
+        <div class="nav-actions">
+          <!-- Search trigger -->
+          <div style="display:flex; align-items:center; gap:6px; background:var(--gray-100); border:1px solid var(--gray-200); border-radius:var(--radius-md); padding:6px 10px; font-size:12px; color:var(--gray-400); cursor:pointer; width:160px;">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" stroke-linecap="round"/></svg>
+            Search...
+            <span style="margin-left:auto; font-size:10px; font-family:var(--font-mono); background:var(--gray-200); padding:1px 5px; border-radius:3px;">⌘K</span>
+          </div>
+          <button class="btn btn-primary btn-sm">+ Booking</button>
+          <div class="nav-notif">
+            <svg width="16" height="16" fill="none" stroke="var(--gray-500)" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="nav-avatar">JD</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────
+     8. APP ICONS & SOCIAL
+───────────────────────────────────────────────────────── -->
+<section class="section" id="icons">
+  <div class="container">
+    <div class="section-label">08 — App Icons &amp; Social</div>
+    <div class="section-title">Multi-surface Icons</div>
+    <div class="section-desc">The icon mark adapts to every surface. Mobile app icon uses a larger radius (22–25% of size). Social avatars maintain the mark on navy at all sizes.</div>
+
+    <div class="app-icon-row">
+      <!-- iOS style -->
+      <div class="app-icon">
+        <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius:27px; box-shadow:var(--shadow-lg);">
+          <rect width="120" height="120" fill="#0F172A"/>
+          <rect x="30" y="30" width="15" height="60" rx="4" fill="#FFFFFF"/>
+          <rect x="30" y="54" width="42" height="12" rx="3" fill="#FFFFFF"/>
+          <rect x="30" y="30" width="60" height="15" rx="4" fill="#06B6D4"/>
+        </svg>
+        <span class="app-icon-label">iOS App Icon<br/>1024px</span>
+      </div>
+
+      <!-- Android -->
+      <div class="app-icon">
+        <svg width="96" height="96" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius:48px; box-shadow:var(--shadow-lg);">
+          <rect width="120" height="120" fill="#0F172A"/>
+          <rect x="30" y="30" width="15" height="60" rx="4" fill="#FFFFFF"/>
+          <rect x="30" y="54" width="42" height="12" rx="3" fill="#FFFFFF"/>
+          <rect x="30" y="30" width="60" height="15" rx="4" fill="#06B6D4"/>
+        </svg>
+        <span class="app-icon-label">Android Icon<br/>512px (circle)</span>
+      </div>
+
+      <!-- Favicon browser -->
+      <div class="app-icon">
+        <div style="background:var(--gray-100); border-radius:6px; padding:8px; display:flex; gap:6px; align-items:center; box-shadow:var(--shadow-sm);">
+          <svg width="16" height="16" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius:3px; flex-shrink:0;">
+            <rect width="32" height="32" rx="7" fill="#0F172A"/>
+            <rect x="8" y="8" width="5" height="16" rx="1.5" fill="#FFFFFF"/>
+            <rect x="8" y="16" width="11" height="4" rx="1" fill="#FFFFFF"/>
+            <rect x="8" y="8" width="16" height="5" rx="1.5" fill="#06B6D4"/>
+          </svg>
+          <span style="font-size:12px; color:var(--gray-600);">FrontBeach — Dashboard</span>
+        </div>
+        <span class="app-icon-label">Browser Tab<br/>16×16 favicon</span>
+      </div>
+
+      <!-- OG/Social card preview -->
+      <div class="app-icon" style="align-items:flex-start;">
+        <div style="width:240px; height:126px; background:var(--navy); border-radius:var(--radius-lg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; box-shadow:var(--shadow-lg); flex-shrink:0;">
+          <div class="wordmark">
+            <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="40" height="40" rx="8" fill="#1E293B"/>
+              <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+              <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+              <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+            </svg>
+            <span style="font-size:18px; font-weight:600; color:#fff; letter-spacing:-0.4px;">FrontBeach</span>
+          </div>
+          <div style="font-size:11px; color:var(--gray-500);">Modern booking for service businesses</div>
+        </div>
+        <span class="app-icon-label">OG / Social Card<br/>1200×630</span>
+      </div>
+
+      <!-- Slack/Workspace avatar -->
+      <div class="app-icon">
+        <svg width="64" height="64" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius:16px; box-shadow:var(--shadow-md);">
+          <rect width="40" height="40" fill="#0F172A"/>
+          <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+          <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+          <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+        </svg>
+        <span class="app-icon-label">Workspace Avatar<br/>Slack / G Suite</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────
+     9. MOTION
+───────────────────────────────────────────────────────── -->
+<section class="section" id="motion">
+  <div class="container">
+    <div class="section-label">09 — Motion</div>
+    <div class="section-title">Animation Principles</div>
+    <div class="section-desc">Motion should feel instant and purposeful. Nothing should animate longer than 300ms in routine interactions. Avoid bounces, spring overloads, or decorative animations that slow users down.</div>
+
+    <div class="flex-col" style="gap:var(--space-3);">
+      <div class="motion-token">
+        <div class="motion-meta">
+          <div class="motion-name">Micro</div>
+          <div class="motion-value">100ms · ease-out</div>
+          <div class="motion-use">Button press, toggle, checkbox, badge flick</div>
+        </div>
+      </div>
+      <div class="motion-token">
+        <div class="motion-meta">
+          <div class="motion-name">Fast</div>
+          <div class="motion-value">150ms · ease-out</div>
+          <div class="motion-use">Hover states, focus rings, dropdown open</div>
+        </div>
+      </div>
+      <div class="motion-token">
+        <div class="motion-meta">
+          <div class="motion-name">Standard</div>
+          <div class="motion-value">200ms · ease-in-out</div>
+          <div class="motion-use">Card transitions, panel slide, sidebar toggle</div>
+        </div>
+      </div>
+      <div class="motion-token">
+        <div class="motion-meta">
+          <div class="motion-name">Smooth</div>
+          <div class="motion-value">300ms · cubic-bezier(0.16,1,0.3,1)</div>
+          <div class="motion-use">Modal open/close, page transitions, drawer</div>
+        </div>
+      </div>
+      <div class="motion-token">
+        <div class="motion-meta">
+          <div class="motion-name">Slow</div>
+          <div class="motion-value">500ms · ease-in-out</div>
+          <div class="motion-use">Loading skeletons, chart renders, onboarding only</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────
+     10. DESIGN TOKENS
+───────────────────────────────────────────────────────── -->
+<section class="section" id="tokens">
+  <div class="container">
+    <div class="section-label">10 — Design Tokens</div>
+    <div class="section-title">Tailwind / CSS Token Reference</div>
+    <div class="section-desc">Implement these as CSS custom properties and Tailwind config extensions. Consistent token usage prevents visual drift across contributors.</div>
+
+    <div class="code-block">
+<span class="comment">/* tailwind.config.ts — extend.colors */</span>
+<span class="prop">brand</span>: {
+  <span class="prop">navy</span>:   <span class="str">'#0F172A'</span>,  <span class="comment">/* primary text, logo bg, sidebar */</span>
+  <span class="prop">cyan</span>:   <span class="str">'#06B6D4'</span>,  <span class="comment">/* accent, CTA, focus ring */</span>
+  <span class="prop">white</span>:  <span class="str">'#FFFFFF'</span>,  <span class="comment">/* card, modal, input bg */</span>
+  <span class="prop">surface</span>:<span class="str">'#F8FAFC'</span>,  <span class="comment">/* page bg, table row alt */</span>
+},
+
+<span class="comment">/* tailwind.config.ts — extend.fontFamily */</span>
+<span class="prop">sans</span>: [<span class="str">'Inter'</span>, <span class="str">'system-ui'</span>, <span class="str">'-apple-system'</span>, <span class="str">'sans-serif'</span>],
+<span class="prop">mono</span>: [<span class="str">'JetBrains Mono'</span>, <span class="str">'Fira Code'</span>, <span class="str">'monospace'</span>],
+
+<span class="comment">/* tailwind.config.ts — extend.borderRadius */</span>
+<span class="prop">DEFAULT</span>: <span class="str">'8px'</span>,   <span class="comment">/* md — default for all elements */</span>
+<span class="prop">lg</span>: <span class="str">'12px'</span>,
+<span class="prop">xl</span>: <span class="str">'16px'</span>,
+<span class="prop">2xl</span>: <span class="str">'20px'</span>,
+
+<span class="comment">/* tailwind.config.ts — extend.boxShadow */</span>
+<span class="prop">xs</span>:  <span class="str">'0 1px 2px 0 rgba(15,23,42,0.04)'</span>,
+<span class="prop">sm</span>:  <span class="str">'0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04)'</span>,
+<span class="prop">md</span>:  <span class="str">'0 4px 6px rgba(15,23,42,0.06), 0 2px 4px rgba(15,23,42,0.04)'</span>,
+<span class="prop">lg</span>:  <span class="str">'0 10px 15px rgba(15,23,42,0.06), 0 4px 6px rgba(15,23,42,0.04)'</span>,
+
+<span class="comment">/* Focus ring — use on all interactive elements */</span>
+<span class="prop">ring-color</span>:  <span class="str">'rgba(6, 182, 212, 0.4)'</span>,   <span class="comment">/* cyan at 40% */</span>
+<span class="prop">ring-width</span>:  <span class="str">'3px'</span>,
+<span class="prop">ring-offset</span>: <span class="str">'2px'</span>,
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────
+     11. GUIDELINES
+───────────────────────────────────────────────────────── -->
+<section class="section" id="guidelines">
+  <div class="container">
+    <div class="section-label">11 — Usage Guidelines</div>
+    <div class="section-title">Do's and Don'ts</div>
+    <div class="section-desc">Brand integrity is maintained through consistent decisions. When in doubt, default to restraint — fewer colors, less motion, more whitespace.</div>
+
+    <div class="do-dont">
+      <div class="do-card">
+        <div class="do-label">✓ Do</div>
+        <ul>
+          <li>Use Deep Navy as the primary brand color in all contexts</li>
+          <li>Use Cyan only for CTAs, focus rings, and active highlights</li>
+          <li>Maintain Inter as the exclusive UI typeface</li>
+          <li>Keep the minimum clear space around the logo at all times</li>
+          <li>Use the mark on navy container, never on colored or image backgrounds directly</li>
+          <li>Scale the wordmark proportionally — never stretch or compress</li>
+          <li>Use border-only cards with subtle shadows; avoid heavy insets</li>
+          <li>Prefer flat design — a single cyan accent line over heavy gradients</li>
+          <li>Use tight letter-spacing (−0.3 to −1.5px) for headings</li>
+          <li>Show status via semantic badges, not raw colored text</li>
+        </ul>
+      </div>
+      <div class="dont-card">
+        <div class="dont-label">✗ Don't</div>
+        <ul>
+          <li>Don't place the logo on busy images, patterns, or low-contrast surfaces</li>
+          <li>Don't use gradients as backgrounds for primary UI surfaces</li>
+          <li>Don't use the cyan color for body text or informational content</li>
+          <li>Don't round buttons or cards beyond 12px in dashboard contexts</li>
+          <li>Don't use more than 4 colors in a single component</li>
+          <li>Don't add drop shadows to the logo mark</li>
+          <li>Don't use the monochrome mark in color contexts — use the full brand version</li>
+          <li>Don't animate interactions longer than 300ms in routine flows</li>
+          <li>Don't use wave, sun, or ocean iconography — no tropical theming</li>
+          <li>Don't use emoji, rounded cartoon icons, or web3-style visual elements</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Brand voice -->
+    <div style="margin-top:var(--space-8);">
+      <div class="card-label" style="margin-bottom:var(--space-4);">Brand Voice — Copy Direction</div>
+      <div class="grid-3">
+        <div class="card">
+          <div style="font-size:13px; font-weight:600; color:var(--navy); margin-bottom:var(--space-2);">Tone</div>
+          <div style="font-size:13px; color:var(--gray-500); line-height:1.7;">Direct, confident, calm. No exclamation points in product UI. No filler phrases like "Easily manage…" — just describe what it does.</div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px; font-weight:600; color:var(--navy); margin-bottom:var(--space-2);">CTAs</div>
+          <div style="font-size:13px; color:var(--gray-500); line-height:1.7;">Action-first, specific. "Book appointment" not "Get started". "View calendar" not "Explore". Avoid vague marketing verbs in product context.</div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px; font-weight:600; color:var(--navy); margin-bottom:var(--space-2);">Empty states</div>
+          <div style="font-size:13px; color:var(--gray-500); line-height:1.7;">"No bookings for today" not "Looks like you're all clear! 🎉". Professional, informative, actionable. Always include a clear next action.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ─────────────────────────────────────────────────────
+     FOOTER
+───────────────────────────────────────────────────────── -->
+<footer class="guide-footer">
+  <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:12px;">
+    <svg width="24" height="24" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="8" fill="#1E293B"/>
+      <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
+      <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
+      <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+    </svg>
+    <span style="color:#94A3B8; font-weight:500;">FrontBeach Brand Guide — v1.0 — 2026</span>
+  </div>
+  <p style="color:#475569; font-size:12px; max-width:480px; margin:0 auto; line-height:1.7;">
+    This guide governs all visual representations of the FrontBeach brand across product, marketing, and partner materials. Deviations require brand team approval.
+  </p>
+</footer>
+
+</body>
+</html>

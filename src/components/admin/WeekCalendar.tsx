@@ -34,8 +34,8 @@ const HOUR_HEIGHT = 72;
 const GRID_OFFSET = 8;
 const TIME_COLUMN_WIDTH = 62;
 const DEFAULT_SCROLL_HOUR = 6;
-const GRID_BORDER = '#d8dde3';
-const GRID_MINOR_BORDER = '#edf0f3';
+const GRID_BORDER = '#E7E5E4';
+const GRID_MINOR_BORDER = '#F0EFED';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const STAFF_COLOR_PALETTE = [
@@ -107,7 +107,7 @@ function hashStaffId(id: string) {
 
 function getStaffTone(staffId: string | null | undefined) {
   if (!staffId) {
-    return { bg: '#F3F4F6', border: '#D1D5DB', text: '#4B5563', accent: '#9CA3AF' };
+    return { bg: '#F5F5F3', border: '#D4D2CF', text: '#6B7280', accent: '#9CA3AF' };
   }
   return STAFF_COLOR_PALETTE[hashStaffId(staffId) % STAFF_COLOR_PALETTE.length];
 }
@@ -336,19 +336,19 @@ export default function WeekCalendar({
               onClick={() => onDateSelect?.(startOfLocalDay(date))}
               className={`flex min-w-[64px] flex-col items-center rounded-md border px-3 py-1 text-center transition-colors ${
                 isSelected
-                  ? 'border-gray-900 bg-gray-900 text-white'
-                  : 'border-[#d8dde3] bg-white text-slate-700 hover:bg-gray-50'
+                  ? 'border-[#111827] bg-[#111827] text-white'
+                  : 'border-[#E7E5E4] bg-white text-[#374151] hover:bg-[#F5F5F3]'
               }`}
               aria-pressed={isSelected}
             >
-              <span className={`text-[11px] font-medium uppercase tracking-[0.08em] ${isSelected ? 'text-white/70' : 'text-slate-600'}`}>
+              <span className={`text-[11px] font-medium uppercase tracking-[0.08em] ${isSelected ? 'text-white/70' : 'text-[#6B7280]'}`}>
                 {DAY_NAMES[date.getDay()]}
               </span>
               <span className="mt-0.5 text-[17px] font-semibold leading-none">
                 {date.getDate()}
               </span>
               {isToday && (
-                <span className={`mt-1 h-1 w-1 rounded-full ${isSelected ? 'bg-white' : 'bg-gray-900'}`} />
+                <span className={`mt-1 h-1 w-1 rounded-full ${isSelected ? 'bg-white' : 'bg-[#2563EB]'}`} />
               )}
             </button>
           );
@@ -369,24 +369,24 @@ export default function WeekCalendar({
               const isToday = visibleDayKeys[dayIdx] === todayKey;
 
               return (
-                <section key={dayIdx} className={isToday ? 'bg-blue-50/50' : undefined}>
+                <section key={dayIdx} className={isToday ? 'bg-[#EFF6FF]/40' : undefined}>
                   <div className="flex items-center justify-between px-4 py-3">
                     <div>
-                      <p className={`text-[12px] font-semibold uppercase tracking-wide ${isToday ? 'text-blue-600' : 'text-slate-600'}`}>
+                      <p className={`text-[12px] font-semibold uppercase tracking-wide ${isToday ? 'text-[#2563EB]' : 'text-[#6B7280]'}`}>
                         {DAY_NAMES[day.getDay()]}
                       </p>
-                      <p className="text-[16px] font-semibold text-gray-900">
+                      <p className="text-[16px] font-semibold text-[#111827]">
                         {day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </p>
                     </div>
-                    <span className="rounded-full bg-white px-2 py-1 text-[11px] font-medium text-slate-600 ring-1 ring-gray-200">
+                    <span className="rounded-md bg-[#F5F5F3] px-2 py-1 text-[11px] font-medium text-[#6B7280] ring-1 ring-[#E7E5E4]">
                       {dayAppts.length} {dayAppts.length === 1 ? 'booking' : 'bookings'}
                     </span>
                   </div>
 
                   <div className="space-y-2 px-4 pb-4">
                     {dayAppts.length === 0 ? (
-                      <p className="rounded-lg border border-dashed border-gray-200 bg-white px-3 py-4 text-center text-[13px] text-slate-500">
+                      <p className="rounded-lg border border-dashed border-[#E7E5E4] bg-white px-3 py-4 text-center text-[13px] text-[#9CA3AF]">
                         No appointments
                       </p>
                     ) : dayAppts.map(appt => {
@@ -404,7 +404,7 @@ export default function WeekCalendar({
                           key={appt.id}
                           type="button"
                           onClick={() => onAppointmentClick(appt)}
-                          className="w-full rounded-xl border p-3.5 text-left transition-colors hover:brightness-[0.98]"
+                          className="w-full rounded-lg border p-3.5 text-left transition-colors hover:brightness-[0.98]"
                           style={{
                             backgroundColor: tone.bg,
                             borderColor: tone.border,
@@ -419,7 +419,7 @@ export default function WeekCalendar({
                               <p className="mt-1 text-[12px] font-medium opacity-80">{timeRange}</p>
                             </div>
                             <span
-                              className="rounded-full px-2 py-1 text-[11px] font-medium"
+                              className="rounded px-1.5 py-0.5 text-[11px] font-semibold"
                               style={{ backgroundColor: tone.accent, color: '#fff' }}
                             >
                               {formatStaffInitials(appt.staff)}
@@ -440,8 +440,8 @@ export default function WeekCalendar({
               {sideBySideLanes.length === 0 ? (
                 <div className="flex h-full items-center justify-center px-6 py-20 text-center">
                   <div className="max-w-sm">
-                    <p className="text-[16px] font-semibold text-gray-900">No staff members found</p>
-                    <p className="mt-1 text-[13px] text-slate-600">Add staff members to use the side-by-side schedule view.</p>
+                    <p className="text-[16px] font-semibold text-[#111827]">No staff members found</p>
+                    <p className="mt-1 text-[13px] text-[#6B7280]">Add staff members to use the side-by-side schedule view.</p>
                   </div>
                 </div>
               ) : (
@@ -456,7 +456,7 @@ export default function WeekCalendar({
                             key={i}
                             className="flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-1.5 text-center bg-white"
                           >
-                            <p className={`text-[14px] font-semibold leading-none ${isToday ? 'text-gray-900' : 'text-slate-600'}`}>
+                            <p className={`text-[13px] font-semibold leading-none ${isToday ? 'text-[#111827]' : 'text-[#6B7280]'}`}>
                               {DAY_NAMES[day.getDay()]} {String(day.getMonth() + 1).padStart(2, '0')}/{String(day.getDate()).padStart(2, '0')}
                             </p>
                           </div>
@@ -480,7 +480,7 @@ export default function WeekCalendar({
                             style={{ gridTemplateColumns: `repeat(${sideBySideLanes.length}, minmax(0, 1fr))` }}
                           >
                             {sideBySideLanes.map(lane => (
-                                <div key={lane.id} className="min-w-0 border-l px-3 py-2 text-[14px] font-semibold text-[#313842] first:border-l-0" style={{ borderColor: GRID_BORDER }}>
+                                <div key={lane.id} className="min-w-0 border-l px-3 py-2 text-[14px] font-semibold text-[#111827] first:border-l-0" style={{ borderColor: GRID_BORDER }}>
                                   <p className="truncate whitespace-nowrap">
                                     {lane.id === '__unassigned__' ? 'Unassigned' : `${lane.first_name} ${lane.last_name}`}
                                   </p>
@@ -502,7 +502,7 @@ export default function WeekCalendar({
                             style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET, height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
                           >
                             <span className="translate-y-[6px]">
-                              <span className="inline-block bg-white px-1 text-[13px] font-medium leading-none text-[#5f6b7a]">
+                              <span className="inline-block bg-white px-1 text-[13px] font-medium leading-none text-[#9CA3AF]">
                                 {formatHour(h)}
                               </span>
                             </span>
@@ -517,7 +517,7 @@ export default function WeekCalendar({
                         return (
                           <div
                             key={dayIdx}
-                            className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-sky-50/40' : 'bg-white'}`}
+                            className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-[#EFF6FF]/30' : 'bg-white'}`}
                             style={{ height: gridHeight, borderColor: GRID_BORDER }}
                           >
                             <div className="flex h-full">
@@ -578,7 +578,7 @@ export default function WeekCalendar({
                           key={i}
                           className="flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-1.5 text-center bg-white"
                         >
-                          <p className={`text-[14px] font-semibold leading-none ${isToday ? 'text-gray-900' : 'text-slate-600'}`}>
+                          <p className={`text-[13px] font-semibold leading-none ${isToday ? 'text-[#111827]' : 'text-[#6B7280]'}`}>
                             {DAY_NAMES[day.getDay()]} {String(day.getMonth() + 1).padStart(2, '0')}/{String(day.getDate()).padStart(2, '0')}
                           </p>
                         </div>
@@ -597,7 +597,7 @@ export default function WeekCalendar({
                           style={{ top: (h - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET, height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
                         >
                           <span className="translate-y-[6px]">
-                            <span className="inline-block bg-white px-1 text-[13px] font-medium leading-none text-[#5f6b7a]">
+                            <span className="inline-block bg-white px-1 text-[13px] font-medium leading-none text-[#9CA3AF]">
                               {formatHour(h)}
                             </span>
                           </span>
@@ -612,7 +612,7 @@ export default function WeekCalendar({
                       return (
                         <div
                           key={dayIdx}
-                          className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-sky-50/40' : 'bg-white'}`}
+                          className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-[#EFF6FF]/30' : 'bg-white'}`}
                           style={{ height: gridHeight, borderColor: GRID_BORDER }}
                         >
                           {halfHours.map(h => (
@@ -648,9 +648,9 @@ export default function WeekCalendar({
 
       {isMonthView && (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="sticky top-0 z-20 grid grid-cols-7 border-b border-gray-200 bg-white">
+          <div className="sticky top-0 z-20 grid grid-cols-7 border-b border-[#E7E5E4] bg-white">
             {DAY_NAMES.map(day => (
-              <div key={day} className="px-2 py-2 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-slate-600">
+              <div key={day} className="px-2 py-2 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-[#9CA3AF]">
                 {day}
               </div>
             ))}
@@ -667,13 +667,13 @@ export default function WeekCalendar({
                 return (
                   <div
                     key={dayKey}
-                    className={`border-l border-b border-gray-200 p-1.5 ${inMonth ? 'bg-white' : 'bg-gray-50 text-slate-500'}`}
+                    className={`border-l border-b border-[#E7E5E4] p-1.5 ${inMonth ? 'bg-white' : 'bg-[#F5F5F3] text-[#9CA3AF]'}`}
                   >
                     <div className="mb-1 flex items-start justify-between gap-2">
-                      <span className={`text-[12px] font-semibold ${isToday ? 'text-gray-900' : inMonth ? 'text-gray-900' : 'text-slate-500'}`}>
+                      <span className={`text-[12px] font-semibold ${isToday ? 'text-[#2563EB]' : inMonth ? 'text-[#111827]' : 'text-[#9CA3AF]'}`}>
                         {day.getDate()}
                       </span>
-                      <span className="text-[10px] text-slate-500">
+                      <span className="text-[10px] text-[#9CA3AF]">
                         {dayAppts.length ? `${dayAppts.length}` : ''}
                       </span>
                     </div>
@@ -707,7 +707,7 @@ export default function WeekCalendar({
                       })}
 
                       {dayAppts.length > 2 && (
-                        <p className="px-1 text-[11px] font-medium text-slate-600">
+                        <p className="px-1 text-[11px] font-medium text-[#6B7280]">
                           +{dayAppts.length - 2} more
                         </p>
                       )}

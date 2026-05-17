@@ -17,8 +17,10 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["Inter", ...fontFamily.sans],
+        mono: ["JetBrains Mono", "Fira Code", ...fontFamily.mono],
       },
       colors: {
+        /* shadcn/ui CSS-variable tokens */
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -52,11 +54,37 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        /* FrontBeach design tokens — direct hex for Tailwind arbitrary values */
+        fb: {
+          page:      "#F5F5F3",
+          surface:   "#FFFFFF",
+          subtle:    "#F9F9F7",
+          hover:     "#F0EFED",
+          border:    "#E7E5E4",
+          "border-strong": "#D4D2CF",
+          brand:     "#2563EB",
+          "brand-dark":  "#1D4ED8",
+          "brand-light": "#DCE8F7",
+          text:      "#111827",
+          secondary: "#6B7280",
+          muted:     "#9CA3AF",
+        },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        /* 8px system: consistent geometric radius */
+        lg:   "8px",
+        md:   "6px",
+        sm:   "4px",
+        xl:   "12px",
+        "2xl":"16px",
+        "3xl":"20px",
+      },
+      boxShadow: {
+        xs:  "0 1px 2px rgba(0,0,0,0.04)",
+        sm:  "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.03)",
+        md:  "0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -1px rgba(0,0,0,0.03)",
+        lg:  "0 10px 15px -3px rgba(0,0,0,0.06), 0 4px 6px -4px rgba(0,0,0,0.03)",
+        focus: "0 0 0 3px rgba(37,99,235,0.12)",
       },
       keyframes: {
         "accordion-down": {

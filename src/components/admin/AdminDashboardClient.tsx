@@ -1195,8 +1195,8 @@ export default function AdminPage() {
 
   return (
     <div
-      className={`min-h-screen bg-white md:overflow-hidden ${
-        isCalendarWorkspace ? "md:h-full md:min-h-0" : "md:h-screen"
+      className={`min-h-full bg-white ${
+        isCalendarWorkspace ? "md:h-full md:min-h-0 md:overflow-hidden" : ""
       }`}
     >
       {/* Appointment Edit Modal */}
@@ -1480,10 +1480,10 @@ export default function AdminPage() {
         <div className="space-y-6">
           {/* Working Hours */}
           <div className="space-y-3">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-[#6B7280]">
               Working Hours
             </p>
-            <div className="divide-y divide-[var(--border-default)] border border-[var(--border-default)] rounded-xl overflow-hidden">
+            <div className="divide-y divide-[var(--border-default)] border border-[var(--border-default)] rounded-lg overflow-hidden">
               {staffHours.map((h) => (
                 <div
                   key={h.day_of_week}
@@ -1508,7 +1508,7 @@ export default function AdminPage() {
                             );
                             setStaffSaved(false);
                           }}
-                          className="h-9 flex-1 min-w-0 rounded-lg border border-gray-200 bg-white px-2 text-[13px] text-gray-900 outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-400 hover:border-gray-300"
+                          className="h-9 flex-1 min-w-0 rounded-lg border border-[#E7E5E4] bg-white px-2 text-[13px] text-[#111827] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] hover:border-[#D4D2CF]"
                         />
                         <span className="text-xs text-[var(--text-muted)] shrink-0">
                           to
@@ -1526,7 +1526,7 @@ export default function AdminPage() {
                             );
                             setStaffSaved(false);
                           }}
-                          className="h-9 flex-1 min-w-0 rounded-lg border border-gray-200 bg-white px-2 text-[13px] text-gray-900 outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-400 hover:border-gray-300"
+                          className="h-9 flex-1 min-w-0 rounded-lg border border-[#E7E5E4] bg-white px-2 text-[13px] text-[#111827] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] hover:border-[#D4D2CF]"
                         />
                       </>
                     ) : (
@@ -1559,7 +1559,7 @@ export default function AdminPage() {
 
           {/* Assigned Services */}
           <div className="space-y-3">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-[#6B7280]">
               Assigned Services
             </p>
             {services.length === 0 ? (
@@ -1576,7 +1576,7 @@ export default function AdminPage() {
                     <input
                       type="checkbox"
                       checked={staffServices.includes(s.id)}
-                      className="rounded border-[var(--border-strong)] text-black focus:ring-black"
+                      className="rounded border-[var(--border-strong)] text-[#2563EB] focus:ring-[#2563EB]"
                       onChange={(e) => {
                         setStaffServices((prev) =>
                           e.target.checked
@@ -1597,25 +1597,25 @@ export default function AdminPage() {
         </div>
       </ResponsiveModal>
 
-      <main className="w-full min-h-0 flex-1 md:h-full">
+      <main className="flex min-h-full w-full flex-col md:h-full md:min-h-0">
         {/* ── APPOINTMENTS ── */}
         {tab === "appointments" && (
           <div
-            className={`slide-up flex min-h-[calc(100vh-78px)] flex-1 flex-col ${
+            className={`slide-up flex min-h-full flex-1 flex-col md:min-h-0 ${
               apptView === "calendar"
                 ? "bg-white md:h-full md:min-h-0 md:overflow-hidden"
-                : "bg-transparent md:min-h-full"
+                : "gap-4 bg-transparent"
             }`}
           >
             {apptView === "calendar" ? (
               <>
-                <div className="shrink-0 border-b border-[#d7dce2] bg-white py-4">
-                  <div className="flex w-full flex-wrap items-center justify-between gap-4">
+                <div className="shrink-0 border-b border-[#E7E5E4] bg-white py-3.5">
+                  <div className="flex w-full flex-wrap items-center justify-between gap-4 px-4 md:px-5">
                     <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
-                      <div className="flex shrink-0 items-center rounded-lg border border-[#d6dbe5] bg-white p-0.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                      <div className="flex shrink-0 items-center rounded-lg border border-[#E7E5E4] bg-white p-0.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
                         <button
                           onClick={showAppointmentList}
-                          className="rounded-md px-3.5 py-1.5 text-[13px] font-medium text-[#697386] transition-colors hover:text-[#111827]"
+                          className="rounded-md px-3.5 py-1.5 text-[13px] font-medium text-[#6B7280] transition-colors hover:text-[#111827]"
                         >
                           List
                         </button>
@@ -1630,19 +1630,19 @@ export default function AdminPage() {
                       <div className="flex shrink-0 items-center gap-2">
                         <button
                           onClick={prevPeriod}
-                          className="grid h-9 w-9 place-items-center rounded-lg border border-[#d6dbe5] bg-white text-[#6b7280] hover:bg-[#f8fafc] transition-colors"
+                          className="grid h-9 w-9 place-items-center rounded-lg border border-[#E7E5E4] bg-white text-[#6B7280] hover:bg-[#F5F5F3] transition-colors"
                         >
                           <ChevronLeft size={16} />
                         </button>
                         <button
                           onClick={goToday}
-                          className="min-h-9 min-w-[132px] rounded-lg border border-[#d6dbe5] bg-white px-4 py-1.5 text-[13px] font-medium text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:bg-[#f8fafc] transition-colors"
+                          className="min-h-9 min-w-[132px] rounded-lg border border-[#E7E5E4] bg-white px-4 py-1.5 text-[13px] font-medium text-[#111827] shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:bg-[#F5F5F3] transition-colors"
                         >
                           {calLabel}
                         </button>
                         <button
                           onClick={nextPeriod}
-                          className="grid h-9 w-9 place-items-center rounded-lg border border-[#d6dbe5] bg-white text-[#6b7280] hover:bg-[#f8fafc] transition-colors"
+                          className="grid h-9 w-9 place-items-center rounded-lg border border-[#E7E5E4] bg-white text-[#6B7280] hover:bg-[#F5F5F3] transition-colors"
                         >
                           <ChevronRight size={16} />
                         </button>
@@ -1684,14 +1684,14 @@ export default function AdminPage() {
                           }));
                           setShowFilterPanel(true);
                         }}
-                        className="grid h-9 w-9 place-items-center rounded-lg border border-[#d6dbe5] bg-white text-[#6b7280] shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:bg-[#f8fafc] transition-colors"
+                        className="grid h-9 w-9 place-items-center rounded-lg border border-[#E7E5E4] bg-white text-[#6B7280] shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:bg-[#F5F5F3] transition-colors"
                         title="Settings"
                       >
                         <Settings size={16} />
                       </button>
                       <button
                         onClick={openApptCreate}
-                        className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-[#111827] px-4 py-1.5 text-[13px] font-semibold text-white hover:bg-[#0b1220] transition-colors"
+                        className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-[#111827] px-4 py-1.5 text-[13px] font-semibold text-white hover:bg-[#111827] transition-colors"
                       >
                         <Plus size={15} />
                         Create
@@ -1700,14 +1700,14 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <div className="min-h-0 flex-1 overflow-hidden bg-white pt-3 pb-6">
+                <div className="min-h-0 flex-1 overflow-hidden bg-white">
                   {onlyMeMissingTeamMember ? (
                     <div className="flex h-full items-center justify-center py-24 text-center">
                       <div className="max-w-sm">
-                        <p className="text-[16px] font-semibold text-gray-900">
+                        <p className="text-[16px] font-semibold text-[#111827]">
                           No appointments assigned to you
                         </p>
-                        <p className="mt-1 text-[13px] text-slate-600">
+                        <p className="mt-1 text-[13px] text-[#6B7280]">
                           We could not find a team member record for the current
                           user, so this view cannot be filtered yet.
                         </p>
@@ -1716,10 +1716,10 @@ export default function AdminPage() {
                   ) : sideBySideMissingStaff ? (
                     <div className="flex h-full items-center justify-center py-24 text-center">
                       <div className="max-w-sm">
-                        <p className="text-[16px] font-semibold text-gray-900">
+                        <p className="text-[16px] font-semibold text-[#111827]">
                           No staff members found
                         </p>
-                        <p className="mt-1 text-[13px] text-slate-600">
+                        <p className="mt-1 text-[13px] text-[#6B7280]">
                           Add staff members to use the side-by-side schedule
                           view.
                         </p>
@@ -1729,7 +1729,7 @@ export default function AdminPage() {
                     <div className="flex h-full items-center justify-center py-24">
                       <Loader2
                         size={22}
-                        className="animate-spin text-slate-500"
+                        className="animate-spin text-[#6B7280]"
                       />
                     </div>
                   ) : (
@@ -1750,19 +1750,19 @@ export default function AdminPage() {
                 </div>
               </>
             ) : (
-              <div className="w-full space-y-4 py-4 md:py-6">
+              <div className="w-full space-y-4 py-4 md:py-0">
                 {/* ── Public Booking Link Card ── */}
                 {businessSlug && bookingUrl && (
-                  <div className="flex flex-col gap-4 rounded-xl border border-[var(--border-default)] bg-white px-4 py-4 shadow-none sm:flex-row sm:items-center">
+                  <div className="flex flex-col gap-4 rounded-lg border border-[var(--border-default)] bg-white px-4 py-4 shadow-none sm:flex-row sm:items-center">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-[var(--brand-light)] flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-lg bg-[var(--brand-light)] flex items-center justify-center shrink-0">
                         <Link2 size={18} className="text-[var(--brand)]" />
                       </div>
                       <div className="min-w-0">
                         <p className="text-[13px] font-semibold text-[var(--text-primary)]">
                           Your public booking link
                         </p>
-                        <p className="text-[12px] text-slate-500 truncate mt-0.5 font-mono">
+                        <p className="text-[12px] text-[#6B7280] truncate mt-0.5 font-mono">
                           {bookingUrl}
                         </p>
                       </div>
@@ -1800,14 +1800,14 @@ export default function AdminPage() {
 
                 {/* Dashboard Stats */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                  <div className="rounded-xl border border-[var(--border-default)] bg-white px-4 py-4 shadow-none">
-                    <p className="text-[12px] uppercase tracking-wider font-semibold text-slate-500 mb-1">
+                  <div className="rounded-lg border border-[var(--border-default)] bg-white px-4 py-4 shadow-none">
+                    <p className="text-[12px] uppercase tracking-wider font-semibold text-[#6B7280] mb-1">
                       Today's Bookings
                     </p>
                     {statsLoading ? (
                       <Loader2
                         size={18}
-                        className="animate-spin text-slate-500"
+                        className="animate-spin text-[#6B7280]"
                       />
                     ) : (
                       <p className="text-[24px] font-semibold text-[var(--text-primary)]">
@@ -1815,14 +1815,14 @@ export default function AdminPage() {
                       </p>
                     )}
                   </div>
-                  <div className="rounded-xl border border-[var(--border-default)] bg-white px-4 py-4 shadow-none">
-                    <p className="text-[12px] uppercase tracking-wider font-semibold text-slate-500 mb-1">
+                  <div className="rounded-lg border border-[var(--border-default)] bg-white px-4 py-4 shadow-none">
+                    <p className="text-[12px] uppercase tracking-wider font-semibold text-[#6B7280] mb-1">
                       Revenue Today
                     </p>
                     {statsLoading ? (
                       <Loader2
                         size={18}
-                        className="animate-spin text-slate-500"
+                        className="animate-spin text-[#6B7280]"
                       />
                     ) : (
                       <p className="text-[24px] font-semibold text-[var(--text-primary)]">
@@ -1830,21 +1830,21 @@ export default function AdminPage() {
                       </p>
                     )}
                   </div>
-                  <div className="rounded-xl border border-[var(--border-default)] bg-white px-4 py-4 shadow-none">
-                    <p className="text-[12px] uppercase tracking-wider font-semibold text-slate-500 mb-1">
+                  <div className="rounded-lg border border-[var(--border-default)] bg-white px-4 py-4 shadow-none">
+                    <p className="text-[12px] uppercase tracking-wider font-semibold text-[#6B7280] mb-1">
                       Next Appointment
                     </p>
                     {statsLoading ? (
                       <Loader2
                         size={18}
-                        className="animate-spin text-slate-500"
+                        className="animate-spin text-[#6B7280]"
                       />
                     ) : stats?.nextUpcomingAppointment ? (
                       <div>
                         <p className="text-[15px] font-semibold text-[var(--text-primary)] truncate">
                           {stats.nextUpcomingAppointment.customer_name}
                         </p>
-                        <p className="text-[13px] text-slate-600 mt-0.5">
+                        <p className="text-[13px] text-[#6B7280] mt-0.5">
                           {new Date(
                             stats.nextUpcomingAppointment.appointment_time,
                           ).toLocaleTimeString("en-US", {
@@ -1858,7 +1858,7 @@ export default function AdminPage() {
                         </p>
                       </div>
                     ) : (
-                      <p className="text-[14px] text-slate-600 mt-1">
+                      <p className="text-[14px] text-[#6B7280] mt-1">
                         None scheduled
                       </p>
                     )}
@@ -1866,20 +1866,20 @@ export default function AdminPage() {
                 </div>
 
                 {/* ── Square-style Toolbar ── */}
-                <div className="flex flex-col gap-2 rounded-xl border border-[var(--border-default)] bg-white px-4 py-4 shadow-none">
+                <div className="flex flex-col gap-2 rounded-lg border border-[var(--border-default)] bg-white px-4 py-4 shadow-none">
                   {/* Row 1: view tabs (left) + settings gear (right) */}
                   <div className="flex items-center justify-between gap-3">
                     {/* View toggle pill */}
-                    <div className="flex items-center bg-gray-100 rounded-lg p-0.5 shrink-0">
+                    <div className="flex items-center bg-[#F0EFED] rounded-lg p-0.5 shrink-0">
                       <button
                         onClick={showAppointmentList}
-                        className="px-3 py-1.5 rounded-md text-[13px] font-medium bg-white shadow-sm text-gray-900 transition-colors"
+                        className="px-3 py-1.5 rounded-md text-[13px] font-medium bg-white shadow-sm text-[#111827] transition-colors"
                       >
                         List
                       </button>
                       <button
                         onClick={showAppointmentCalendar}
-                        className="px-3 py-1.5 rounded-md text-[13px] font-medium text-slate-600 hover:text-slate-800 transition-colors"
+                        className="px-3 py-1.5 rounded-md text-[13px] font-medium text-[#6B7280] hover:text-[#374151] transition-colors"
                       >
                         Calendar
                       </button>
@@ -1899,8 +1899,8 @@ export default function AdminPage() {
                       }}
                       className={`flex items-center gap-1.5 h-9 px-3 rounded-lg border text-[13px] font-medium transition-colors ${
                         filterStaff || filterStatus !== "all" || searchTerm
-                          ? "border-gray-900 bg-gray-900 text-white"
-                          : "border-gray-300 bg-white text-slate-700 hover:bg-gray-50 hover:border-gray-400"
+                          ? "border-[#111827] bg-[#111827] text-white"
+                          : "border-[#E7E5E4] bg-white text-[#374151] hover:bg-[#F5F5F3] hover:border-[#D4D2CF]"
                       }`}
                       title="Appointment attributes"
                     >
@@ -1909,7 +1909,7 @@ export default function AdminPage() {
                       {(filterStaff ||
                         filterStatus !== "all" ||
                         searchTerm) && (
-                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white text-gray-900 text-[10px] font-bold leading-none">
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white text-[#111827] text-[10px] font-bold leading-none">
                           {
                             [
                               filterStaff,
@@ -1932,49 +1932,49 @@ export default function AdminPage() {
                             new Date().toISOString().split("T")[0] &&
                           dateRange.to ===
                             new Date().toISOString().split("T")[0]
-                            ? "bg-gray-900 text-white border-gray-900"
-                            : "bg-white text-slate-700 border-gray-200 hover:bg-gray-50"
+                            ? "bg-[#111827] text-white border-[#111827]"
+                            : "bg-white text-[#374151] border-[#E7E5E4] hover:bg-[#F5F5F3]"
                         }`}
                       >
                         Today
                       </button>
                       <button
                         onClick={setThisWeek}
-                        className="h-8 px-3 rounded-lg border border-gray-200 bg-white text-slate-700 text-[13px] font-medium hover:bg-gray-50 transition-colors"
+                        className="h-8 px-3 rounded-lg border border-[#E7E5E4] bg-white text-[#374151] text-[13px] font-medium hover:bg-[#F5F5F3] transition-colors"
                       >
                         This week
                       </button>
 
                       {/* Active filter chips — dismissible inline */}
                       {filterStatus !== "all" && (
-                        <span className="inline-flex items-center gap-1 h-7 pl-2 pr-1.5 rounded-full bg-gray-100 text-slate-700 text-[12px] font-medium">
+                        <span className="inline-flex items-center gap-1 h-7 pl-2 pr-1.5 rounded-md bg-[#F0EFED] text-[#374151] text-[12px] font-medium">
                           {STATUS_LABELS[filterStatus] || filterStatus}
                           <button
                             onClick={() => setFilterStatus("all")}
-                            className="hover:text-gray-900"
+                            className="hover:text-[#111827]"
                           >
                             <X size={11} />
                           </button>
                         </span>
                       )}
                       {filterStaff && (
-                        <span className="inline-flex items-center gap-1 h-7 pl-2 pr-1.5 rounded-full bg-gray-100 text-slate-700 text-[12px] font-medium">
+                        <span className="inline-flex items-center gap-1 h-7 pl-2 pr-1.5 rounded-md bg-[#F0EFED] text-[#374151] text-[12px] font-medium">
                           {employees.find((e) => e.id === filterStaff)
                             ?.first_name ?? "Staff"}
                           <button
                             onClick={() => setFilterStaff("")}
-                            className="hover:text-gray-900"
+                            className="hover:text-[#111827]"
                           >
                             <X size={11} />
                           </button>
                         </span>
                       )}
                       {searchTerm && (
-                        <span className="inline-flex items-center gap-1 h-7 pl-2 pr-1.5 rounded-full bg-gray-100 text-slate-700 text-[12px] font-medium">
+                        <span className="inline-flex items-center gap-1 h-7 pl-2 pr-1.5 rounded-md bg-[#F0EFED] text-[#374151] text-[12px] font-medium">
                           &ldquo;{searchTerm}&rdquo;
                           <button
                             onClick={() => setSearchTerm("")}
-                            className="hover:text-gray-900"
+                            className="hover:text-[#111827]"
                           >
                             <X size={11} />
                           </button>
@@ -1986,23 +1986,23 @@ export default function AdminPage() {
                     <div className="flex items-center gap-2 overflow-x-auto pb-1">
                       <button
                         onClick={prevPeriod}
-                        className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                        className="p-1.5 rounded-lg border border-[#E7E5E4] hover:bg-[#F5F5F3] transition-colors"
                       >
-                        <ChevronLeft size={15} className="text-slate-600" />
+                        <ChevronLeft size={15} className="text-[#6B7280]" />
                       </button>
                       <button
                         onClick={goToday}
-                        className="px-2.5 h-8 rounded-lg border border-gray-200 text-[13px] font-medium text-slate-700 hover:bg-gray-50 transition-colors"
+                        className="px-2.5 h-8 rounded-lg border border-[#E7E5E4] text-[13px] font-medium text-[#374151] hover:bg-[#F5F5F3] transition-colors"
                       >
                         Today
                       </button>
                       <button
                         onClick={nextPeriod}
-                        className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                        className="p-1.5 rounded-lg border border-[#E7E5E4] hover:bg-[#F5F5F3] transition-colors"
                       >
-                        <ChevronRight size={15} className="text-slate-600" />
+                        <ChevronRight size={15} className="text-[#6B7280]" />
                       </button>
-                      <span className="text-[14px] font-medium text-slate-700 hidden sm:block">
+                      <span className="text-[14px] font-medium text-[#374151] hidden sm:block">
                         {calLabel}
                       </span>
                       <SquareSelect
@@ -2024,7 +2024,7 @@ export default function AdminPage() {
                         className="w-[170px] shrink-0"
                       />
                       <button
-                        className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-slate-500"
+                        className="p-1.5 rounded-lg border border-[#E7E5E4] hover:bg-[#F5F5F3] transition-colors text-[#6B7280]"
                         onClick={loadCalendarAppts}
                         title="Refresh"
                       >
@@ -2040,13 +2040,13 @@ export default function AdminPage() {
             {showFilterPanel && (
               <div className="fixed inset-0 z-[200] bg-white w-full min-h-screen overflow-y-auto flex flex-col">
                 {/* ── Header bar ── */}
-                <header className="shrink-0 border-b border-gray-100">
+                <header className="shrink-0 border-b border-[#E7E5E4]">
                   <div className="w-full px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
                     {/* Left: Close */}
                     <button
                       type="button"
                       onClick={() => setShowFilterPanel(false)}
-                      className="flex items-center gap-1.5 text-[13px] font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                      className="flex items-center gap-1.5 text-[13px] font-medium text-[#6B7280] hover:text-[#111827] transition-colors"
                       aria-label="Close"
                     >
                       <X size={18} />
@@ -2054,7 +2054,7 @@ export default function AdminPage() {
                     </button>
 
                     {/* Center: Title */}
-                    <p className="text-[14px] font-semibold text-gray-900">
+                    <p className="text-[14px] font-semibold text-[#111827]">
                       Appointment attributes
                     </p>
 
@@ -2067,7 +2067,7 @@ export default function AdminPage() {
                         setSearchTerm(pendingFilter.search);
                         setShowFilterPanel(false);
                       }}
-                      className="h-9 px-4 rounded-lg bg-gray-900 text-white text-[13px] font-semibold hover:bg-gray-800 transition-colors"
+                      className="h-9 px-4 rounded-lg bg-[#2563EB] text-white text-[13px] font-semibold hover:bg-[#1D4ED8] transition-colors"
                     >
                       Save
                     </button>
@@ -2079,17 +2079,17 @@ export default function AdminPage() {
                   <div className="w-full px-4 sm:px-6 lg:px-8 py-10 pb-24 space-y-10">
                     {/* Page title */}
                     <div>
-                      <h1 className="text-[22px] font-semibold text-gray-900">
+                      <h1 className="text-[22px] font-semibold text-[#111827]">
                         Appointment attributes
                       </h1>
-                      <p className="text-[14px] text-slate-600 mt-1.5 leading-relaxed">
+                      <p className="text-[14px] text-[#6B7280] mt-1.5 leading-relaxed">
                         Choose what appears on your appointment calendar.
                       </p>
                     </div>
 
                     {/* ── Section 1: Appointment status ── */}
                     <section className="space-y-1">
-                      <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-4">
+                      <p className="text-[11px] font-semibold uppercase tracking-widest text-[#6B7280] mb-4">
                         Appointment status
                       </p>
 
@@ -2107,9 +2107,9 @@ export default function AdminPage() {
                       ).map((row) => (
                         <div
                           key={row.key}
-                          className="flex items-center justify-between py-3.5 border-b border-gray-100 last:border-0"
+                          className="flex items-center justify-between py-3.5 border-b border-[#E7E5E4] last:border-0"
                         >
-                          <span className="text-[15px] text-slate-800">
+                          <span className="text-[15px] text-[#374151]">
                             {row.label}
                           </span>
                           <button
@@ -2124,8 +2124,8 @@ export default function AdminPage() {
                             }
                             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent
                               transition-colors duration-200 ease-in-out
-                              focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2
-                              ${pendingFilter[row.key] ? "bg-gray-900" : "bg-gray-200"}`}
+                              focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:ring-offset-2
+                              ${pendingFilter[row.key] ? "bg-[#2563EB]" : "bg-[#E7E5E4]"}`}
                           >
                             <span
                               className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow
@@ -2139,7 +2139,7 @@ export default function AdminPage() {
 
                     {/* ── Section 2: Calendar display ── */}
                     <section className="space-y-1">
-                      <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-4">
+                      <p className="text-[11px] font-semibold uppercase tracking-widest text-[#6B7280] mb-4">
                         Calendar display
                       </p>
 
@@ -2158,9 +2158,9 @@ export default function AdminPage() {
                       ).map((row) => (
                         <div
                           key={row.key}
-                          className="flex items-center justify-between py-3.5 border-b border-gray-100 last:border-0"
+                          className="flex items-center justify-between py-3.5 border-b border-[#E7E5E4] last:border-0"
                         >
-                          <span className="text-[15px] text-slate-800">
+                          <span className="text-[15px] text-[#374151]">
                             {row.label}
                           </span>
                           <button
@@ -2175,8 +2175,8 @@ export default function AdminPage() {
                             }
                             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent
                               transition-colors duration-200 ease-in-out
-                              focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2
-                              ${pendingFilter[row.key] ? "bg-gray-900" : "bg-gray-200"}`}
+                              focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:ring-offset-2
+                              ${pendingFilter[row.key] ? "bg-[#2563EB]" : "bg-[#E7E5E4]"}`}
                           >
                             <span
                               className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow
@@ -2190,14 +2190,14 @@ export default function AdminPage() {
 
                     {/* ── Section 3: Filters ── */}
                     <section className="space-y-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+                      <p className="text-[11px] font-semibold uppercase tracking-widest text-[#6B7280]">
                         Filters
                       </p>
 
                       {/* Staff */}
                       {employees.length > 0 && (
                         <div>
-                          <label className="block text-[13px] font-medium text-slate-700 mb-1.5">
+                          <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
                             Staff member
                           </label>
                           <div className="relative">
@@ -2209,7 +2209,7 @@ export default function AdminPage() {
                                   staff: e.target.value,
                                 }))
                               }
-                              className="h-11 w-full appearance-none rounded-xl border border-gray-200 bg-white hover:border-gray-300 pl-4 pr-8 text-[14px] text-gray-900 outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-400 transition-all cursor-pointer"
+                              className="h-11 w-full appearance-none rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] pl-4 pr-8 text-[14px] text-[#111827] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] transition-all cursor-pointer"
                             >
                               <option value="">All staff</option>
                               {employees.map((emp) => (
@@ -2220,7 +2220,7 @@ export default function AdminPage() {
                             </select>
                             <ChevronDown
                               size={14}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"
                             />
                           </div>
                         </div>
@@ -2228,7 +2228,7 @@ export default function AdminPage() {
 
                       {/* Status */}
                       <div>
-                        <label className="block text-[13px] font-medium text-slate-700 mb-1.5">
+                        <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
                           Status
                         </label>
                         <div className="relative">
@@ -2240,7 +2240,7 @@ export default function AdminPage() {
                                 status: e.target.value,
                               }))
                             }
-                            className="h-11 w-full appearance-none rounded-xl border border-gray-200 bg-white hover:border-gray-300 pl-4 pr-8 text-[14px] text-gray-900 outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-400 transition-all cursor-pointer"
+                            className="h-11 w-full appearance-none rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] pl-4 pr-8 text-[14px] text-[#111827] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] transition-all cursor-pointer"
                           >
                             <option value="all">All statuses</option>
                             <option value="confirmed">Confirmed</option>
@@ -2250,20 +2250,20 @@ export default function AdminPage() {
                           </select>
                           <ChevronDown
                             size={14}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"
                           />
                         </div>
                       </div>
 
                       {/* Search */}
                       <div>
-                        <label className="block text-[13px] font-medium text-slate-700 mb-1.5">
+                        <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
                           Search customer
                         </label>
                         <div className="relative">
                           <Search
                             size={15}
-                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF]"
                           />
                           <input
                             type="text"
@@ -2275,11 +2275,11 @@ export default function AdminPage() {
                                 search: e.target.value,
                               }))
                             }
-                            className="h-11 w-full rounded-xl border border-gray-200 bg-white hover:border-gray-300 pl-10 pr-4 text-[14px] text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-400 transition-all"
+                            className="h-11 w-full rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] pl-10 pr-4 text-[14px] text-[#111827] placeholder-[#9CA3AF] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] transition-all"
                           />
                           {pendingFilter.search && (
                             <button
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#374151]"
                               onClick={() =>
                                 setPendingFilter((f) => ({ ...f, search: "" }))
                               }
@@ -2304,7 +2304,7 @@ export default function AdminPage() {
                               search: "",
                             }))
                           }
-                          className="text-[13px] font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                          className="text-[13px] font-medium text-[#6B7280] hover:text-[#111827] transition-colors"
                         >
                           Clear filters
                         </button>
@@ -2324,7 +2324,7 @@ export default function AdminPage() {
                 />
               </div>
             ) : apptView === "overview" && appointments.length === 0 ? (
-              <div className="rounded-xl border border-[var(--border-default)] bg-white px-6 py-12 text-center shadow-none">
+              <div className="rounded-lg border border-[var(--border-default)] bg-white px-6 py-12 text-center shadow-none">
                 <Calendar
                   size={28}
                   className="mx-auto mb-3 text-[var(--text-muted)]"
@@ -2337,11 +2337,11 @@ export default function AdminPage() {
                 </p>
               </div>
             ) : apptView === "overview" ? (
-              <div className="overflow-hidden rounded-xl border border-[var(--border-default)] bg-white">
+              <div className="overflow-hidden rounded-lg border border-[var(--border-default)] bg-white">
                 {appointments.map((appt, i) => (
                   <div key={appt.id}>
                     <button
-                      className="w-full flex items-start gap-3 px-4 py-4 text-left hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-start gap-3 px-4 py-4 text-left hover:bg-[#F5F5F3] transition-colors"
                       style={{
                         borderBottom:
                           i < appointments.length - 1 && expandedId !== appt.id
@@ -2403,21 +2403,21 @@ export default function AdminPage() {
                         <div className="space-y-3 mb-5">
                           <div>
                             <p className="caption">Contact</p>
-                            <p className="text-sm text-gray-900">
+                            <p className="text-sm text-[#111827]">
                               {appt.customer_email} •{" "}
                               {appt.customer_phone || "No phone"}
                             </p>
                           </div>
                           <div>
                             <p className="caption">Staff</p>
-                            <p className="text-sm text-gray-900">
+                            <p className="text-sm text-[#111827]">
                               {appt.staff
                                 ? `${appt.staff.first_name} ${appt.staff.last_name}`
                                 : "Unassigned"}
                             </p>
                           </div>
                           <div>
-                            <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 mb-1">
+                            <p className="text-[10px] uppercase tracking-wider font-semibold text-[#6B7280] mb-1">
                               Services
                             </p>
                             <div className="flex flex-wrap gap-1.5">
@@ -2483,7 +2483,7 @@ export default function AdminPage() {
                             </button>
                           </div>
                         ) : (
-                          <div className="mb-5 py-2.5 px-4 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-xl flex items-center justify-center text-sm font-medium text-[var(--text-secondary)]">
+                          <div className="mb-5 py-2.5 px-4 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg flex items-center justify-center text-sm font-medium text-[var(--text-secondary)]">
                             Appointment{" "}
                             {appt.status === "completed"
                               ? "completed"
@@ -2492,7 +2492,7 @@ export default function AdminPage() {
                         )}
 
                         {/* Secondary Actions */}
-                        <div className="space-y-3 pt-4 border-t border-gray-200">
+                        <div className="space-y-3 pt-4 border-t border-[#E7E5E4]">
                           <p className="text-xs font-medium text-[var(--text-secondary)]">
                             More actions
                           </p>
@@ -2508,7 +2508,7 @@ export default function AdminPage() {
                               appt.status !== "completed" &&
                               appt.status !== "cancelled" && (
                                 <button
-                                  className="h-10 rounded-lg border border-gray-200 text-sm font-medium text-orange-600 flex justify-center items-center gap-2 hover:bg-orange-50 bg-white transition-colors"
+                                  className="h-10 rounded-lg border border-[#E7E5E4] text-sm font-medium text-orange-600 flex justify-center items-center gap-2 hover:bg-orange-50 bg-white transition-colors"
                                   onClick={() =>
                                     updateStatus(appt.id, "no_show")
                                   }
@@ -2588,7 +2588,7 @@ export default function AdminPage() {
 
         {/* ── AVAILABILITY ── */}
         {tab === "availability" && (
-          <div className="slide-up mx-auto w-full max-w-5xl space-y-6 py-4 md:py-6">
+          <div className="slide-up mx-auto w-full max-w-5xl space-y-6 py-4 md:py-0">
             <div>
               <h2 className="h3">Business hours</h2>
               <p className="body-sm mt-0.5">
@@ -2680,7 +2680,7 @@ export default function AdminPage() {
 
         {/* ── SERVICES ── */}
         {tab === "services" && (
-          <div className="slide-up mx-auto w-full max-w-6xl space-y-6 py-4 md:py-6">
+          <div className="slide-up mx-auto w-full max-w-6xl space-y-6 py-4 md:py-0">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="h3">Services</h2>
@@ -2769,7 +2769,7 @@ export default function AdminPage() {
         {/* ── STAFF ── */}
         {/* ── STAFF ── */}
         {tab === "staff" && (
-          <div className="slide-up mx-auto w-full max-w-6xl space-y-6 py-4 md:py-6">
+          <div className="slide-up mx-auto w-full max-w-6xl space-y-6 py-4 md:py-0">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -2807,21 +2807,21 @@ export default function AdminPage() {
                 {/* Panel */}
                 <div className="relative z-10 w-full sm:max-w-[520px] bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[90dvh] slide-up">
                   {/* ── Sticky Header ── */}
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-[#E7E5E4] shrink-0">
                     <div>
                       <h3
                         id="add-staff-modal-title"
-                        className="text-[17px] font-semibold text-gray-900 leading-tight"
+                        className="text-[17px] font-semibold text-[#111827] leading-tight"
                       >
                         Add Staff Member
                       </h3>
-                      <p className="text-[12px] text-slate-600 mt-0.5">
+                      <p className="text-[12px] text-[#6B7280] mt-0.5">
                         New team members are visible to customers for booking.
                       </p>
                     </div>
                     <button
                       onClick={() => setShowAddStaff(false)}
-                      className="ml-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-gray-100 transition-colors shrink-0"
+                      className="ml-4 p-1.5 rounded-lg text-[#9CA3AF] hover:text-[#374151] hover:bg-[#F0EFED] transition-colors shrink-0"
                       aria-label="Close"
                     >
                       <X size={18} />
@@ -2832,23 +2832,23 @@ export default function AdminPage() {
                   <div className="overflow-y-auto flex-1 px-6 py-5 space-y-6">
                     {/* Section 1: Basic Info */}
                     <div className="space-y-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
                         Basic Info
                       </p>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-[13px] font-medium text-slate-700 mb-1.5">
+                          <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
                             First name <span className="text-red-500">*</span>
                           </label>
                           <input
                             id="add-staff-first-name"
-                            className={`h-10 w-full rounded-lg border px-3 text-[14px] text-gray-900 placeholder-gray-400 outline-none transition-all
-                              focus:ring-2 focus:ring-black/10 focus:border-gray-400
+                            className={`h-10 w-full rounded-lg border px-3 text-[14px] text-[#111827] placeholder-[#9CA3AF] outline-none transition-all
+                              focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB]
                               ${
                                 addStaffFirstNameTouched &&
                                 !addStaffForm.first_name.trim()
                                   ? "border-red-400 bg-red-50"
-                                  : "border-gray-200 bg-white hover:border-gray-300"
+                                  : "border-[#E7E5E4] bg-white hover:border-[#D4D2CF]"
                               }`}
                             placeholder="Jane"
                             value={addStaffForm.first_name}
@@ -2869,15 +2869,15 @@ export default function AdminPage() {
                           </p>
                         </div>
                         <div>
-                          <label className="block text-[13px] font-medium text-slate-700 mb-1.5">
+                          <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
                             Last name{" "}
-                            <span className="text-[13px] font-normal text-slate-500">
+                            <span className="text-[13px] font-normal text-[#6B7280]">
                               (optional)
                             </span>
                           </label>
                           <input
                             id="add-staff-last-name"
-                            className="h-10 w-full rounded-lg border border-gray-200 bg-white hover:border-gray-300 px-3 text-[14px] text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-400 transition-all"
+                            className="h-10 w-full rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] px-3 text-[14px] text-[#111827] placeholder-[#9CA3AF] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] transition-all"
                             placeholder="Doe"
                             value={addStaffForm.last_name}
                             onChange={(e) =>
@@ -2896,20 +2896,20 @@ export default function AdminPage() {
 
                     {/* Section 2: Contact Info */}
                     <div className="space-y-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
                         Contact Info
                       </p>
                       <div>
-                        <label className="block text-[13px] font-medium text-slate-700 mb-1.5">
+                        <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
                           Email{" "}
-                          <span className="text-[13px] font-normal text-slate-500">
+                          <span className="text-[13px] font-normal text-[#6B7280]">
                             (optional)
                           </span>
                         </label>
                         <input
                           id="add-staff-email"
                           type="email"
-                          className="h-10 w-full rounded-lg border border-gray-200 bg-white hover:border-gray-300 px-3 text-[14px] text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-400 transition-all"
+                          className="h-10 w-full rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] px-3 text-[14px] text-[#111827] placeholder-[#9CA3AF] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] transition-all"
                           placeholder="jane@example.com"
                           value={addStaffForm.email}
                           onChange={(e) =>
@@ -2922,16 +2922,16 @@ export default function AdminPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-[13px] font-medium text-slate-700 mb-1.5">
+                        <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
                           Phone{" "}
-                          <span className="text-[13px] font-normal text-slate-500">
+                          <span className="text-[13px] font-normal text-[#6B7280]">
                             (optional)
                           </span>
                         </label>
                         <input
                           id="add-staff-phone"
                           type="tel"
-                          className="h-10 w-full rounded-lg border border-gray-200 bg-white hover:border-gray-300 px-3 text-[14px] text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-400 transition-all"
+                          className="h-10 w-full rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] px-3 text-[14px] text-[#111827] placeholder-[#9CA3AF] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] transition-all"
                           placeholder="555-000-0000"
                           value={addStaffForm.phone}
                           onChange={(e) =>
@@ -2947,7 +2947,7 @@ export default function AdminPage() {
 
                     {/* Section 3: Staff Settings */}
                     <div className="space-y-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
                         Staff Settings
                       </p>
 
@@ -2955,7 +2955,7 @@ export default function AdminPage() {
                       <div>
                         <label
                           htmlFor="add-staff-role"
-                          className="block text-[13px] font-medium text-slate-700 mb-1.5"
+                          className="block text-[13px] font-medium text-[#374151] mb-1.5"
                         >
                           Role
                         </label>
@@ -2969,17 +2969,17 @@ export default function AdminPage() {
                                 role: e.target.value,
                               }))
                             }
-                            className="h-10 w-full appearance-none rounded-lg border border-gray-200 bg-white hover:border-gray-300 pl-3 pr-8 text-[14px] text-gray-900 outline-none focus:ring-2 focus:ring-black/10 focus:border-gray-400 transition-all cursor-pointer"
+                            className="h-10 w-full appearance-none rounded-lg border border-[#E7E5E4] bg-white hover:border-[#D4D2CF] pl-3 pr-8 text-[14px] text-[#111827] outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-[#2563EB] transition-all cursor-pointer"
                           >
                             <option value="staff">Staff</option>
                             <option value="admin">Admin</option>
                           </select>
                           <ChevronDown
                             size={14}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"
                           />
                         </div>
-                        <p className="text-[12px] text-slate-500 mt-1">
+                        <p className="text-[12px] text-[#6B7280] mt-1">
                           {addStaffForm.role === "admin"
                             ? "Can manage all settings and staff."
                             : "Can be booked by customers."}
@@ -2987,12 +2987,12 @@ export default function AdminPage() {
                       </div>
 
                       {/* Bookable toggle */}
-                      <div className="flex items-center justify-between py-3 px-4 rounded-xl border border-gray-100 bg-gray-50">
+                      <div className="flex items-center justify-between py-3 px-4 rounded-lg border border-[#E7E5E4] bg-[#F5F5F3]">
                         <div>
-                          <p className="text-[13px] font-medium text-slate-800">
+                          <p className="text-[13px] font-medium text-[#374151]">
                             Bookable by customers
                           </p>
-                          <p className="text-[12px] text-slate-500 mt-0.5">
+                          <p className="text-[12px] text-[#6B7280] mt-0.5">
                             Show this person on the public booking page
                           </p>
                         </div>
@@ -3006,10 +3006,10 @@ export default function AdminPage() {
                               is_bookable: !f.is_bookable,
                             }))
                           }
-                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 ${
+                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:ring-offset-2 ${
                             addStaffForm.is_bookable
-                              ? "bg-black"
-                              : "bg-gray-200"
+                              ? "bg-[#2563EB]"
+                              : "bg-[#E7E5E4]"
                           }`}
                         >
                           <span
@@ -3023,11 +3023,11 @@ export default function AdminPage() {
                       </div>
 
                       {/* Services placeholder */}
-                      <div className="py-3 px-4 rounded-xl border border-dashed border-gray-200 bg-white">
-                        <p className="text-[13px] font-medium text-slate-700">
+                      <div className="py-3 px-4 rounded-lg border border-dashed border-[#E7E5E4] bg-white">
+                        <p className="text-[13px] font-medium text-[#374151]">
                           Service assignment
                         </p>
-                        <p className="text-[12px] text-slate-500 mt-0.5">
+                        <p className="text-[12px] text-[#6B7280] mt-0.5">
                           You can assign services to this staff member after
                           they&apos;re added.
                         </p>
@@ -3035,7 +3035,7 @@ export default function AdminPage() {
 
                       {/* Login invite — only when email is set */}
                       {addStaffForm.email.trim() && (
-                        <label className="flex items-start gap-3 cursor-pointer p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <label className="flex items-start gap-3 cursor-pointer p-4 rounded-lg border border-[#E7E5E4] bg-[#F5F5F3] hover:bg-[#F0EFED] transition-colors">
                           <input
                             type="checkbox"
                             checked={addStaffForm.invite}
@@ -3045,13 +3045,13 @@ export default function AdminPage() {
                                 invite: e.target.checked,
                               }))
                             }
-                            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
+                            className="mt-0.5 h-4 w-4 rounded border-[#E7E5E4] text-[#2563EB] focus:ring-[#2563EB]"
                           />
                           <div>
-                            <p className="text-[13px] font-semibold text-slate-800">
+                            <p className="text-[13px] font-semibold text-[#374151]">
                               Send login invite
                             </p>
-                            <p className="text-[12px] text-slate-500 mt-0.5">
+                            <p className="text-[12px] text-[#6B7280] mt-0.5">
                               Staff receives an email to set up their account
                               and sign in at /employee
                             </p>
@@ -3062,7 +3062,7 @@ export default function AdminPage() {
 
                     {/* Error */}
                     {addStaffError && (
-                      <div className="flex items-start gap-2.5 p-3.5 rounded-xl border border-red-100 bg-red-50">
+                      <div className="flex items-start gap-2.5 p-3.5 rounded-lg border border-red-100 bg-red-50">
                         <XCircle
                           size={15}
                           className="text-red-500 mt-0.5 shrink-0"
@@ -3076,7 +3076,7 @@ export default function AdminPage() {
                   {/* end scrollable body */}
 
                   {/* ── Sticky Footer ── */}
-                  <div className="flex items-center gap-3 px-6 py-4 border-t border-gray-100 shrink-0">
+                  <div className="flex items-center gap-3 px-6 py-4 border-t border-[#E7E5E4] shrink-0">
                     <button
                       type="button"
                       onClick={() => {
@@ -3213,7 +3213,7 @@ export default function AdminPage() {
             ref={serviceActionMenuRef}
             role="menu"
             aria-label={`${activeServiceAction.name} actions`}
-            className="fixed w-40 bg-white rounded-xl shadow-lg border border-[var(--border-default)] py-1 z-[79] overflow-hidden"
+            className="fixed w-40 bg-white rounded-lg shadow-lg border border-[var(--border-default)] py-1 z-[79] overflow-hidden"
             style={{
               top: serviceActionMenu.top,
               left: serviceActionMenu.left,

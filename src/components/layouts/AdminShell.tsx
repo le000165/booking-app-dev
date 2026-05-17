@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { CalendarDays, Clock3, LogOut, Settings, Users } from 'lucide-react';
+import { CalendarDays, Clock3, LogOut, Menu, Settings, Users, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 const DESKTOP_NAV = [
@@ -12,14 +12,6 @@ const DESKTOP_NAV = [
   { href: '/admin?tab=availability', label: 'Availability', icon: Clock3, key: 'availability' },
   { href: '/admin?tab=services', label: 'Services', icon: Settings, key: 'services' },
   { href: '/admin?tab=staff', label: 'Staff', icon: Users, key: 'staff' },
-];
-
-const MOBILE_NAV = [
-  { href: '/admin?tab=appointments', label: 'Home', icon: CalendarDays, key: 'appointments' },
-  { href: '/admin?tab=appointments&view=calendar', label: 'Calendar', icon: CalendarDays, key: 'appointments-calendar' },
-  { href: '/admin?tab=staff', label: 'Staff', icon: Users, key: 'staff' },
-  { href: '/admin?tab=services', label: 'Services', icon: Settings, key: 'services' },
-  { href: '/admin?tab=availability', label: 'More', icon: Settings, key: 'availability' },
 ];
 
 type AdminSection = 'appointments' | 'availability' | 'services' | 'staff';
@@ -38,6 +30,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const supabase = createClient();
   const [businessName, setBusinessName] = useState('Dashboard');
   const [bookingPath, setBookingPath] = useState('/book');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const tabParam = searchParams.get('tab');
   const viewParam = searchParams.get('view');
 
@@ -46,6 +39,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     [pathname, tabParam]
   );
   const isCalendarView = currentSection === 'appointments' && viewParam === 'calendar';
+
   useEffect(() => {
     let cancelled = false;
 
@@ -88,54 +82,132 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     router.push('/login');
   };
 
-  return (
-    <div className="admin-shell">
-      <aside className="admin-sidebar hidden md:flex">
-        <div className="admin-brand">
-          <p className="admin-brand-eyebrow">DASHBOARD</p>
+  useEffect(() => {
+    if (!mobileSidebarOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileSidebarOpen(false);
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobileSidebarOpen]);
+
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [pathname, searchParams]);
+
+  const renderSidebarContent = (variant: 'desktop' | 'mobile') => (
+    <>
+      <div className="admin-sidebar-header">
+        <div className="admin-brand-mark" aria-hidden="true">
+          {businessName.charAt(0).toUpperCase()}
+        </div>
+        <div className="admin-brand-block">
+          <p className="admin-brand-eyebrow">Dashboard</p>
           <p className="admin-brand-title">{businessName}</p>
-          <Link href={bookingPath} className="admin-brand-link">
+          <Link
+            href={bookingPath}
+            className="admin-brand-link"
+            onClick={() => {
+              if (variant === 'mobile') setMobileSidebarOpen(false);
+            }}
+          >
             {bookingPath}
           </Link>
         </div>
-        <nav className="admin-nav">
-          {DESKTOP_NAV.map(item => {
-            const Icon = item.icon;
-            const active = currentSection === item.key;
-            return (
-              <Link key={item.href} href={item.href} className={`admin-nav-item ${active ? 'active' : ''}`}>
-                <Icon size={20} />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="admin-sidebar-footer">
-          <button type="button" onClick={handleSignOut} className="admin-nav-item admin-signout">
-            <LogOut size={20} />
-            <span>Sign out</span>
+        {variant === 'mobile' && (
+          <button
+            type="button"
+            onClick={() => setMobileSidebarOpen(false)}
+            className="admin-sidebar-close"
+            aria-label="Close navigation"
+          >
+            <X size={18} />
           </button>
-        </div>
-      </aside>
-
-      <div className={`admin-main ${isCalendarView ? 'admin-main-calendar' : ''}`}>
-        {children}
+        )}
       </div>
 
-      <nav className="admin-mobile-nav md:hidden">
-        {MOBILE_NAV.map(item => {
+      <nav className="admin-nav" aria-label="Admin navigation">
+        {DESKTOP_NAV.map(item => {
           const Icon = item.icon;
-          const active = item.key === 'appointments-calendar'
-            ? currentSection === 'appointments' && viewParam === 'calendar'
-            : currentSection === item.key;
+          const active = currentSection === item.key;
           return (
-            <Link key={item.href} href={item.href} className={`admin-mobile-item ${active ? 'active' : ''}`}>
-              <Icon size={17} />
-              <span>{item.label}</span>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`admin-nav-item ${active ? 'active' : ''}`}
+              title={item.label}
+              aria-current={active ? 'page' : undefined}
+              onClick={() => {
+                if (variant === 'mobile') setMobileSidebarOpen(false);
+              }}
+            >
+              <Icon size={20} />
+              <span className="admin-nav-label">{item.label}</span>
             </Link>
           );
         })}
       </nav>
+
+      <div className="admin-sidebar-footer">
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="admin-nav-item admin-signout"
+          title="Sign out"
+        >
+          <LogOut size={20} />
+          <span className="admin-nav-label">Sign out</span>
+        </button>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="admin-shell">
+      <aside className="admin-sidebar admin-sidebar-desktop hidden md:flex">
+        {renderSidebarContent('desktop')}
+      </aside>
+
+      {mobileSidebarOpen && (
+        <button
+          type="button"
+          className="admin-sidebar-backdrop md:hidden"
+          aria-label="Close navigation"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`admin-sidebar admin-sidebar-mobile md:hidden ${
+          mobileSidebarOpen ? 'is-open' : ''
+        }`}
+        aria-hidden={!mobileSidebarOpen}
+      >
+        {renderSidebarContent('mobile')}
+      </aside>
+
+      <div className={`admin-main ${isCalendarView ? 'admin-main-calendar' : ''}`}>
+        <div className="admin-mobile-topbar md:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileSidebarOpen(true)}
+            className="admin-mobile-menu-btn"
+            aria-label="Open navigation"
+            aria-expanded={mobileSidebarOpen}
+          >
+            <Menu size={19} />
+          </button>
+        </div>
+        {children}
+      </div>
     </div>
   );
 }
