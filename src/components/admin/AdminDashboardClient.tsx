@@ -1223,6 +1223,23 @@ export default function AdminPage() {
     }
   }, [businessId]);
 
+  const refreshAppointmentData = useCallback(async () => {
+    if (!businessId) return;
+
+    const results = await Promise.allSettled([
+      loadAppointments(),
+      loadCalendarAppts(),
+      loadStats(),
+    ]);
+
+    results.forEach((result, index) => {
+      if (result.status === "rejected") {
+        const label = ["appointments", "calendar", "stats"][index] ?? "appointment data";
+        console.error(`[ADMIN][REFRESH] Failed to refresh ${label}:`, result.reason);
+      }
+    });
+  }, [businessId, loadAppointments, loadCalendarAppts, loadStats]);
+
   // ── Auth ──
   useEffect(() => {
     async function resolveAuth() {
@@ -1319,15 +1336,25 @@ export default function AdminPage() {
       return;
     setUpdatingId(id);
     try {
-      await fetch(`/api/appointments/${id}`, {
+      const res = await fetch(`/api/appointments/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to update appointment status");
+      }
       setAppointments((prev) =>
         prev.map((a) => (a.id === id ? { ...a, status } : a)),
       );
+      setCalAppts((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, status } : a)),
+      );
       setExpandedId(null);
+      await refreshAppointmentData();
+    } catch (err: any) {
+      alert(err.message || "Failed to update appointment status");
     } finally {
       setUpdatingId(null);
     }
@@ -1463,11 +1490,7 @@ export default function AdminPage() {
 
       setEditAppt(null);
       setApptEditorOpen(false);
-      if (apptView === "calendar") {
-        await loadCalendarAppts();
-      } else {
-        await loadAppointments();
-      }
+      await refreshAppointmentData();
     } catch (err: any) {
       alert(err.message);
     } finally {

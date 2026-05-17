@@ -223,27 +223,29 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
               {item.children && (
                 <div
-                  className={`admin-nav-children ${isExpanded ? 'is-open' : ''}`}
+                  className={`admin-nav-children ${isExpanded ? 'is-open' : 'is-closed'}`}
                   id={childrenId}
                   aria-hidden={!isExpanded}
                 >
-                  {item.children.map(child => {
-                    const childActive = currentAppointmentSection === child.key;
-                    return (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        className={`admin-nav-subitem ${childActive ? 'active' : ''}`}
-                        aria-current={childActive ? 'page' : undefined}
-                        tabIndex={isExpanded ? 0 : -1}
-                        onClick={() => {
-                          if (variant === 'mobile') setMobileSidebarOpen(false);
-                        }}
-                      >
-                        <span className="admin-nav-label">{child.label}</span>
-                      </Link>
-                    );
-                  })}
+                  <div className="admin-nav-children-inner">
+                    {item.children.map(child => {
+                      const childActive = currentAppointmentSection === child.key;
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className={`admin-nav-subitem ${childActive ? 'active' : ''}`}
+                          aria-current={childActive ? 'page' : undefined}
+                          tabIndex={isExpanded ? 0 : -1}
+                          onClick={() => {
+                            if (variant === 'mobile') setMobileSidebarOpen(false);
+                          }}
+                        >
+                          <span className="admin-nav-label">{child.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
