@@ -1186,7 +1186,6 @@ export default function AdminPage() {
       </div>
     );
 
-  const isCalendarWorkspace = tab === "appointments" && apptView === "calendar";
   const activeServiceAction = serviceActionMenu
     ? services.find((svc) => svc.id === serviceActionMenu.serviceId)
     : null;
@@ -1194,11 +1193,7 @@ export default function AdminPage() {
     typeof document !== "undefined" ? document.body : null;
 
   return (
-    <div
-      className={`min-h-full bg-white ${
-        isCalendarWorkspace ? "md:h-full md:min-h-0 md:overflow-hidden" : ""
-      }`}
-    >
+    <div className="min-h-full bg-white md:h-full">
       {/* Appointment Edit Modal */}
       {apptEditorOpen && (
         <ResponsiveModal
@@ -1600,107 +1595,120 @@ export default function AdminPage() {
       <main className="flex min-h-full w-full flex-col md:h-full md:min-h-0">
         {/* ── APPOINTMENTS ── */}
         {tab === "appointments" && (
-          <div
-            className={`slide-up flex min-h-full flex-1 flex-col md:min-h-0 ${
-              apptView === "calendar"
-                ? "bg-white md:h-full md:min-h-0 md:overflow-hidden"
-                : "gap-4 bg-transparent"
-            }`}
-          >
+          <div className="slide-up flex min-h-full flex-1 flex-col gap-4 bg-transparent md:min-h-0">
             {apptView === "calendar" ? (
-              <>
-                <div className="shrink-0 border-b border-[#E7E5E4] bg-white py-3.5">
-                  <div className="flex w-full flex-wrap items-center justify-between gap-4 px-4 md:px-5">
-                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
-                      <div className="flex shrink-0 items-center rounded-lg border border-[#E7E5E4] bg-white p-0.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-                        <button
-                          onClick={showAppointmentList}
-                          className="rounded-md px-3.5 py-1.5 text-[13px] font-medium text-[#6B7280] transition-colors hover:text-[#111827]"
-                        >
-                          List
-                        </button>
-                        <button
-                          onClick={showAppointmentCalendar}
-                          className="rounded-md bg-[#111827] px-3.5 py-1.5 text-[13px] font-medium text-white transition-colors"
-                        >
-                          Calendar
-                        </button>
-                      </div>
-
-                      <div className="flex shrink-0 items-center gap-2">
-                        <button
-                          onClick={prevPeriod}
-                          className="grid h-9 w-9 place-items-center rounded-lg border border-[#E7E5E4] bg-white text-[#6B7280] hover:bg-[#F5F5F3] transition-colors"
-                        >
-                          <ChevronLeft size={16} />
-                        </button>
-                        <button
-                          onClick={goToday}
-                          className="min-h-9 min-w-[132px] rounded-lg border border-[#E7E5E4] bg-white px-4 py-1.5 text-[13px] font-medium text-[#111827] shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:bg-[#F5F5F3] transition-colors"
-                        >
-                          {calLabel}
-                        </button>
-                        <button
-                          onClick={nextPeriod}
-                          className="grid h-9 w-9 place-items-center rounded-lg border border-[#E7E5E4] bg-white text-[#6B7280] hover:bg-[#F5F5F3] transition-colors"
-                        >
-                          <ChevronRight size={16} />
-                        </button>
-                      </div>
-
-                      <div className="flex min-w-0 flex-wrap items-center gap-2">
-                        <SquareSelect
-                          label="Range"
-                          value={calendarView}
-                          onChange={(value) =>
-                            setCalendarView(value as CalendarView)
-                          }
-                          options={CALENDAR_VIEW_OPTIONS}
-                          className="w-[154px]"
-                          triggerClassName="min-h-9 rounded-lg py-1.5 shadow-none"
-                        />
-                        <SquareSelect
-                          label="View"
-                          value={calendarDisplayMode}
-                          onChange={(value) =>
-                            setCalendarDisplayMode(value as CalendarDisplayMode)
-                          }
-                          options={CALENDAR_DISPLAY_OPTIONS}
-                          className="w-[176px]"
-                          triggerClassName="min-h-9 rounded-lg py-1.5 shadow-none"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="ml-auto flex shrink-0 items-center gap-2">
+              <div className="flex min-h-0 w-full flex-1 flex-col gap-4 py-4 md:py-0">
+                <div className="flex shrink-0 flex-col gap-2 rounded-lg border border-[var(--border-default)] bg-white px-4 py-4 shadow-none">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center bg-[#F0EFED] rounded-lg p-0.5 shrink-0">
                       <button
-                        id="appt-settings-btn"
-                        onClick={() => {
-                          setPendingFilter((f) => ({
-                            ...f,
-                            staff: filterStaff,
-                            status: filterStatus,
-                            search: searchTerm,
-                          }));
-                          setShowFilterPanel(true);
-                        }}
-                        className="grid h-9 w-9 place-items-center rounded-lg border border-[#E7E5E4] bg-white text-[#6B7280] shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:bg-[#F5F5F3] transition-colors"
-                        title="Settings"
+                        onClick={showAppointmentList}
+                        className="px-3 py-1.5 rounded-md text-[13px] font-medium text-[#6B7280] hover:text-[#374151] transition-colors"
                       >
-                        <Settings size={16} />
+                        List
                       </button>
                       <button
-                        onClick={openApptCreate}
-                        className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-[#111827] px-4 py-1.5 text-[13px] font-semibold text-white hover:bg-[#111827] transition-colors"
+                        onClick={showAppointmentCalendar}
+                        className="px-3 py-1.5 rounded-md text-[13px] font-medium bg-white shadow-sm text-[#111827] transition-colors"
                       >
-                        <Plus size={15} />
-                        Create
+                        Calendar
                       </button>
                     </div>
+
+                    <button
+                      id="appt-settings-btn"
+                      onClick={() => {
+                        setPendingFilter((f) => ({
+                          ...f,
+                          staff: filterStaff,
+                          status: filterStatus,
+                          search: searchTerm,
+                        }));
+                        setShowFilterPanel(true);
+                      }}
+                      className={`flex items-center gap-1.5 h-9 px-3 rounded-lg border text-[13px] font-medium transition-colors ${
+                        filterStaff || filterStatus !== "all" || searchTerm
+                          ? "border-[#111827] bg-[#111827] text-white"
+                          : "border-[#E7E5E4] bg-white text-[#374151] hover:bg-[#F5F5F3] hover:border-[#D4D2CF]"
+                      }`}
+                      title="Appointment attributes"
+                    >
+                      <Settings size={15} />
+                      <span className="hidden sm:inline">Settings</span>
+                      {(filterStaff ||
+                        filterStatus !== "all" ||
+                        searchTerm) && (
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white text-[#111827] text-[10px] font-bold leading-none">
+                          {
+                            [
+                              filterStaff,
+                              filterStatus !== "all",
+                              !!searchTerm,
+                            ].filter(Boolean).length
+                          }
+                        </span>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    <button
+                      onClick={prevPeriod}
+                      className="p-1.5 rounded-lg border border-[#E7E5E4] hover:bg-[#F5F5F3] transition-colors"
+                    >
+                      <ChevronLeft size={15} className="text-[#6B7280]" />
+                    </button>
+                    <button
+                      onClick={goToday}
+                      className="px-2.5 h-8 rounded-lg border border-[#E7E5E4] text-[13px] font-medium text-[#374151] hover:bg-[#F5F5F3] transition-colors"
+                    >
+                      Today
+                    </button>
+                    <button
+                      onClick={nextPeriod}
+                      className="p-1.5 rounded-lg border border-[#E7E5E4] hover:bg-[#F5F5F3] transition-colors"
+                    >
+                      <ChevronRight size={15} className="text-[#6B7280]" />
+                    </button>
+                    <span className="text-[14px] font-medium text-[#374151] hidden sm:block">
+                      {calLabel}
+                    </span>
+                    <SquareSelect
+                      label="Range"
+                      value={calendarView}
+                      onChange={(value) =>
+                        setCalendarView(value as CalendarView)
+                      }
+                      options={CALENDAR_VIEW_OPTIONS}
+                      className="w-[145px] shrink-0"
+                    />
+                    <SquareSelect
+                      label="View"
+                      value={calendarDisplayMode}
+                      onChange={(value) =>
+                        setCalendarDisplayMode(value as CalendarDisplayMode)
+                      }
+                      options={CALENDAR_DISPLAY_OPTIONS}
+                      className="w-[170px] shrink-0"
+                    />
+                    <button
+                      className="p-1.5 rounded-lg border border-[#E7E5E4] hover:bg-[#F5F5F3] transition-colors text-[#6B7280]"
+                      onClick={loadCalendarAppts}
+                      title="Refresh"
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                    <button
+                      onClick={openApptCreate}
+                      className="ml-auto inline-flex h-8 shrink-0 items-center gap-2 rounded-lg bg-[#111827] px-3 text-[13px] font-semibold text-white hover:bg-[#111827] transition-colors"
+                    >
+                      <Plus size={14} />
+                      Create
+                    </button>
                   </div>
                 </div>
 
-                <div className="min-h-0 flex-1 overflow-hidden bg-white">
+                <div className="h-[620px] min-h-0 overflow-hidden rounded-lg border border-[var(--border-default)] bg-white md:h-auto md:flex-1">
                   {onlyMeMissingTeamMember ? (
                     <div className="flex h-full items-center justify-center py-24 text-center">
                       <div className="max-w-sm">
@@ -1748,9 +1756,9 @@ export default function AdminPage() {
                     />
                   )}
                 </div>
-              </>
+              </div>
             ) : (
-              <div className="w-full space-y-4 py-4 md:py-0">
+              <div className="flex w-full flex-col gap-4 py-4 md:py-0">
                 {/* ── Public Booking Link Card ── */}
                 {businessSlug && bookingUrl && (
                   <div className="flex flex-col gap-4 rounded-lg border border-[var(--border-default)] bg-white px-4 py-4 shadow-none sm:flex-row sm:items-center">

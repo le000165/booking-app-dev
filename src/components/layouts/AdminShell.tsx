@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -30,7 +30,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const supabase = createClient();
   const [businessName, setBusinessName] = useState('Dashboard');
   const [bookingPath, setBookingPath] = useState('/book');
+  const [desktopSidebarExpanded, setDesktopSidebarExpanded] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tabParam = searchParams.get('tab');
   const viewParam = searchParams.get('view');
 
@@ -38,7 +40,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     () => getCurrentSection(pathname, tabParam),
     [pathname, tabParam]
   );
-  const isCalendarView = currentSection === 'appointments' && viewParam === 'calendar';
 
   useEffect(() => {
     let cancelled = false;
@@ -81,6 +82,34 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     await supabase.auth.signOut();
     router.push('/login');
   };
+
+  const clearDesktopCollapseTimer = () => {
+    if (collapseTimerRef.current) {
+      clearTimeout(collapseTimerRef.current);
+      collapseTimerRef.current = null;
+    }
+  };
+
+  const handleDesktopSidebarEnter = () => {
+    clearDesktopCollapseTimer();
+    setDesktopSidebarExpanded(true);
+  };
+
+  const handleDesktopSidebarLeave = () => {
+    clearDesktopCollapseTimer();
+    collapseTimerRef.current = setTimeout(() => {
+      setDesktopSidebarExpanded(false);
+      collapseTimerRef.current = null;
+    }, 140);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (collapseTimerRef.current) {
+        clearTimeout(collapseTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!mobileSidebarOpen) return;
@@ -172,7 +201,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="admin-shell">
-      <aside className="admin-sidebar admin-sidebar-desktop hidden md:flex">
+      <aside
+        className={`admin-sidebar admin-sidebar-desktop hidden md:flex ${
+          desktopSidebarExpanded ? 'is-expanded' : ''
+        }`}
+        onMouseEnter={handleDesktopSidebarEnter}
+        onMouseLeave={handleDesktopSidebarLeave}
+      >
         {renderSidebarContent('desktop')}
       </aside>
 
@@ -194,7 +229,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         {renderSidebarContent('mobile')}
       </aside>
 
-      <div className={`admin-main ${isCalendarView ? 'admin-main-calendar' : ''}`}>
+      <div className="admin-main">
         <div className="admin-mobile-topbar md:hidden">
           <button
             type="button"

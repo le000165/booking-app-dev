@@ -234,6 +234,10 @@ export default function WeekCalendar({
     () => Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i),
     []
   );
+  const timeSlotHours = useMemo(
+    () => Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i),
+    []
+  );
   const halfHours = useMemo(
     () => Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i + 0.5),
     []
@@ -314,7 +318,7 @@ export default function WeekCalendar({
     return Math.max(15, (end - start) / 60000) * (HOUR_HEIGHT / 60);
   }
 
-  const gridHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET + 40;
+  const gridHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET;
   const gridMinWidth = Math.max(640, TIME_COLUMN_WIDTH + visibleDays.length * 180);
   const sideBySideLanes = [...sideBySideStaff, ...(hasUnassigned ? [{ id: '__unassigned__', first_name: 'Unassigned', last_name: '' }] : [])];
   const sideBySideMinWidth = Math.max(780, TIME_COLUMN_WIDTH + visibleDays.length * Math.max(220, sideBySideLanes.length * 120));
@@ -492,10 +496,10 @@ export default function WeekCalendar({
                     })}
                   </div>
 
-                  <div ref={sideBySideScrollRef} className="min-h-0 flex-1 overflow-y-auto pb-8">
+                  <div ref={sideBySideScrollRef} className="min-h-0 flex-1 overflow-y-auto">
                     <div className="flex">
-                      <div className="sticky left-0 z-10 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH, height: gridHeight }}>
-                        {hours.map(h => (
+                      <div className="sticky left-0 z-10 shrink-0 border-b bg-white" style={{ width: TIME_COLUMN_WIDTH, height: gridHeight, borderColor: GRID_BORDER }}>
+                        {timeSlotHours.map(h => (
                           <div
                             key={h}
                             className="absolute left-0 right-0 flex items-start justify-end border-t pr-2.5"
@@ -517,7 +521,7 @@ export default function WeekCalendar({
                         return (
                           <div
                             key={dayIdx}
-                            className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-[#EFF6FF]/30' : 'bg-white'}`}
+                            className={`relative flex-1 min-w-0 border-b border-l ${isToday ? 'bg-[#EFF6FF]/30' : 'bg-white'}`}
                             style={{ height: gridHeight, borderColor: GRID_BORDER }}
                           >
                             <div className="flex h-full">
@@ -587,10 +591,10 @@ export default function WeekCalendar({
                   </div>
                 )}
 
-                <div ref={scheduleScrollRef} className="min-h-0 flex-1 overflow-y-auto pb-8">
+                <div ref={scheduleScrollRef} className="min-h-0 flex-1 overflow-y-auto">
                   <div className="flex">
-                    <div className="sticky left-0 z-10 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH, height: gridHeight }}>
-                      {hours.map(h => (
+                    <div className="sticky left-0 z-10 shrink-0 border-b bg-white" style={{ width: TIME_COLUMN_WIDTH, height: gridHeight, borderColor: GRID_BORDER }}>
+                      {timeSlotHours.map(h => (
                         <div
                           key={h}
                           className="absolute left-0 right-0 flex items-start justify-end border-t pr-2.5"
@@ -612,7 +616,7 @@ export default function WeekCalendar({
                       return (
                         <div
                           key={dayIdx}
-                          className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-[#EFF6FF]/30' : 'bg-white'}`}
+                          className={`relative flex-1 min-w-0 border-b border-l ${isToday ? 'bg-[#EFF6FF]/30' : 'bg-white'}`}
                           style={{ height: gridHeight, borderColor: GRID_BORDER }}
                         >
                           {halfHours.map(h => (
