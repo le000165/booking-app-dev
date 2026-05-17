@@ -43,6 +43,7 @@ const SLOT_HEIGHT = 22;
 const HOUR_HEIGHT = SLOT_HEIGHT * (60 / MINUTES_PER_SLOT);
 const GRID_OFFSET = 8;
 const TIME_COLUMN_WIDTH = 62;
+const DATE_HEADER_HEIGHT = 28;
 const DEFAULT_SCROLL_HOUR = 6;
 const GRID_BORDER = '#E7E5E4';
 const GRID_MINOR_BORDER = '#F0EFED';
@@ -318,24 +319,8 @@ export default function WeekCalendar({
   const sideBySideStaff = useMemo(() => {
     if (displayMode !== 'sideBySide') return [];
 
-    const map = new Map<string, { id: string; first_name: string; last_name: string }>();
-    staffMembers.forEach(staff => {
-      if (!map.has(staff.id)) map.set(staff.id, staff);
-    });
-
-    appointments.forEach(appt => {
-      if (appt.staff && !map.has(appt.staff.id)) {
-        map.set(appt.staff.id, appt.staff);
-      }
-    });
-
-    return Array.from(map.values());
-  }, [appointments, displayMode, staffMembers]);
-
-  const hasUnassigned = useMemo(
-    () => displayMode === 'sideBySide' && appointments.some(appt => !appt.assigned_employee_id),
-    [appointments, displayMode]
-  );
+    return staffMembers;
+  }, [displayMode, staffMembers]);
 
   function apptTop(appt: Appointment): number {
     const d = new Date(appt.start_time);
@@ -385,8 +370,8 @@ export default function WeekCalendar({
   }
 
   const gridHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT + GRID_OFFSET;
-  const gridMinWidth = Math.max(640, TIME_COLUMN_WIDTH + visibleDays.length * 180);
-  const sideBySideLanes = [...sideBySideStaff, ...(hasUnassigned ? [{ id: '__unassigned__', first_name: 'Unassigned', last_name: '' }] : [])];
+  const gridMinWidth = Math.max(720, TIME_COLUMN_WIDTH + visibleDays.length * 180);
+  const sideBySideLanes = sideBySideStaff;
   const sideBySideMinWidth = Math.max(780, TIME_COLUMN_WIDTH + visibleDays.length * Math.max(220, sideBySideLanes.length * 120));
   const isMonthView = view === 'month';
   const monthMonth = startOfMonth(anchorDate);
@@ -434,18 +419,29 @@ export default function WeekCalendar({
           {showDayStrip ? dayStrip : null}
 
           {displayMode === 'sideBySide' ? (
-            <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden bg-white">
-              {sideBySideLanes.length === 0 ? (
-                <div className="flex h-full items-center justify-center px-6 py-20 text-center">
-                  <div className="max-w-sm">
-                    <p className="text-[16px] font-semibold text-[#111827]">No staff members found</p>
-                    <p className="mt-1 text-[13px] text-[#6B7280]">Add staff members to use the side-by-side schedule view.</p>
-                  </div>
+            sideBySideLanes.length === 0 ? (
+              <div className="flex min-h-0 flex-1 items-center justify-center px-6 py-20 text-center">
+                <div className="max-w-sm">
+                  <p className="text-[16px] font-semibold text-[#111827]">No staff members found</p>
+                  <p className="mt-1 text-[13px] text-[#6B7280]">Add staff members to use the side-by-side schedule view.</p>
                 </div>
-              ) : (
-                <div className="flex h-full min-h-0 flex-col" style={{ minWidth: sideBySideMinWidth }}>
+              </div>
+            ) : (
+              /* Single unified scroll container — owns both X and Y scroll.
+                 Sticky headers use top/left positioning independently within this container,
+                 avoiding the iOS overflow-y:hidden child-scroll-blocking bug. */
+              <div
+                ref={sideBySideScrollRef}
+                className="cal-scroll min-h-0 flex-1 bg-white"
+                style={{
+                  overflow: 'auto',
+                  touchAction: 'pan-x pan-y',
+                  overscrollBehavior: 'contain',
+                }}
+              >
+                <div style={{ minWidth: sideBySideMinWidth }}>
                   {view !== 'day' && (
-                    <div className="z-20 flex shrink-0 border-b border-[#d8dde3] bg-white">
+                    <div className="sticky top-0 z-20 flex shrink-0 border-b border-[#d8dde3] bg-white">
                       <div className="sticky left-0 z-30 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH }} />
                       {visibleDays.map((day, i) => {
                         const isToday = visibleDayKeys[i] === todayKey;
@@ -463,155 +459,37 @@ export default function WeekCalendar({
                     </div>
                   )}
 
-                  <div className="z-20 flex shrink-0 border-b border-[#d8dde3] bg-white">
+                  <div
+                    className="sticky z-20 flex shrink-0 border-b border-[#d8dde3] bg-white"
+                    style={{ top: view !== 'day' ? DATE_HEADER_HEIGHT : 0 }}
+                  >
                     <div className="sticky left-0 z-30 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH }} />
-                    {visibleDays.map((day, dayIdx) => {
-                      const isToday = visibleDayKeys[dayIdx] === todayKey;
-                      return (
+                    {visibleDays.map((day, dayIdx) => (
+                      <div
+                        key={dayIdx}
+                        className="min-w-0 flex-1 border-l bg-white"
+                        style={{ borderColor: GRID_BORDER }}
+                      >
                         <div
-                          key={dayIdx}
-                          className="min-w-0 flex-1 border-l bg-white"
-                          style={{ borderColor: GRID_BORDER }}
+                          className="grid text-center"
+                          style={{ gridTemplateColumns: `repeat(${sideBySideLanes.length}, minmax(0, 1fr))` }}
                         >
-                          <div
-                            className="grid text-center"
-                            style={{ gridTemplateColumns: `repeat(${sideBySideLanes.length}, minmax(0, 1fr))` }}
-                          >
-                            {sideBySideLanes.map(lane => (
-                                <div key={lane.id} className="min-w-0 border-l px-3 py-2 text-[14px] font-semibold text-[#111827] first:border-l-0" style={{ borderColor: GRID_BORDER }}>
-                                  <p className="truncate whitespace-nowrap">
-                                    {lane.id === '__unassigned__' ? 'Unassigned' : `${lane.first_name} ${lane.last_name}`}
-                                  </p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div ref={sideBySideScrollRef} className="min-h-0 flex-1 overflow-y-auto">
-                    <div className="flex">
-                      <div className="sticky left-0 z-10 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH, height: gridHeight }}>
-                        {quarterHours.map(h => (
-                          <div
-                            key={h}
-                            className="absolute left-0 right-0 border-t"
-                            style={{ top: minutesToGridTop(h * 60), borderColor: GRID_SUBDIVISION_BORDER }}
-                          />
-                        ))}
-                        {halfHours.map(h => (
-                          <div
-                            key={h}
-                            className="absolute left-0 right-0 border-t"
-                            style={{ top: minutesToGridTop(h * 60), borderColor: GRID_MINOR_BORDER }}
-                          />
-                        ))}
-                        {timeSlotHours.map(h => (
-                          <div
-                            key={h}
-                            className="absolute left-0 right-0 flex items-start justify-end border-t pr-2.5"
-                            style={{ top: minutesToGridTop(h * 60), height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
-                          >
-                            <span className="translate-y-[6px]">
-                              <span className="inline-block bg-white px-1 text-[13px] font-medium leading-none text-[#9CA3AF]">
-                                {formatHour(h)}
-                              </span>
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {visibleDays.map((day, dayIdx) => {
-                        const isToday = visibleDayKeys[dayIdx] === todayKey;
-                        const dayAppts = apptsByDay[dayIdx] || [];
-
-                        return (
-                          <div
-                            key={dayIdx}
-                            className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-[#EFF6FF]/30' : 'bg-white'}`}
-                            style={{ height: gridHeight, borderColor: GRID_BORDER }}
-                          >
-                            {renderClosedHours(day)}
-                            <div className="flex h-full">
-                              {sideBySideLanes.map((lane, laneIdx) => {
-                                const laneAppointments = dayAppts.filter(appt => {
-                                  if (lane.id === '__unassigned__') return !appt.assigned_employee_id;
-                                  return appt.assigned_employee_id === lane.id;
-                                });
-
-                                return (
-                                  <div
-                                    key={lane.id}
-                                    className="relative min-w-0 flex-1 border-l first:border-l-0"
-                                    style={{ borderColor: GRID_BORDER }}
-                                  >
-                                    {quarterHours.map(h => (
-                                      <div
-                                        key={h}
-                                        className="absolute left-0 right-0 border-t"
-                                        style={{ top: minutesToGridTop(h * 60), borderColor: GRID_SUBDIVISION_BORDER }}
-                                      />
-                                    ))}
-                                    {halfHours.map(h => (
-                                      <div
-                                        key={h}
-                                        className="absolute left-0 right-0 border-t"
-                                        style={{ top: minutesToGridTop(h * 60), borderColor: GRID_MINOR_BORDER }}
-                                      />
-                                    ))}
-                                    {timeSlotHours.map(h => (
-                                      <div
-                                        key={h}
-                                        className="absolute left-0 right-0 border-t"
-                                        style={{ top: minutesToGridTop(h * 60), borderColor: GRID_BORDER }}
-                                      />
-                                    ))}
-
-                                    {laneAppointments.map(appt => {
-                                      const top = apptTop(appt);
-                                      const height = Math.max(apptHeight(appt), 34);
-                                      return renderTimedAppointmentCard(appt, top, height, onAppointmentClick);
-                                    })}
-                                  </div>
-                                );
-                              })}
+                          {sideBySideLanes.map(lane => (
+                            <div
+                              key={lane.id}
+                              className="min-w-0 border-l px-3 py-2 text-[14px] font-semibold text-[#111827] first:border-l-0"
+                              style={{ borderColor: GRID_BORDER }}
+                            >
+                              <p className="truncate whitespace-nowrap">
+                                {lane.id === '__unassigned__' ? 'Unassigned' : `${lane.first_name} ${lane.last_name}`}
+                              </p>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-          <div
-              ref={scheduleScrollRef}
-              className="min-h-0 flex-1 overflow-auto bg-white"
-              style={{ touchAction: 'pan-x pan-y' }}
-            >
-              <div className="flex min-h-0 flex-col" style={{ minWidth: gridMinWidth }}>
-                {view !== 'day' && (
-                  <div className="sticky top-0 z-20 flex border-b border-[#d8dde3] bg-white">
-                    <div className="sticky left-0 z-30 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH }} />
-                    {visibleDays.map((day, i) => {
-                      const isToday = visibleDayKeys[i] === todayKey;
-                      return (
-                        <div
-                          key={i}
-                          className="flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-1.5 text-center bg-white"
-                        >
-                          <p className={`text-[13px] font-semibold leading-none ${isToday ? 'text-[#111827]' : 'text-[#6B7280]'}`}>
-                            {DAY_NAMES[day.getDay()]} {String(day.getMonth() + 1).padStart(2, '0')}/{String(day.getDate()).padStart(2, '0')}
-                          </p>
+                          ))}
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
-                )}
 
-                <div ref={scheduleScrollRef} className="min-h-0 flex-1 overflow-y-auto">
                   <div className="flex">
                     <div className="sticky left-0 z-10 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH, height: gridHeight }}>
                       {quarterHours.map(h => (
@@ -643,8 +521,8 @@ export default function WeekCalendar({
                       ))}
                     </div>
 
-                    {visibleDays.map((_, dayIdx) => {
-                      const isToday  = visibleDayKeys[dayIdx] === todayKey;
+                    {visibleDays.map((day, dayIdx) => {
+                      const isToday = visibleDayKeys[dayIdx] === todayKey;
                       const dayAppts = apptsByDay[dayIdx] || [];
 
                       return (
@@ -653,41 +531,167 @@ export default function WeekCalendar({
                           className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-[#EFF6FF]/30' : 'bg-white'}`}
                           style={{ height: gridHeight, borderColor: GRID_BORDER }}
                         >
-                          {renderClosedHours(visibleDays[dayIdx])}
-                          {quarterHours.map(h => (
-                            <div
-                              key={h}
-                              className="absolute left-0 right-0 border-t"
-                              style={{ top: minutesToGridTop(h * 60), borderColor: GRID_SUBDIVISION_BORDER }}
-                            />
-                          ))}
-                          {halfHours.map(h => (
-                            <div
-                              key={h}
-                              className="absolute left-0 right-0 border-t"
-                              style={{ top: minutesToGridTop(h * 60), borderColor: GRID_MINOR_BORDER }}
-                            />
-                          ))}
-                          {timeSlotHours.map(h => (
-                            <div
-                              key={h}
-                              className="absolute left-0 right-0 border-t"
-                              style={{ top: minutesToGridTop(h * 60), borderColor: GRID_BORDER }}
-                            />
-                          ))}
+                          {renderClosedHours(day)}
+                          <div className="flex h-full">
+                            {sideBySideLanes.map((lane) => {
+                              const laneAppointments = dayAppts.filter(appt => appt.assigned_employee_id === lane.id);
 
-                          {dayAppts.map(appt => {
-                            const top        = apptTop(appt);
-                            const height     = Math.max(apptHeight(appt), 34);
-                            return renderTimedAppointmentCard(appt, top, height, onAppointmentClick);
-                          })}
+                              return (
+                                <div
+                                  key={lane.id}
+                                  className="relative min-w-0 flex-1 border-l first:border-l-0"
+                                  style={{ borderColor: GRID_BORDER }}
+                                >
+                                  {quarterHours.map(h => (
+                                    <div
+                                      key={h}
+                                      className="absolute left-0 right-0 border-t"
+                                      style={{ top: minutesToGridTop(h * 60), borderColor: GRID_SUBDIVISION_BORDER }}
+                                    />
+                                  ))}
+                                  {halfHours.map(h => (
+                                    <div
+                                      key={h}
+                                      className="absolute left-0 right-0 border-t"
+                                      style={{ top: minutesToGridTop(h * 60), borderColor: GRID_MINOR_BORDER }}
+                                    />
+                                  ))}
+                                  {timeSlotHours.map(h => (
+                                    <div
+                                      key={h}
+                                      className="absolute left-0 right-0 border-t"
+                                      style={{ top: minutesToGridTop(h * 60), borderColor: GRID_BORDER }}
+                                    />
+                                  ))}
+
+                                  {laneAppointments.map(appt => {
+                                    const top = apptTop(appt);
+                                    const height = Math.max(apptHeight(appt), 34);
+                                    return renderTimedAppointmentCard(appt, top, height, onAppointmentClick);
+                                  })}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       );
                     })}
                   </div>
                 </div>
               </div>
+            )
+          ) : (
+          /* ── Combined / onlyMe: outer scrolls X, inner scrolls Y ─────────
+             A single overflow:auto container with position:sticky children
+             triggers an iOS Safari bug that locks scroll to one axis. We keep
+             two separate containers so each scroller owns one axis cleanly.
+             Both carry touch-action: pan-x pan-y so iOS routes each swipe to
+             the correct container without ambiguity. */
+          <div
+            className="min-h-0 flex-1 overflow-auto bg-white"
+            style={{ touchAction: 'pan-x pan-y' }}
+          >
+            <div className="flex min-h-0 flex-col" style={{ minWidth: gridMinWidth }}>
+              {view !== 'day' && (
+                <div className="sticky top-0 z-20 flex shrink-0 border-b border-[#d8dde3] bg-white">
+                  <div className="sticky left-0 z-30 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH }} />
+                  {visibleDays.map((day, i) => {
+                    const isToday = visibleDayKeys[i] === todayKey;
+                    return (
+                      <div
+                        key={i}
+                        className="flex-1 min-w-0 border-l border-[#d8dde3] px-2 py-1.5 text-center bg-white"
+                      >
+                        <p className={`text-[13px] font-semibold leading-none ${isToday ? 'text-[#111827]' : 'text-[#6B7280]'}`}>
+                          {DAY_NAMES[day.getDay()]} {String(day.getMonth() + 1).padStart(2, '0')}/{String(day.getDate()).padStart(2, '0')}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div
+                ref={scheduleScrollRef}
+                className="cal-scroll min-h-0 flex-1 overflow-y-auto"
+                style={{ touchAction: 'pan-x pan-y', overscrollBehavior: 'contain' }}
+              >
+                <div className="flex">
+                  <div className="sticky left-0 z-10 shrink-0 bg-white" style={{ width: TIME_COLUMN_WIDTH, height: gridHeight }}>
+                    {quarterHours.map(h => (
+                      <div
+                        key={h}
+                        className="absolute left-0 right-0 border-t"
+                        style={{ top: minutesToGridTop(h * 60), borderColor: GRID_SUBDIVISION_BORDER }}
+                      />
+                    ))}
+                    {halfHours.map(h => (
+                      <div
+                        key={h}
+                        className="absolute left-0 right-0 border-t"
+                        style={{ top: minutesToGridTop(h * 60), borderColor: GRID_MINOR_BORDER }}
+                      />
+                    ))}
+                    {timeSlotHours.map(h => (
+                      <div
+                        key={h}
+                        className="absolute left-0 right-0 flex items-start justify-end border-t pr-2.5"
+                        style={{ top: minutesToGridTop(h * 60), height: HOUR_HEIGHT, borderColor: GRID_BORDER }}
+                      >
+                        <span className="translate-y-[6px]">
+                          <span className="inline-block bg-white px-1 text-[13px] font-medium leading-none text-[#9CA3AF]">
+                            {formatHour(h)}
+                          </span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {visibleDays.map((_, dayIdx) => {
+                    const isToday  = visibleDayKeys[dayIdx] === todayKey;
+                    const dayAppts = apptsByDay[dayIdx] || [];
+
+                    return (
+                      <div
+                        key={dayIdx}
+                        className={`relative flex-1 min-w-0 border-l ${isToday ? 'bg-[#EFF6FF]/30' : 'bg-white'}`}
+                        style={{ height: gridHeight, borderColor: GRID_BORDER }}
+                      >
+                        {renderClosedHours(visibleDays[dayIdx])}
+                        {quarterHours.map(h => (
+                          <div
+                            key={h}
+                            className="absolute left-0 right-0 border-t"
+                            style={{ top: minutesToGridTop(h * 60), borderColor: GRID_SUBDIVISION_BORDER }}
+                          />
+                        ))}
+                        {halfHours.map(h => (
+                          <div
+                            key={h}
+                            className="absolute left-0 right-0 border-t"
+                            style={{ top: minutesToGridTop(h * 60), borderColor: GRID_MINOR_BORDER }}
+                          />
+                        ))}
+                        {timeSlotHours.map(h => (
+                          <div
+                            key={h}
+                            className="absolute left-0 right-0 border-t"
+                            style={{ top: minutesToGridTop(h * 60), borderColor: GRID_BORDER }}
+                          />
+                        ))}
+
+                        {dayAppts.map(appt => {
+                          const top    = apptTop(appt);
+                          const height = Math.max(apptHeight(appt), 34);
+                          return renderTimedAppointmentCard(appt, top, height, onAppointmentClick);
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
+          </div>
           )}
         </>
       )}

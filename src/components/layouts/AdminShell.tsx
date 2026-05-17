@@ -221,8 +221,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 </Link>
               )}
 
-              {item.children && isExpanded && (
-                <div className="admin-nav-children" id={childrenId}>
+              {item.children && (
+                <div
+                  className={`admin-nav-children ${isExpanded ? 'is-open' : ''}`}
+                  id={childrenId}
+                  aria-hidden={!isExpanded}
+                >
                   {item.children.map(child => {
                     const childActive = currentAppointmentSection === child.key;
                     return (
@@ -231,6 +235,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                         href={child.href}
                         className={`admin-nav-subitem ${childActive ? 'active' : ''}`}
                         aria-current={childActive ? 'page' : undefined}
+                        tabIndex={isExpanded ? 0 : -1}
                         onClick={() => {
                           if (variant === 'mobile') setMobileSidebarOpen(false);
                         }}

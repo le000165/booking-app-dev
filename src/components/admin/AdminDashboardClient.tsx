@@ -23,7 +23,6 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import WeekCalendar from "@/components/admin/WeekCalendar";
-import MobileAgenda from "@/components/admin/MobileAgenda";
 import SquareSelect from "@/components/ui/square-select";
 import ResponsiveModal from "@/components/ui/responsive-modal";
 
@@ -138,6 +137,11 @@ const CALENDAR_VIEW_OPTIONS: { value: CalendarView; label: string }[] = [
   { value: "month", label: "Month" },
 ];
 
+const MOBILE_CALENDAR_VIEW_OPTIONS: { value: CalendarView; label: string }[] = [
+  { value: "day", label: "Day" },
+  { value: "fiveDay", label: "5 days" },
+];
+
 const CALENDAR_DISPLAY_OPTIONS: {
   value: CalendarDisplayMode;
   label: string;
@@ -216,6 +220,473 @@ function getCalendarRange(view: CalendarView, anchorDate: Date) {
   return { start: startOfMonth(anchor), end: endOfMonth(anchor) };
 }
 
+function sameLocalDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function DesktopCalendarDatePicker({
+  label,
+  selectedDate,
+  onSelect,
+}: {
+  label: string;
+  selectedDate: Date;
+  onSelect: (date: Date) => void;
+}) {
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [open, setOpen] = useState(false);
+  const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(selectedDate));
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+
+  const calendarDays = useMemo(() => {
+    const first = startOfMonth(visibleMonth);
+    const start = addDays(first, -first.getDay());
+
+    return Array.from({ length: 42 }, (_, index) => addDays(start, index));
+  }, [visibleMonth]);
+
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current || typeof window === "undefined") return;
+
+    const rect = triggerRef.current.getBoundingClientRect();
+    const panelWidth = 280;
+    const margin = 12;
+    const left = Math.min(
+      Math.max(margin, rect.left),
+      Math.max(margin, window.innerWidth - panelWidth - margin),
+    );
+
+    setPosition({
+      top: rect.bottom + 8,
+      left,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    setVisibleMonth(startOfMonth(selectedDate));
+    updatePosition();
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (triggerRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    const handleScrollOrResize = () => updatePosition();
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", handleScrollOrResize);
+    window.addEventListener("scroll", handleScrollOrResize, true);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleScrollOrResize);
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+    };
+  }, [open, selectedDate, updatePosition]);
+
+  const selectDate = (date: Date) => {
+    onSelect(startOfLocalDay(date));
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  const panel = open
+    ? createPortal(
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-label="Choose calendar date"
+          className="fixed z-[80] w-[280px] rounded-[12px] border border-[var(--border-default)] bg-white p-3 shadow-[0_14px_32px_rgba(17,24,39,0.12)]"
+          style={{ top: position.top, left: position.left }}
+        >
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setVisibleMonth((date) => {
+                  const next = new Date(date);
+                  next.setMonth(next.getMonth() - 1);
+                  return startOfMonth(next);
+                });
+              }}
+              aria-label="Previous month"
+              className="admin-toolbar-nav-btn h-8 w-8 rounded-[8px] border border-[var(--border-default)] bg-white hover:bg-[var(--bg-hover)]"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <p className="text-[13px] font-semibold text-[var(--text-primary)]">
+              {MONTHS[visibleMonth.getMonth()]} {visibleMonth.getFullYear()}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setVisibleMonth((date) => {
+                  const next = new Date(date);
+                  next.setMonth(next.getMonth() + 1);
+                  return startOfMonth(next);
+                });
+              }}
+              aria-label="Next month"
+              className="admin-toolbar-nav-btn h-8 w-8 rounded-[8px] border border-[var(--border-default)] bg-white hover:bg-[var(--bg-hover)]"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 text-center">
+            {DAYS_SHORT.map((day) => (
+              <span key={day} className="py-1 text-[11px] font-medium text-[var(--text-muted)]">
+                {day}
+              </span>
+            ))}
+            {calendarDays.map((date) => {
+              const inMonth = date.getMonth() === visibleMonth.getMonth();
+              const isSelected = sameLocalDay(date, selectedDate);
+              const isToday = sameLocalDay(date, new Date());
+
+              return (
+                <button
+                  key={`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`}
+                  type="button"
+                  onClick={() => selectDate(date)}
+                  className={`flex h-9 items-center justify-center rounded-[8px] text-[13px] font-medium transition-colors ${
+                    isSelected
+                      ? "bg-[#111827] text-white"
+                      : inMonth
+                        ? "text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+                        : "text-[var(--text-muted)] hover:bg-[var(--bg-subtle)]"
+                  }`}
+                >
+                  <span className={isToday && !isSelected ? "border-b border-[var(--text-primary)]" : ""}>
+                    {date.getDate()}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>,
+        document.body,
+      )
+    : null;
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        className="calendar-web-toolbar-control calendar-web-toolbar-date shadow-none"
+      >
+        <span className="calendar-web-toolbar-label">Date</span>
+        <span className="calendar-web-toolbar-value max-w-[240px]">{label}</span>
+      </button>
+      {panel}
+    </>
+  );
+}
+
+type CalendarStaffMember = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  is_active?: boolean;
+};
+
+function DesktopStaffSelector({
+  staffMembers,
+  selectedStaffIds,
+  onChange,
+}: {
+  staffMembers: CalendarStaffMember[];
+  selectedStaffIds: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+
+  const normalizedStaff = useMemo(
+    () =>
+      staffMembers.map((staff) => ({
+        ...staff,
+        fullName: `${staff.first_name} ${staff.last_name}`.trim(),
+      })),
+    [staffMembers],
+  );
+
+  const allSelected = staffMembers.length > 0 && selectedStaffIds.length === staffMembers.length;
+  const selectedCount = selectedStaffIds.length;
+  const selectedStaff =
+    selectedCount === 1
+      ? normalizedStaff.find((staff) => staff.id === selectedStaffIds[0])
+      : null;
+  const displayLabel = allSelected
+    ? "All staff"
+    : selectedCount === 1
+      ? (selectedStaff?.first_name || selectedStaff?.fullName || "Sarah")
+      : `${selectedCount} selected`;
+
+  const filteredStaff = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (!term) return normalizedStaff;
+    return normalizedStaff.filter((staff) => staff.fullName.toLowerCase().includes(term));
+  }, [normalizedStaff, query]);
+
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current || typeof window === "undefined") return;
+
+    const rect = triggerRef.current.getBoundingClientRect();
+    const panelWidth = 332;
+    const margin = 12;
+    const left = Math.min(
+      Math.max(margin, rect.left),
+      Math.max(margin, window.innerWidth - panelWidth - margin),
+    );
+
+    setPosition({
+      top: rect.bottom + 8,
+      left,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      setQuery("");
+      return;
+    }
+
+    updatePosition();
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (triggerRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    const handleScrollOrResize = () => updatePosition();
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", handleScrollOrResize);
+    window.addEventListener("scroll", handleScrollOrResize, true);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleScrollOrResize);
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+    };
+  }, [open, updatePosition]);
+
+  const toggleSelected = (id: string) => {
+    onChange(
+      selectedStaffIds.includes(id)
+        ? selectedStaffIds.filter((currentId) => currentId !== id)
+        : [...selectedStaffIds, id],
+    );
+  };
+
+  const selectOnly = (id: string) => {
+    onChange([id]);
+  };
+
+  const panel = open
+    ? createPortal(
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-label="Choose staff members"
+          className="fixed z-[80] w-[332px] rounded-[12px] border border-[var(--border-default)] bg-white p-3 shadow-[0_14px_32px_rgba(17,24,39,0.12)]"
+          style={{ top: position.top, left: position.left }}
+        >
+          <div className="mb-2 flex items-center justify-start gap-1.5 border-b border-[var(--border-default)] pb-2">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => onChange(staffMembers.map((staff) => staff.id))}
+                className="rounded-[8px] border border-[var(--border-default)] bg-white px-2.5 py-1.5 text-[12px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+              >
+                Select all
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange([])}
+                className="rounded-[8px] border border-[var(--border-default)] bg-white px-2.5 py-1.5 text-[12px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search staff"
+              className="h-10 w-full rounded-[10px] border border-[var(--border-default)] bg-white px-3 text-[13px] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--border-strong)]"
+            />
+          </div>
+
+          <div className="max-h-[320px] overflow-auto pr-1">
+            <div className="space-y-1">
+              {filteredStaff.length === 0 ? (
+                <div className="px-2 py-6 text-center">
+                  <p className="text-[13px] text-[var(--text-secondary)]">No staff found.</p>
+                </div>
+              ) : (
+                filteredStaff.map((staff) => {
+                  const isSelected = selectedStaffIds.includes(staff.id);
+
+                  return (
+                    <div
+                      key={staff.id}
+                      className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[10px] px-2.5 py-2 hover:bg-[var(--bg-hover)] focus-within:bg-[var(--bg-hover)]"
+                    >
+                      <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelected(staff.id)}
+                          className="h-4 w-4 rounded border-[var(--border-strong)] text-[var(--text-primary)] focus:ring-[var(--text-primary)]"
+                        />
+                        <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-[var(--text-primary)]">
+                          {staff.fullName || "Unnamed staff"}
+                        </span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => selectOnly(staff.id)}
+                        className="inline-flex h-7 min-w-[40px] items-center justify-center justify-self-end rounded-none border-0 bg-transparent px-0 text-[11px] font-semibold text-[var(--text-secondary)] underline decoration-[1.5px] underline-offset-2 opacity-0 transition-[opacity,color,text-decoration-color] duration-150 ease-out group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 hover:text-[var(--text-primary)] focus-visible:text-[var(--text-primary)] focus-visible:outline-none"
+                        aria-label={`Only ${staff.fullName || "this staff member"}`}
+                      >
+                        Only
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )
+    : null;
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        className="calendar-web-toolbar-control calendar-web-toolbar-chip shadow-none"
+      >
+        <span className="calendar-web-toolbar-label">Staff</span>
+        {!allSelected && <span aria-hidden="true" className="text-[var(--text-muted)]">·</span>}
+        <span className="calendar-web-toolbar-value max-w-[120px]">{displayLabel}</span>
+      </button>
+      {panel}
+    </>
+  );
+}
+
+function MobileCalendarToolbar({
+  calLabel,
+  calendarDate,
+  onToday,
+  onPrev,
+  onNext,
+  onCreate,
+}: {
+  calLabel: string;
+  calendarDate: Date;
+  onToday: () => void;
+  onPrev: () => void;
+  onNext: () => void;
+  onCreate: () => void;
+}) {
+  const today = new Date();
+  const isTodaySelected =
+    calendarDate.getFullYear() === today.getFullYear() &&
+    calendarDate.getMonth() === today.getMonth() &&
+    calendarDate.getDate() === today.getDate();
+
+  return (
+    <div className="shrink-0 rounded-[12px] border border-[var(--border-default)] bg-white px-3 py-3 shadow-none">
+      {/* Row 1: selected date + Create */}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <p className="min-w-0 truncate text-[14px] font-semibold leading-5 text-[var(--text-primary)]">
+          {calLabel}
+        </p>
+        <button
+          type="button"
+          onClick={onCreate}
+          className="admin-toolbar-primary-btn h-11 shrink-0 px-4 text-[13px]"
+        >
+          Create
+        </button>
+      </div>
+
+      {/* Row 2: prev / today / next */}
+      <div className="mt-2 grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
+        <button
+          type="button"
+          onClick={onPrev}
+          aria-label="Previous day"
+          className="admin-toolbar-icon-btn !h-11 !w-11 !rounded-[10px] shrink-0 active:bg-[var(--bg-hover)]"
+        >
+          <ChevronLeft size={15} />
+        </button>
+        <button
+          type="button"
+          onClick={onToday}
+          aria-pressed={isTodaySelected}
+          className={`h-11 w-full rounded-[10px] border border-[var(--border-default)] px-3 text-[13px] font-medium leading-none transition-colors active:bg-[var(--bg-hover)] ${
+            isTodaySelected
+              ? 'bg-[var(--bg-hover)] text-[var(--text-primary)]'
+              : 'bg-white text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
+          }`}
+        >
+          Today
+        </button>
+        <button
+          type="button"
+          onClick={onNext}
+          aria-label="Next day"
+          className="admin-toolbar-icon-btn !h-11 !w-11 !rounded-[10px] shrink-0 active:bg-[var(--bg-hover)]"
+        >
+          <ChevronRight size={15} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function useIsMobile(breakpoint = 768): boolean {
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -283,23 +754,20 @@ export default function AdminPage() {
     startOfLocalDay(new Date()),
   );
 
-  // ── Mobile Agenda ──
+  // ── Mobile ──
   const isMobile = useIsMobile();
-  const [mobileAnchor, setMobileAnchor] = useState<Date>(() =>
-    startOfWeek(startOfLocalDay(new Date()))
-  );
-  const [mobileAppts, setMobileAppts] = useState<Appointment[]>([]);
-  const [mobileLoading, setMobileLoading] = useState(false);
-  const [mobileViewMode, setMobileViewMode] = useState<'calendar' | 'list'>('calendar');
+
+  // Mobile is locked to day view and sideBySide mode.
+  const effectiveCalendarView: CalendarView = isMobile ? "day" : calendarView;
 
   const calendarRange = useMemo(
-    () => getCalendarRange(calendarView, calendarDate),
-    [calendarView, calendarDate],
+    () => getCalendarRange(effectiveCalendarView, calendarDate),
+    [effectiveCalendarView, calendarDate],
   );
   const calLabel = useMemo(
     () =>
-      formatCalendarLabel(calendarView, calendarRange.start, calendarRange.end),
-    [calendarView, calendarRange.start, calendarRange.end],
+      formatCalendarLabel(effectiveCalendarView, calendarRange.start, calendarRange.end),
+    [effectiveCalendarView, calendarRange.start, calendarRange.end],
   );
 
   const prevPeriod = () => {
@@ -328,24 +796,13 @@ export default function AdminPage() {
     setCalendarDate(startOfLocalDay(new Date()));
   };
 
-  const mobileRange = useMemo(
-    () => ({ start: mobileAnchor, end: addDays(mobileAnchor, 6) }),
-    [mobileAnchor],
-  );
-  const mobileLabel = useMemo(
-    () => formatCalendarLabel("week", mobileRange.start, mobileRange.end),
-    [mobileRange.start, mobileRange.end],
-  );
-  const mobilePrev = () => setMobileAnchor((d) => addDays(d, -7));
-  const mobileNext = () => setMobileAnchor((d) => addDays(d, 7));
-  const mobileGoToday = () =>
-    setMobileAnchor(startOfWeek(startOfLocalDay(new Date())));
-
   // ── Filters ──
   const [dateRange, setDateRange] = useState({
     from: new Date().toISOString().split("T")[0],
     to: new Date().toISOString().split("T")[0],
   });
+  type DateRangePreset = "today" | "thisWeek";
+  const [dateRangePreset, setDateRangePreset] = useState<DateRangePreset>("today");
   const [filterStaff, setFilterStaff] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -400,6 +857,8 @@ export default function AdminPage() {
   const [allStaff, setAllStaff] = useState<any[]>([]);
   const [staffLoading, setStaffLoading] = useState(true);
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
+  const [calendarStaffIds, setCalendarStaffIds] = useState<string[]>([]);
+  const [calendarStaffInitialized, setCalendarStaffInitialized] = useState(false);
   const [staffHours, setStaffHours] = useState<DayHours[]>(DEFAULT_HOURS);
   const [staffServices, setStaffServices] = useState<string[]>([]);
   const [staffSaving, setStaffSaving] = useState(false);
@@ -454,6 +913,7 @@ export default function AdminPage() {
   const setToday = () => {
     const today = new Date().toISOString().split("T")[0];
     setDateRange({ from: today, to: today });
+    setDateRangePreset("today");
   };
   const setThisWeek = () => {
     const now = new Date();
@@ -463,6 +923,7 @@ export default function AdminPage() {
       from: new Date(now.setDate(first)).toISOString().split("T")[0],
       to: new Date(now.setDate(last)).toISOString().split("T")[0],
     });
+    setDateRangePreset("thisWeek");
   };
   const resetFilters = () => {
     setToday();
@@ -513,31 +974,46 @@ export default function AdminPage() {
     return calAppts;
   }, [calendarDisplayMode, calAppts, currentTeamMemberId]);
 
-  const calendarSideBySideStaff = useMemo(() => {
-    if (calendarDisplayMode !== "sideBySide") return [];
+  const calendarStaffOptions = useMemo<CalendarStaffMember[]>(
+    () =>
+      (allStaff || [])
+        .filter((staff: CalendarStaffMember) => staff.is_active !== false)
+        .map((staff: CalendarStaffMember) => ({
+          id: staff.id,
+          first_name: staff.first_name,
+          last_name: staff.last_name,
+          is_active: staff.is_active,
+        })),
+    [allStaff],
+  );
 
-    const seen = new Map<string, Employee>();
-    employees.forEach((emp) => {
-      if (!seen.has(emp.id)) seen.set(emp.id, emp);
-    });
-    calAppts.forEach((appt) => {
-      if (appt.staff && !seen.has(appt.staff.id)) {
-        seen.set(appt.staff.id, {
-          id: appt.staff.id,
-          first_name: appt.staff.first_name,
-          last_name: appt.staff.last_name,
-        });
-      }
-    });
+  useEffect(() => {
+    if (calendarStaffInitialized) return;
+    if (staffLoading) return;
 
-    return Array.from(seen.values());
-  }, [calendarDisplayMode, employees, calAppts]);
+    if (calendarStaffOptions.length === 0) {
+      setCalendarStaffIds([]);
+      setCalendarStaffInitialized(true);
+      return;
+    }
+
+    setCalendarStaffIds(calendarStaffOptions.map((staff) => staff.id));
+    setCalendarStaffInitialized(true);
+  }, [calendarStaffInitialized, calendarStaffOptions, staffLoading]);
+
+  const calendarVisibleStaff = useMemo(
+    () => calendarStaffOptions.filter((staff) => calendarStaffIds.includes(staff.id)),
+    [calendarStaffIds, calendarStaffOptions],
+  );
+
+  const effectiveDisplayMode: CalendarDisplayMode = isMobile ? "sideBySide" : calendarDisplayMode;
 
   const onlyMeMissingTeamMember =
-    calendarDisplayMode === "onlyMe" && !currentTeamMemberId;
+    effectiveDisplayMode === "onlyMe" && !currentTeamMemberId;
   const sideBySideMissingStaff =
-    calendarDisplayMode === "sideBySide" &&
-    calendarSideBySideStaff.length === 0;
+    effectiveDisplayMode === "sideBySide" &&
+    calendarStaffInitialized &&
+    calendarVisibleStaff.length === 0;
 
   const loadCalendarAppts = useCallback(async () => {
     if (!businessId) return;
@@ -561,29 +1037,6 @@ export default function AdminPage() {
   useEffect(() => {
     if (apptView === "calendar" && businessId) loadCalendarAppts();
   }, [apptView, calendarRange, businessId, loadCalendarAppts]);
-
-  const loadMobileAppts = useCallback(async () => {
-    if (!businessId) return;
-    setMobileLoading(true);
-    try {
-      const params = new URLSearchParams({
-        business_id: businessId,
-        from: mobileRange.start.toISOString(),
-        to: endOfLocalDay(mobileRange.end).toISOString(),
-      });
-      const res = await fetch(`/api/appointments?${params.toString()}`);
-      const data = await res.json();
-      setMobileAppts(data.appointments || []);
-    } catch (err) {
-      console.error("[ADMIN][MOBILE_AGENDA]", err);
-    } finally {
-      setMobileLoading(false);
-    }
-  }, [businessId, mobileRange]);
-
-  useEffect(() => {
-    if (apptView === "calendar" && isMobile && businessId) loadMobileAppts();
-  }, [apptView, isMobile, mobileRange, businessId, loadMobileAppts]);
 
   const loadServices = useCallback(async () => {
     if (!businessId) return;
@@ -1654,109 +2107,34 @@ export default function AdminPage() {
             {apptView === "calendar" ? (
               <div className="flex min-h-0 w-full flex-1 flex-col gap-4 py-4 md:py-0">
                 {isMobile ? (
-                  /* ── Mobile toolbar: two-row stacked layout ── */
-                  <div className="shrink-0 rounded-lg border border-[var(--border-default)] bg-white">
-                    {/* Row 1: date label (primary) + Create (primary action) */}
-                    <div className="flex items-center justify-between gap-2 border-b border-[var(--border-default)] px-3 py-2.5">
-                      <span className="truncate text-[14px] font-semibold text-[var(--text-primary)]">
-                        {mobileViewMode === 'list' ? mobileLabel : calLabel}
-                      </span>
-                      <button
-                        onClick={openApptCreate}
-                        className="admin-toolbar-primary-btn shrink-0"
-                      >
-                        Create
-                      </button>
-                    </div>
-                    {/* Row 2: secondary controls — scrolls horizontally if needed */}
-                    <div className="overflow-x-auto">
-                      <div className="flex min-w-max items-center gap-1 px-2.5 py-2">
-                        {/* Nav arrows + Today */}
-                        <button
-                          onClick={mobileViewMode === 'list' ? mobilePrev : prevPeriod}
-                          aria-label="Previous period"
-                          className="admin-toolbar-nav-btn"
-                        >
-                          <ChevronLeft size={15} />
-                        </button>
-                        <button
-                          onClick={mobileViewMode === 'list' ? mobileGoToday : goToday}
-                          className="admin-toolbar-secondary-btn"
-                        >
-                          Today
-                        </button>
-                        <button
-                          onClick={mobileViewMode === 'list' ? mobileNext : nextPeriod}
-                          aria-label="Next period"
-                          className="admin-toolbar-nav-btn"
-                        >
-                          <ChevronRight size={15} />
-                        </button>
-
-                        <div className="mx-1 h-4 w-px shrink-0 bg-[var(--border-default)]" />
-
-                        {/* View selector — calendar mode only */}
-                        {mobileViewMode === 'calendar' && (
-                          <>
-                            {CALENDAR_VIEW_OPTIONS.map(opt => (
-                              <button
-                                key={opt.value}
-                                onClick={() => setCalendarView(opt.value)}
-                                className={`admin-toolbar-secondary-btn ${calendarView === opt.value ? 'active' : ''}`}
-                              >
-                                {opt.value === 'fiveDay' ? '5d' : opt.label}
-                              </button>
-                            ))}
-                            <div className="mx-1 h-4 w-px shrink-0 bg-[var(--border-default)]" />
-                          </>
-                        )}
-
-                        {/* Calendar ↔ List toggle */}
-                        <button
-                          onClick={() => setMobileViewMode(v => v === 'calendar' ? 'list' : 'calendar')}
-                          className={`admin-toolbar-secondary-btn ${mobileViewMode === 'list' ? 'active' : ''}`}
-                        >
-                          {mobileViewMode === 'calendar' ? 'List' : 'Calendar'}
-                        </button>
-
-                        {/* Settings / Filter */}
-                        <button
-                          onClick={() => {
-                            setPendingFilter((f) => ({
-                              ...f,
-                              staff: filterStaff,
-                              status: filterStatus,
-                              search: searchTerm,
-                            }));
-                            setShowFilterPanel(true);
-                          }}
-                          className={`admin-toolbar-secondary-btn ${
-                            filterStaff || filterStatus !== "all" || searchTerm ? "active" : ""
-                          }`}
-                        >
-                          Settings
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <MobileCalendarToolbar
+                    calLabel={calLabel}
+                    calendarDate={calendarDate}
+                    onToday={goToday}
+                    onPrev={prevPeriod}
+                    onNext={nextPeriod}
+                    onCreate={openApptCreate}
+                  />
                 ) : (
                   /* ── Desktop toolbar: full controls ── */
-                  <div className="flex shrink-0 items-center gap-2 rounded-lg border border-[var(--border-default)] bg-white px-3 py-2.5 shadow-none overflow-x-auto">
-                    <div className="flex items-center gap-0.5 shrink-0">
+                  <div className="flex shrink-0 items-center gap-2 overflow-x-auto bg-transparent px-0 py-0">
+                    <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={prevPeriod}
                         aria-label="Previous period"
-                        className="admin-toolbar-nav-btn"
+                        className="admin-toolbar-nav-btn calendar-web-toolbar-control calendar-web-toolbar-icon"
                       >
                         <ChevronLeft size={15} />
                       </button>
-                      <span className="text-[13px] font-medium text-[var(--text-primary)] min-w-[130px] text-center px-1 whitespace-nowrap">
-                        {calLabel}
-                      </span>
+                      <DesktopCalendarDatePicker
+                        label={calLabel}
+                        selectedDate={calendarDate}
+                        onSelect={setCalendarDate}
+                      />
                       <button
                         onClick={nextPeriod}
                         aria-label="Next period"
-                        className="admin-toolbar-nav-btn"
+                        className="admin-toolbar-nav-btn calendar-web-toolbar-control calendar-web-toolbar-icon"
                       >
                         <ChevronRight size={15} />
                       </button>
@@ -1764,29 +2142,36 @@ export default function AdminPage() {
 
                     <button
                       onClick={goToday}
-                      className="admin-toolbar-secondary-btn shrink-0"
+                      className="admin-toolbar-secondary-btn calendar-web-toolbar-control shrink-0"
                     >
                       Today
                     </button>
-
-                    <div className="w-px h-4 bg-[var(--border-default)] shrink-0 mx-0.5" />
 
                     <SquareSelect
                       label="Range"
                       value={calendarView}
                       onChange={(value) => setCalendarView(value as CalendarView)}
                       options={CALENDAR_VIEW_OPTIONS}
-                      className="w-[130px] shrink-0"
+                      compact
+                      showChevron={false}
+                      className="calendar-web-toolbar-control calendar-web-toolbar-chip shrink-0"
                     />
                     <SquareSelect
                       label="View"
                       value={calendarDisplayMode}
                       onChange={(value) => setCalendarDisplayMode(value as CalendarDisplayMode)}
                       options={CALENDAR_DISPLAY_OPTIONS}
-                      className="w-[155px] shrink-0"
+                      compact
+                      showChevron={false}
+                      className="calendar-web-toolbar-control calendar-web-toolbar-chip shrink-0"
+                    />
+                    <DesktopStaffSelector
+                      staffMembers={calendarStaffOptions}
+                      selectedStaffIds={calendarStaffIds}
+                      onChange={setCalendarStaffIds}
                     />
 
-                    <div className="flex items-center gap-1.5 ml-auto shrink-0">
+                    <div className="ml-auto flex items-center gap-2 shrink-0">
                       <button
                         onClick={() => {
                           setPendingFilter((f) => ({
@@ -1797,15 +2182,17 @@ export default function AdminPage() {
                           }));
                           setShowFilterPanel(true);
                         }}
-                        className={`admin-toolbar-secondary-btn ${
-                          filterStaff || filterStatus !== "all" || searchTerm ? "active" : ""
+                        className={`admin-toolbar-secondary-btn calendar-web-toolbar-control shrink-0 ${
+                          filterStaff || filterStatus !== "all" || searchTerm
+                            ? "border-[var(--border-strong)] bg-[var(--bg-hover)] text-[var(--text-primary)]"
+                            : "border-[var(--border-default)] bg-white text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
                         }`}
                       >
                         Settings
                       </button>
                       <button
                         onClick={openApptCreate}
-                        className="admin-toolbar-primary-btn"
+                        className="admin-toolbar-primary-btn calendar-web-toolbar-primary shrink-0"
                       >
                         Create
                       </button>
@@ -1813,93 +2200,78 @@ export default function AdminPage() {
                   </div>
                 )}
 
-                {isMobile && mobileViewMode === 'list' ? (
-                  /* ── Mobile list / agenda fallback ── */
-                  <div className="overflow-hidden rounded-lg border border-[var(--border-default)] bg-white">
-                    <MobileAgenda
-                      appointments={mobileAppts}
-                      loading={mobileLoading}
+                {/* ── Calendar grid (mobile + desktop) ── */}
+                {/* overflow:clip preserves border-radius clipping on mobile without
+                    setting overflow-x/y:hidden, which would block iOS touch scroll */}
+                <div
+                  className="cal-scroll-wrap overflow-hidden h-[calc(100svh-188px)] min-h-[420px] rounded-lg border border-[var(--border-default)] bg-white md:h-auto md:flex-1 md:rounded-none md:border-y md:border-r md:border-l-0"
+                >
+                  {onlyMeMissingTeamMember ? (
+                    <div className="flex h-full items-center justify-center py-24 text-center">
+                      <div className="max-w-sm">
+                        <p className="text-[16px] font-semibold text-[#111827]">
+                          No appointments assigned to you
+                        </p>
+                        <p className="mt-1 text-[13px] text-[#6B7280]">
+                          We could not find a team member record for the current
+                          user, so this view cannot be filtered yet.
+                        </p>
+                      </div>
+                    </div>
+                  ) : sideBySideMissingStaff ? (
+                    <div className="flex h-full items-center justify-center py-24 text-center">
+                      <div className="max-w-sm">
+                        <p className="text-[16px] font-semibold text-[#111827]">
+                          Select at least one staff member to view the calendar.
+                        </p>
+                        <p className="mt-1 text-[13px] text-[#6B7280]">
+                          Use the Staff control above to choose who appears in the
+                          calendar columns.
+                        </p>
+                      </div>
+                    </div>
+                  ) : calLoading ? (
+                    <div className="flex h-full items-center justify-center py-24">
+                      <Loader2
+                        size={22}
+                        className="animate-spin text-[#6B7280]"
+                      />
+                    </div>
+                  ) : (
+                    <WeekCalendar
+                      appointments={calendarAppointments}
+                      view={effectiveCalendarView}
+                      anchorDate={calendarDate}
+                      selectedDate={calendarDate}
+                      displayMode={effectiveDisplayMode}
+                      staffMembers={calendarVisibleStaff}
+                      businessHours={hours}
+                      onDateSelect={setCalendarDate}
                       onAppointmentClick={(appt) => {
                         setExpandedId(appt.id);
                         openApptEdit(appt);
                       }}
                     />
-                  </div>
-                ) : (
-                  /* ── Calendar grid (mobile + desktop) ── */
-                  /* overflow:clip preserves border-radius clipping on mobile without
-                     setting overflow-x/y:hidden, which would block iOS touch scroll */
-                  <div
-                    className="h-[calc(100svh-160px)] min-h-[420px] rounded-lg border border-[var(--border-default)] bg-white md:h-auto md:flex-1 md:rounded-none md:border-y md:border-r md:border-l-0"
-                    style={{ overflow: 'clip' }}
-                  >
-                    {onlyMeMissingTeamMember ? (
-                      <div className="flex h-full items-center justify-center py-24 text-center">
-                        <div className="max-w-sm">
-                          <p className="text-[16px] font-semibold text-[#111827]">
-                            No appointments assigned to you
-                          </p>
-                          <p className="mt-1 text-[13px] text-[#6B7280]">
-                            We could not find a team member record for the current
-                            user, so this view cannot be filtered yet.
-                          </p>
-                        </div>
-                      </div>
-                    ) : sideBySideMissingStaff ? (
-                      <div className="flex h-full items-center justify-center py-24 text-center">
-                        <div className="max-w-sm">
-                          <p className="text-[16px] font-semibold text-[#111827]">
-                            No staff members found
-                          </p>
-                          <p className="mt-1 text-[13px] text-[#6B7280]">
-                            Add staff members to use the side-by-side schedule
-                            view.
-                          </p>
-                        </div>
-                      </div>
-                    ) : calLoading ? (
-                      <div className="flex h-full items-center justify-center py-24">
-                        <Loader2
-                          size={22}
-                          className="animate-spin text-[#6B7280]"
-                        />
-                      </div>
-                    ) : (
-                      <WeekCalendar
-                        appointments={calendarAppointments}
-                        view={calendarView}
-                        anchorDate={calendarDate}
-                        selectedDate={calendarDate}
-                        displayMode={calendarDisplayMode}
-                        staffMembers={calendarSideBySideStaff}
-                        businessHours={hours}
-                        onDateSelect={setCalendarDate}
-                        onAppointmentClick={(appt) => {
-                          setExpandedId(appt.id);
-                          openApptEdit(appt);
-                        }}
-                      />
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ) : (
               <div className="flex w-full flex-col gap-3 py-4 md:py-0 mx-auto max-w-[900px]">
                 {/* ── Public Booking Link Card ── */}
                 {businessSlug && bookingUrl && (
-                  <div className="flex items-center justify-between gap-4 rounded-lg border border-[var(--border-default)] bg-white px-4 py-3 shadow-none">
-                    <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex flex-col gap-2 rounded-lg border border-[var(--border-default)] bg-white px-3 py-3 shadow-none sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4">
+                    <div className="flex min-w-0 items-center gap-2.5">
                       <div className="w-1.5 h-1.5 rounded-full bg-[var(--success)] shrink-0" />
-                      <div className="flex items-baseline gap-0 min-w-0 overflow-hidden font-mono text-[12px]">
-                        <span className="text-[var(--text-muted)] truncate shrink-[2] min-w-0">
-                          frontbeach.vercel.com
+                      <div className="flex min-w-0 items-baseline gap-0 overflow-hidden font-mono text-[12px]">
+                        <span className="min-w-0 flex-1 truncate text-[var(--text-muted)]">
+                          frontbeach.vercel.app
                         </span>
                         <span className="text-[var(--text-muted)] shrink-0">/</span>
                         <span className="font-semibold text-[var(--text-primary)] shrink-0">{businessSlug}</span>
                         <span className="text-[var(--text-muted)] shrink-0">/book</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
                       <button
                         id="copy-booking-link-btn"
                         onClick={() => {
@@ -1908,7 +2280,7 @@ export default function AdminPage() {
                             setTimeout(() => setLinkCopied(false), 2000);
                           });
                         }}
-                        className="admin-toolbar-secondary-btn"
+                        className="admin-toolbar-secondary-btn h-9 flex-1 px-3 text-sm sm:flex-none sm:px-4"
                       >
                         {linkCopied ? (
                           <Check size={12} className="text-[var(--success)]" />
@@ -1922,7 +2294,7 @@ export default function AdminPage() {
                         href={bookingUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="admin-toolbar-secondary-btn"
+                        className="admin-toolbar-secondary-btn h-9 flex-1 px-3 text-sm sm:flex-none sm:px-4"
                       >
                         <ExternalLink size={12} /> Open
                       </a>
@@ -1978,24 +2350,29 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 rounded-lg border border-[var(--border-default)] bg-white px-3 py-2.5 shadow-none flex-wrap">
-                  <button
-                    onClick={setToday}
-                    className={`admin-toolbar-secondary-btn ${
-                      dateRange.from === new Date().toISOString().split("T")[0] &&
-                      dateRange.to === new Date().toISOString().split("T")[0]
-                        ? "active"
-                        : ""
-                    }`}
-                  >
-                    Today
-                  </button>
-                  <button
-                    onClick={setThisWeek}
-                    className="admin-toolbar-secondary-btn"
-                  >
-                    This week
-                  </button>
+                <div className="flex flex-col gap-2 rounded-lg border border-[var(--border-default)] bg-white px-3 py-2.5 shadow-none sm:flex-row sm:items-center sm:gap-2">
+                  <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:flex-1 sm:justify-start">
+                    <button
+                      onClick={setToday}
+                      className={`admin-toolbar-secondary-btn admin-toolbar-date-btn h-9 flex-1 px-3 text-sm sm:flex-none ${
+                        dateRangePreset === "today"
+                          ? "!bg-gray-200 !text-gray-950 !border-gray-200 hover:!bg-gray-200 active:!bg-gray-300 md:!bg-[#111827] md:!text-white md:!border-[#111827] md:hover:!bg-[#1f2937]"
+                          : "!bg-transparent !text-gray-700 !border-transparent hover:!bg-gray-100 active:!bg-gray-300 md:!bg-[var(--bg-surface)] md:!text-[var(--text-secondary)] md:!border-[var(--border-default)] md:hover:!bg-[var(--bg-hover)]"
+                      }`}
+                    >
+                      Today
+                    </button>
+                    <button
+                      onClick={setThisWeek}
+                      className={`admin-toolbar-secondary-btn admin-toolbar-date-btn h-9 flex-1 px-3 text-sm sm:flex-none ${
+                        dateRangePreset === "thisWeek"
+                          ? "!bg-gray-200 !text-gray-950 !border-gray-200 hover:!bg-gray-200 active:!bg-gray-300 md:!bg-[#111827] md:!text-white md:!border-[#111827] md:hover:!bg-[#1f2937]"
+                          : "!bg-transparent !text-gray-700 !border-transparent hover:!bg-gray-100 active:!bg-gray-300 md:!bg-[var(--bg-surface)] md:!text-[var(--text-secondary)] md:!border-[var(--border-default)] md:hover:!bg-[var(--bg-hover)]"
+                      }`}
+                    >
+                      This week
+                    </button>
+                  </div>
 
                   {filterStatus !== "all" && (
                     <span className="inline-flex items-center gap-1 h-[30px] pl-2.5 pr-1.5 rounded-md bg-[#F0EFED] text-[#374151] text-[12px] font-medium">
@@ -2034,7 +2411,7 @@ export default function AdminPage() {
                     </span>
                   )}
 
-                  <div className="flex items-center gap-1.5 ml-auto">
+                  <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto sm:justify-end">
                     <button
                       onClick={() => {
                         setPendingFilter((f) => ({
@@ -2045,7 +2422,9 @@ export default function AdminPage() {
                         }));
                         setShowFilterPanel(true);
                       }}
-                      className={`admin-toolbar-secondary-btn ${
+                      aria-label="Settings"
+                      title="Settings"
+                      className={`admin-toolbar-secondary-btn h-9 flex-1 px-3 text-sm sm:flex-none ${
                         filterStaff || filterStatus !== "all" || searchTerm ? "active" : ""
                       }`}
                     >
@@ -2053,7 +2432,7 @@ export default function AdminPage() {
                     </button>
                     <button
                       onClick={openApptCreate}
-                      className="admin-toolbar-primary-btn"
+                      className="admin-toolbar-primary-btn h-9 flex-1 px-4 text-sm sm:flex-none sm:px-5"
                     >
                       Create
                     </button>

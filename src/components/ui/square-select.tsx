@@ -21,6 +21,8 @@ interface SquareSelectProps {
   menuClassName?: string;
   triggerClassName?: string;
   ariaLabel?: string;
+  compact?: boolean;
+  showChevron?: boolean;
 }
 
 type MenuPosition = {
@@ -40,6 +42,8 @@ export default function SquareSelect({
   menuClassName,
   triggerClassName,
   ariaLabel,
+  compact = false,
+  showChevron = true,
 }: SquareSelectProps) {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -270,7 +274,8 @@ export default function SquareSelect({
         onClick={() => setOpen(prev => !prev)}
         onKeyDown={handleTriggerKeyDown}
         className={cn(
-          'inline-flex h-10 min-w-0 items-center justify-between gap-3 rounded-lg border border-[#E7E5E4] bg-white px-3.5 py-2 text-left shadow-xs transition-colors',
+          'inline-flex h-10 min-w-0 items-center rounded-lg border border-[#E7E5E4] bg-white px-3.5 py-2 text-left shadow-xs transition-colors',
+          compact ? 'justify-start gap-2 whitespace-nowrap' : 'justify-between gap-3',
           'hover:border-[#D4D2CF] hover:bg-[#F9F9F7]',
           open && 'border-[#2563EB] ring-2 ring-[rgba(37,99,235,0.12)]',
           disabled && 'cursor-not-allowed opacity-60 hover:border-[#E7E5E4] hover:bg-white',
@@ -278,16 +283,29 @@ export default function SquareSelect({
           triggerClassName
         )}
       >
-        <div className="min-w-0">
-          <p className="text-[11px] font-medium leading-none text-[#9CA3AF]">{label}</p>
-          <p className="truncate text-[13px] font-semibold leading-tight text-[#111827]">
-            {selectedOption?.label ?? 'Select'}
-          </p>
-        </div>
-        <ChevronDown
-          size={14}
-          className={cn('shrink-0 text-[#9CA3AF] transition-transform', open && 'rotate-180 text-[#6B7280]')}
-        />
+        {compact ? (
+          <>
+            <span className="shrink-0 text-[13px] font-medium leading-none text-[#6B7280]">
+              {label}
+            </span>
+            <span className="min-w-0 truncate text-[13px] font-semibold leading-none text-[#111827]">
+              {selectedOption?.label ?? 'Select'}
+            </span>
+          </>
+        ) : (
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium leading-none text-[#9CA3AF]">{label}</p>
+            <p className="truncate text-[13px] font-semibold leading-tight text-[#111827]">
+              {selectedOption?.label ?? 'Select'}
+            </p>
+          </div>
+        )}
+        {showChevron && (
+          <ChevronDown
+            size={14}
+            className={cn('shrink-0 text-[#9CA3AF] transition-transform', open && 'rotate-180 text-[#6B7280]')}
+          />
+        )}
       </button>
       {panel}
     </>

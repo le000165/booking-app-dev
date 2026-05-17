@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Audit"
+  short_description: "Evaluate website UI and frontend quality"
+  default_prompt: "Use $design-audit to evaluate the design and frontend quality of this website."
