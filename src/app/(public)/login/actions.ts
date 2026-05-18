@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { isAdminRole, isStaffRole } from '@/lib/db/guards'
+import type { BusinessMemberRole } from '@/types/database'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Admin client — Service Role, bypasses RLS. Server-only. Never expose to browser.
@@ -44,13 +46,59 @@ export async function login(formData: FormData) {
 
   console.log('[AUTH][LOGIN] Auth success, user_id:', data.user.id)
 
+  try {
+    const admin = createAdminClient()
+
+    const [{ data: profile, error: profileError }, { data: teamMember, error: teamMemberError }, { data: pendingTeamMember, error: pendingTeamMemberError }] =
+      await Promise.all([
+        admin
+          .from('profiles')
+          .select('user_id, email, created_at')
+          .eq('user_id', data.user.id)
+          .maybeSingle(),
+        admin
+          .from('team_members')
+          .select('id, user_id, email, business_id, role, first_name, last_name')
+          .eq('user_id', data.user.id)
+          .maybeSingle(),
+        admin
+          .from('team_members')
+          .select('id, user_id, email, business_id, role, first_name, last_name')
+          .eq('email', email.toLowerCase())
+          .is('user_id', null)
+          .maybeSingle(),
+      ])
+
+    console.log('[AUTH][LOGIN][DEBUG] auth context:', {
+      user_id: data.user.id,
+      email: data.user.email ?? email,
+    })
+    console.log('[AUTH][LOGIN][DEBUG] profile by profiles.user_id:', {
+      found: !!profile,
+      profile: profile ?? null,
+      error: profileError?.message ?? null,
+    })
+    console.log('[AUTH][LOGIN][DEBUG] team_members by user_id:', {
+      found: !!teamMember,
+      teamMember: teamMember ?? null,
+      error: teamMemberError?.message ?? null,
+    })
+    console.log('[AUTH][LOGIN][DEBUG] pending team_members by email and null user_id:', {
+      found: !!pendingTeamMember,
+      teamMember: pendingTeamMember ?? null,
+      error: pendingTeamMemberError?.message ?? null,
+    })
+  } catch (debugError: any) {
+    console.error('[AUTH][LOGIN][DEBUG] Failed to run supplemental login audit:', debugError.message)
+  }
+
   // Resolve redirect via business_members (SaaS access layer)
   const { data: membership, error: memberError } = await supabase
     .from('business_members')
     .select('role, business_id')
     .eq('user_id', data.user.id)
     .limit(1)
-    .returns<{ role: string; business_id: string }[]>()
+    .returns<{ role: BusinessMemberRole; business_id: string }[]>()
     .single()
 
   console.log('[AUTH][LOGIN] Membership lookup:', {
@@ -58,9 +106,35 @@ export async function login(formData: FormData) {
     error: memberError?.message || null,
   })
 
+  try {
+    const admin = createAdminClient()
+    const businessId = membership?.business_id ?? null
+    const { data: business, error: businessError } = businessId
+      ? await admin
+          .from('businesses')
+          .select('id, name, slug')
+          .eq('id', businessId)
+          .maybeSingle()
+      : { data: null, error: null }
+
+    console.log('[AUTH][LOGIN][DEBUG] business_members role check:', {
+      business_id: businessId,
+      role: membership?.role ?? null,
+      business_found: !!business,
+      business: business ?? null,
+      business_error: businessError?.message ?? null,
+    })
+  } catch (debugError: any) {
+    console.error('[AUTH][LOGIN][DEBUG] Failed business lookup:', debugError.message)
+  }
+
   let redirectUrl = '/onboarding'
   if (membership) {
-    redirectUrl = membership.role === 'employee' ? '/employee' : '/admin'
+    redirectUrl = isStaffRole(membership.role)
+      ? '/employee'
+      : isAdminRole(membership.role)
+        ? '/admin'
+        : '/onboarding'
   }
 
   console.log('[AUTH][LOGIN] Redirecting to:', redirectUrl)

@@ -1,5 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import type { BusinessMemberRole } from '@/types/database';
+
+export function isAdminRole(role: BusinessMemberRole | null | undefined) {
+  return role === 'owner' || role === 'admin';
+}
+
+export function isStaffRole(role: BusinessMemberRole | null | undefined) {
+  return role === 'staff';
+}
 
 export async function requireBusinessMember(businessId: string) {
   const supabase = await createClient();
@@ -35,7 +44,7 @@ export async function requireAdminOrOwner(businessId: string) {
     return result;
   }
 
-  if (!['owner', 'admin'].includes(result.member.role)) {
+  if (!isAdminRole(result.member.role)) {
     return {
       error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
     };
