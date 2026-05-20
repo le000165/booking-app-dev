@@ -3,7 +3,7 @@
 
 BEGIN;
 
--- 1. Insert a demo business with the slug 'luxe-nails' (required for the demo route)
+-- 1. Insert a demo workspace with the slug 'luxe-nails' (required for the demo route)
 INSERT INTO businesses (id, name, slug, email, phone, address, timezone, is_active)
 VALUES (
   '11111111-1111-1111-1111-111111111111', 

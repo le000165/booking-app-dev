@@ -54,7 +54,7 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        /* FrontBeach design tokens — direct hex for Tailwind arbitrary values */
+        /* Vero design tokens — direct hex for Tailwind arbitrary values */
         fb: {
           page:      "#F5F5F3",
           surface:   "#FFFFFF",

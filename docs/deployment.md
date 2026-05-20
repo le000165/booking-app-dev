@@ -1,6 +1,6 @@
 # Deployment
 
-This document explains how the booking SaaS is deployed and configured.
+This document explains how the Vero platform is deployed and configured.
 
 The application is deployed using:
 
@@ -8,7 +8,7 @@ The application is deployed using:
 - Supabase
 - Resend
 
-The project is a multi-tenant booking SaaS inspired by Square Appointments and BellaBiz.
+The project is a multi-tenant Vero platform inspired by Square Appointments and BellaBiz.
 
 ---
 

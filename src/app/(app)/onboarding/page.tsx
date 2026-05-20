@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Loader2, CheckCircle, ChevronRight, ChevronLeft, Building2, Scissors, User, Clock } from 'lucide-react';
 import SquareSelect from '@/components/ui/square-select';
@@ -169,14 +170,15 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-[var(--bg-page)] flex flex-col items-center justify-start px-5 py-12">
       <div className="w-full max-w-[480px] space-y-8">
 
-        {/* Logo */}
         <div className="text-center">
-          <div className="w-10 h-10 rounded-xl bg-[var(--text-primary)] flex items-center justify-center mx-auto mb-4">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <rect x="3" y="3" width="18" height="18" rx="3" fill="white"/>
-              <path d="M8 12h8M12 8v8" stroke="#171717" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </div>
+          <Image
+            src="/brand/logo-mark.svg"
+            alt="Vero"
+            width={40}
+            height={40}
+            priority
+            className="mx-auto mb-4 h-10 w-10"
+          />
           <h1 className="text-[22px] font-semibold text-[var(--text-primary)] tracking-tight">
             Set up your business
           </h1>

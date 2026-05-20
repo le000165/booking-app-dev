@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { CalendarDays, ChevronDown, Clock3, LogOut, Menu, Settings, UserCircle2, Users, X, type LucideIcon } from 'lucide-react';
+import { CalendarDays, ChevronDown, Clock3, LogOut, Menu, Settings, Users, X, type LucideIcon } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 type AdminSection = 'appointments' | 'availability' | 'services' | 'staff';
@@ -55,6 +56,21 @@ function getCurrentAppointmentSection(pathname: string, view: string | null): Ap
   return 'overview';
 }
 
+function getAdminDocumentTitle(
+  pathname: string,
+  tab: string | null,
+  view: string | null,
+  section: AdminSection,
+  appointmentSection: AppointmentSection
+) {
+  if (pathname === '/admin' && !tab && !view) return 'Appointment - Overview';
+  if (section === 'availability') return 'Availability';
+  if (section === 'services') return 'Services';
+  if (section === 'staff') return 'Staff';
+  if (appointmentSection === 'calendar') return 'Appointment - Calendar';
+  return 'Appointment - Overview';
+}
+
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -73,6 +89,16 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     () => getCurrentAppointmentSection(pathname, viewParam),
     [pathname, viewParam]
   );
+
+  useEffect(() => {
+    document.title = getAdminDocumentTitle(
+      pathname,
+      tabParam,
+      viewParam,
+      currentSection,
+      currentAppointmentSection
+    );
+  }, [currentAppointmentSection, currentSection, pathname, tabParam, viewParam]);
 
   // Click-based expand state for parent nav items with children.
   // null = all collapsed. Uses the section key as the value.
@@ -157,7 +183,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     <>
       <div className="admin-sidebar-header">
         <div className="admin-brand-mark" aria-hidden="true">
-          <UserCircle2 size={18} strokeWidth={1.5} />
+          <Image
+            src="/brand/logo-mark.svg"
+            alt=""
+            width={28}
+            height={28}
+            className="h-7 w-7"
+          />
         </div>
         <div className="admin-brand-block">
           <p className="admin-brand-title">{businessName}</p>
@@ -303,6 +335,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             <Menu size={18} />
           </button>
           <span className="ml-3 text-[14px] font-semibold text-[var(--text-primary)] truncate">
+            <Image
+              src="/brand/logo-mark.svg"
+              alt="Vero"
+              width={28}
+              height={28}
+              className="mr-2 inline-block h-7 w-7 align-middle"
+            />
             {businessName}
           </span>
         </div>

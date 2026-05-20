@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   ArrowLeft,
-  Calendar,
   Eye,
   EyeOff,
   Loader2,
@@ -54,11 +54,15 @@ export default function AuthForm({ mode }: AuthFormProps) {
       <div className="mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-6xl items-center justify-center">
         <div className="grid w-full overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl lg:grid-cols-[1fr_440px]">
           <section className="hidden bg-gray-950 p-10 text-white lg:flex lg:flex-col lg:justify-between">
-            <Link href="/" className="inline-flex w-fit items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white">
-                <Calendar size={17} className="text-gray-950" />
-              </div>
-              <span className="text-[18px] font-bold tracking-tight">BookEasy</span>
+            <Link href="/" className="inline-flex w-fit items-center">
+              <Image
+                src="/brand/logo-dark.svg"
+                alt="Vero"
+                width={120}
+                height={34}
+                priority
+                className="h-9 w-auto"
+              />
             </Link>
 
             <div className="max-w-md">
@@ -197,7 +201,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
             <div className="mt-6 text-center text-[13px] text-gray-500">
               {isLogin ? (
                 <>
-                  New to BookEasy?{' '}
+                  New to Vero?{' '}
                   <Link href="/signup" className="font-semibold text-gray-900 hover:underline">
                     Start for free
                   </Link>

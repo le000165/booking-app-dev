@@ -4,8 +4,8 @@ import SiteFooter from '@/components/marketing/SiteFooter';
 import SiteNav from '@/components/marketing/SiteNav';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service — BookEasy',
-  description: 'BookEasy terms of service overview for website visitors and account users.',
+  title: 'Terms of Service — Vero',
+  description: 'Vero terms of service overview for website visitors and account users.',
 };
 
 export default function TermsPage() {
@@ -23,9 +23,9 @@ export default function TermsPage() {
 
         <div className="mt-10 space-y-8 text-[15px] leading-relaxed text-gray-600">
           <section>
-            <h2 className="mb-3 text-[20px] font-bold text-gray-950">Use of BookEasy</h2>
+            <h2 className="mb-3 text-[20px] font-bold text-gray-950">Use of Vero</h2>
             <p>
-              BookEasy provides appointment booking and scheduling tools for service
+              Vero provides appointment booking and scheduling tools for service
               businesses. Users are responsible for keeping account access secure and
               using the platform in a lawful and professional manner.
             </p>
@@ -56,7 +56,7 @@ export default function TermsPage() {
               <Link href="/privacy" className="font-semibold text-gray-950 hover:underline">
                 Privacy Policy
               </Link>{' '}
-              for information about how BookEasy handles data.
+              for information about how Vero handles data.
             </p>
           </section>
         </div>

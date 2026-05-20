@@ -2,8 +2,14 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BookEasy — Appointment Booking Software for Service Businesses",
-  description: "Online booking, staff scheduling, and automated reminders for salons, spas, clinics, and consultants. Start free.",
+  title: "Vero",
+  description: "Premium booking SaaS",
+  icons: {
+    icon: "/brand/favicon.ico",
+    shortcut: "/brand/favicon.ico",
+    apple: "/brand/apple-touch-icon.png",
+  },
+  manifest: "/brand/manifest.webmanifest",
 };
 
 export default function RootLayout({

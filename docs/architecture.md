@@ -1,6 +1,6 @@
 # Architecture
 
-This project is a web-first, mobile-friendly booking SaaS inspired by Square Appointments and BellaBiz.
+This project is a web-first, mobile-friendly Vero platform inspired by Square Appointments and BellaBiz.
 
 The app is not a single-salon booking site. It is a multi-tenant SaaS where different businesses can sign up, manage their own services, staff, appointments, and customer booking pages.
 

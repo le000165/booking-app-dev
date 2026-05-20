@@ -4,8 +4,8 @@ import SiteFooter from '@/components/marketing/SiteFooter';
 import SiteNav from '@/components/marketing/SiteNav';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — BookEasy',
-  description: 'BookEasy privacy policy overview for website visitors and account users.',
+  title: 'Privacy Policy — Vero',
+  description: 'Vero privacy policy overview for website visitors and account users.',
 };
 
 export default function PrivacyPage() {
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="mb-3 text-[20px] font-bold text-gray-950">Overview</h2>
             <p>
-              BookEasy collects the information needed to provide appointment booking,
+              Vero collects the information needed to provide appointment booking,
               account access, customer communication, and business management features.
               This page summarizes the intended privacy posture for the production route.
             </p>
@@ -52,7 +52,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="mb-3 text-[20px] font-bold text-gray-950">Contact</h2>
             <p>
-              For privacy questions, contact the BookEasy team through your account
+              For privacy questions, contact the Vero team through your account
               administrator or return to the{' '}
               <Link href="/" className="font-semibold text-gray-950 hover:underline">
                 homepage

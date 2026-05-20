@@ -5,7 +5,7 @@ import SiteFooter from '@/components/marketing/SiteFooter';
 import SiteNav from '@/components/marketing/SiteNav';
 
 export const metadata: Metadata = {
-  title: 'Pricing — BookEasy',
+  title: 'Pricing — Vero',
   description:
     'Simple pricing for service businesses. Choose Starter, Professional, or Business and start accepting bookings online.',
 };
@@ -69,7 +69,7 @@ const faqs = [
     a: 'Not yet. This pricing page is informational only; no Stripe or billing logic has been added.',
   },
   {
-    q: 'Does BookEasy work for multi-staff businesses?',
+    q: 'Does Vero work for multi-staff businesses?',
     a: 'Yes. Staff scheduling, assigned services, and multi-staff calendar views are core parts of the platform.',
   },
 ];

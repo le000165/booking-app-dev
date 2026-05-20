@@ -1,10 +1,4 @@
-<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FrontBeach logo mark">
-  <!-- Container: Deep Navy rounded square -->
-  <rect width="40" height="40" rx="8" fill="#0F172A"/>
-  <!-- F letterform — white vertical stroke -->
-  <rect x="10" y="10" width="5" height="20" rx="1.5" fill="#FFFFFF"/>
-  <!-- F letterform — white mid horizontal stroke -->
-  <rect x="10" y="18" width="14" height="4" rx="1" fill="#FFFFFF"/>
-  <!-- Horizon accent — Cyan top bar (the brand signature line) -->
-  <rect x="10" y="10" width="20" height="5" rx="1.5" fill="#06B6D4"/>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="56" y="56" width="400" height="400" rx="96" fill="#0F172A"/>
+  <path d="M151 162H215L256 288L297 162H361L287 350H225L151 162Z" fill="white"/>
 </svg>

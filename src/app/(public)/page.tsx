@@ -16,7 +16,7 @@ import SiteFooter from '@/components/marketing/SiteFooter';
 import SiteNav from '@/components/marketing/SiteNav';
 
 export const metadata: Metadata = {
-  title: 'BookEasy — Appointment Booking Software for Service Businesses',
+  title: 'Vero — Appointment Booking Software for Service Businesses',
   description:
     'Online booking, staff scheduling, and automated reminders for salons, spas, clinics, and consultants. Set up in 5 minutes. Free to start.',
 };
@@ -54,7 +54,7 @@ function DashboardMockup() {
         </div>
         <div className="flex-1 mx-2">
           <div className="h-5 rounded-md border border-gray-200 bg-white flex items-center px-2">
-            <span className="font-mono text-[9px] text-gray-400 select-none">app.bookeasy.io/admin</span>
+            <span className="font-mono text-[9px] text-gray-400 select-none">app.vero.so/admin</span>
           </div>
         </div>
       </div>
@@ -365,7 +365,7 @@ function FeaturesSection() {
             Everything you need to grow
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-[17px] leading-relaxed text-gray-500">
-            From your first booking to your hundredth client — BookEasy handles operations
+            From your first booking to your hundredth client — Vero handles operations
             so you can focus on delivering exceptional service.
           </p>
         </div>
@@ -526,7 +526,7 @@ function IndustriesSection() {
             Built for every service business
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-[17px] text-gray-500">
-            Whether you have one chair or twenty staff members — BookEasy adapts to your workflow.
+            Whether you have one chair or twenty staff members — Vero adapts to your workflow.
           </p>
         </div>
 
@@ -574,7 +574,7 @@ function BenefitsSection() {
     },
     {
       title: 'Scale without the complexity',
-      desc: 'Add staff, services, and locations as you grow. BookEasy scales alongside your business.',
+      desc: 'Add staff, services, and locations as you grow. Vero scales alongside your business.',
     },
   ];
 
@@ -585,13 +585,13 @@ function BenefitsSection() {
           {/* Left copy */}
           <div>
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-400">
-              Why BookEasy
+              Why Vero
             </p>
             <h2 className="text-[36px] font-bold tracking-[-0.025em] text-white sm:text-[44px]">
               Your business runs better when bookings manage themselves
             </h2>
             <p className="mt-5 text-[17px] leading-relaxed text-gray-400">
-              Most booking tools are built as an afterthought. BookEasy is built from the ground up for service
+              Most booking tools are built as an afterthought. Vero is built from the ground up for service
               professionals who need reliability, clarity, and control.
             </p>
             <div className="mt-8">
@@ -639,7 +639,7 @@ function CTASection() {
             Ready to fill your calendar?
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-[17px] leading-relaxed text-gray-500">
-            Join thousands of service professionals who have replaced manual booking with BookEasy.
+            Join thousands of service professionals who have replaced manual booking with Vero.
             Setup is free and takes less than 5 minutes.
           </p>
 

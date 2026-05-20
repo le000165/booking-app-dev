@@ -8,7 +8,6 @@ import {
   Calendar,
   Loader2,
   MoreHorizontal,
-  Plus,
   Pencil,
   Trash2,
   X,
@@ -2287,7 +2286,7 @@ export default function AdminPage() {
                       <div className="w-1.5 h-1.5 rounded-full bg-[var(--success)] shrink-0" />
                       <div className="flex min-w-0 items-baseline gap-0 overflow-hidden font-mono text-[12px]">
                         <span className="min-w-0 flex-1 truncate text-[var(--text-muted)]">
-                          frontbeach.vercel.app
+                          vero.app
                         </span>
                         <span className="text-[var(--text-muted)] shrink-0">/</span>
                         <span className="font-semibold text-[var(--text-primary)] shrink-0">{businessSlug}</span>
@@ -2380,7 +2379,7 @@ export default function AdminPage() {
                       className={`admin-toolbar-secondary-btn admin-toolbar-date-btn h-9 flex-1 px-3 text-sm sm:flex-none ${
                         dateRangePreset === "today"
                           ? "!bg-gray-200 !text-gray-950 !border-gray-200 hover:!bg-gray-200 active:!bg-gray-300 md:!bg-[#111827] md:!text-white md:!border-[#111827] md:hover:!bg-[#1f2937]"
-                          : "!bg-transparent !text-gray-700 !border-transparent hover:!bg-gray-100 active:!bg-gray-300 md:!bg-[var(--bg-surface)] md:!text-[var(--text-secondary)] md:!border-[var(--border-default)] md:hover:!bg-[var(--bg-hover)]"
+                          : "!bg-white !text-gray-700 !border-gray-200 hover:!bg-gray-100 active:!bg-gray-300 md:!bg-[var(--bg-surface)] md:!text-[var(--text-secondary)] md:!border-[var(--border-default)] md:hover:!bg-[var(--bg-hover)]"
                       }`}
                     >
                       Today
@@ -2390,7 +2389,7 @@ export default function AdminPage() {
                       className={`admin-toolbar-secondary-btn admin-toolbar-date-btn h-9 flex-1 px-3 text-sm sm:flex-none ${
                         dateRangePreset === "thisWeek"
                           ? "!bg-gray-200 !text-gray-950 !border-gray-200 hover:!bg-gray-200 active:!bg-gray-300 md:!bg-[#111827] md:!text-white md:!border-[#111827] md:hover:!bg-[#1f2937]"
-                          : "!bg-transparent !text-gray-700 !border-transparent hover:!bg-gray-100 active:!bg-gray-300 md:!bg-[var(--bg-surface)] md:!text-[var(--text-secondary)] md:!border-[var(--border-default)] md:hover:!bg-[var(--bg-hover)]"
+                          : "!bg-white !text-gray-700 !border-gray-200 hover:!bg-gray-100 active:!bg-gray-300 md:!bg-[var(--bg-surface)] md:!text-[var(--text-secondary)] md:!border-[var(--border-default)] md:hover:!bg-[var(--bg-hover)]"
                       }`}
                     >
                       This week
@@ -3078,13 +3077,13 @@ export default function AdminPage() {
         {/* ── SERVICES ── */}
         {tab === "services" && (
           <div className="slide-up mx-auto w-full max-w-[900px] space-y-5 py-4 md:py-0">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
               <div>
                 <h2 className="h3">Services</h2>
                 <p className="body-sm mt-0.5">Manage what customers can book</p>
               </div>
-              <button className="btn-black !w-auto" onClick={openCreate}>
-                <Plus size={16} /> Add Service
+              <button className="btn-black !min-h-10 !w-auto !px-4 !py-2 !text-sm sm:!min-h-11 sm:!px-5" onClick={openCreate}>
+                Add Service
               </button>
             </div>
 
@@ -3100,8 +3099,8 @@ export default function AdminPage() {
                 <p className="font-medium text-[15px] text-[var(--text-primary)]">
                   Create your first service to start taking bookings.
                 </p>
-                <button className="btn-black !w-auto mt-4" onClick={openCreate}>
-                  <Plus size={16} /> Add Service
+                <button className="btn-black !min-h-10 !w-auto !px-4 !py-2 !text-sm mt-4 sm:!min-h-11 sm:!px-5" onClick={openCreate}>
+                  Add Service
                 </button>
               </div>
             ) : (
@@ -3180,7 +3179,7 @@ export default function AdminPage() {
                   onClick={() => router.push(staffFormUrl)}
                   className="btn-black !w-auto"
                 >
-                  <Plus size={18} /> Add Staff
+                  Add Staff
                 </button>
               )}
             </div>
@@ -3534,7 +3533,7 @@ export default function AdminPage() {
                   onClick={() => router.push(staffFormUrl)}
                   className="btn-black !w-auto"
                 >
-                  <Plus size={16} className="mr-2" /> Add Staff
+                  Add Staff
                 </button>
               </div>
             ) : (

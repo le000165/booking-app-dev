@@ -1,6 +1,11 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { Loader2 } from 'lucide-react';
 import AdminDashboardClient from '@/components/admin/AdminDashboardClient';
+
+export const metadata: Metadata = {
+  title: 'Appointment - Overview',
+};
 
 export default function AdminAppointmentsPage() {
   return (

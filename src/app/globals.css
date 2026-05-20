@@ -871,6 +871,12 @@ input[type="time"].input-field::-webkit-calendar-picker-indicator {
   flex: 0 0 22px;
   color: #374151;
 }
+.admin-brand-logo {
+  width: 104px;
+  height: 32px;
+  flex-basis: 104px;
+  justify-content: flex-start;
+}
 .admin-brand-block {
   min-width: 0;
   flex: 1;

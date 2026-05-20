@@ -1,0 +1,6 @@
+<svg width="640" height="160" viewBox="0 0 640 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="24" y="24" width="112" height="112" rx="28" fill="#0F172A"/>
+  <path d="M52 52H70.5L80 81L89.5 52H108L91 108H69L52 52Z" fill="white"/>
+  <path d="M182 43L225 117H204L174 63H190L160 117H139L182 43ZM159 94H205V111H159V94Z" fill="#0F172A" fill-opacity="0"/>
+  <text x="168" y="104" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="72" font-weight="650" letter-spacing="-2" fill="#0F172A">Vero</text>
+</svg>

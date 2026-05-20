@@ -5,9 +5,9 @@ import SiteFooter from '@/components/marketing/SiteFooter';
 import SiteNav from '@/components/marketing/SiteNav';
 
 export const metadata: Metadata = {
-  title: 'About — BookEasy',
+  title: 'About — Vero',
   description:
-    'Learn about BookEasy, appointment booking software built for service businesses that need simple scheduling and professional operations.',
+    'Learn about Vero, appointment booking software built for service businesses that need simple scheduling and professional operations.',
 };
 
 export default function AboutPage() {
@@ -18,13 +18,13 @@ export default function AboutPage() {
         <section className="bg-gray-50 py-20 lg:py-28">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">
-              About BookEasy
+              About Vero
             </p>
             <h1 className="text-[42px] font-bold tracking-[-0.03em] text-gray-950 sm:text-[56px]">
               Helping service businesses spend less time coordinating and more time serving
             </h1>
             <p className="mt-5 text-[17px] leading-relaxed text-gray-600">
-              BookEasy is built for businesses where every appointment matters: salons,
+              Vero is built for businesses where every appointment matters: salons,
               spas, clinics, consultants, wellness teams, and local service providers.
               Our mission is to make professional booking software feel clear, fast,
               and approachable from the first day.

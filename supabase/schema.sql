@@ -1,4 +1,4 @@
--- Phase 1: Minimal Booking System Schema
+-- Phase 1: Minimal Vero Booking Schema
 -- Businesses (Multi-tenant)
 CREATE TABLE businesses (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

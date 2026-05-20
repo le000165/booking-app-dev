@@ -5,7 +5,7 @@ import SiteFooter from '@/components/marketing/SiteFooter';
 import SiteNav from '@/components/marketing/SiteNav';
 
 export const metadata: Metadata = {
-  title: 'Solutions — BookEasy',
+  title: 'Solutions — Vero',
   description:
     'Booking software for salons, spas, barbers, clinics, consultants, fitness and wellness teams, and pet service businesses.',
 };
@@ -69,7 +69,7 @@ export default function SolutionsPage() {
               Booking workflows for the way service businesses actually operate
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-[17px] leading-relaxed text-gray-600">
-              Whether you run a solo practice or a multi-staff studio, BookEasy gives
+              Whether you run a solo practice or a multi-staff studio, Vero gives
               your customers a simple booking path and your team a clearer schedule.
             </p>
           </div>

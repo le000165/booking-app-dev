@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build a production-ready marketing site and auth flow for the booking SaaS.
+Build a production-ready marketing site and auth flow for the Vero platform.
 
 ## Routes
 

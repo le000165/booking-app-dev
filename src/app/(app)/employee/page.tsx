@@ -528,6 +528,12 @@ function getEstimatedEarning(appointments: Appointment[]) {
   return getOriginalServiceTotal(appointments) / 2;
 }
 
+function getEmployeeDocumentTitle(tab: PortalTab) {
+  if (tab === 'appointments') return 'Employee - Portal';
+  if (tab === 'earnings') return 'Employee - Earnings';
+  return 'Employee - Profile';
+}
+
 export default function EmployeePage() {
   const supabase = createClient();
   const router = useRouter();
@@ -543,6 +549,10 @@ export default function EmployeePage() {
   const [selectedDate, setSelectedDate] = useState(() => startOfLocalDay(new Date()));
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>('day');
   const [activeTab, setActiveTab] = useState<PortalTab>('appointments');
+
+  useEffect(() => {
+    document.title = getEmployeeDocumentTitle(activeTab);
+  }, [activeTab]);
 
   const loadAppointments = useCallback(async () => {
     setApptLoading(true);

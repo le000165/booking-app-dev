@@ -1,6 +1,6 @@
 # Roadmap
 
-This roadmap tracks the development progress of the booking SaaS platform inspired by Square Appointments and BellaBiz.
+This roadmap tracks the development progress of the Vero platform inspired by Square Appointments and BellaBiz.
 
 The platform is a multi-tenant SaaS where businesses can create accounts, manage bookings, staff, services, and customer scheduling through public booking pages.
 
@@ -35,7 +35,7 @@ Core goals:
 
 # Development Phases
 
-## Phase 1 — Core Booking System
+## Phase 1 — Core Vero Booking
 
 Goal:
 Build the core customer booking flow and business scheduling foundation.

@@ -1,6 +1,11 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { Loader2 } from 'lucide-react';
 import StaffNewClient from '@/components/admin/StaffNewClient';
+
+export const metadata: Metadata = {
+  title: 'Staff - New',
+};
 
 function StaffNewFallback() {
   return (

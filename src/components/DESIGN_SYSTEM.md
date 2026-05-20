@@ -1,4 +1,4 @@
-# Booking SaaS Design System
+# Vero Design System
 
 ## Layout rules
 

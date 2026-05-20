@@ -15,9 +15,9 @@ import SiteFooter from '@/components/marketing/SiteFooter';
 import SiteNav from '@/components/marketing/SiteNav';
 
 export const metadata: Metadata = {
-  title: 'Features — BookEasy',
+  title: 'Features — Vero',
   description:
-    'Explore BookEasy features for online booking, staff scheduling, calendar management, customer management, reminders, and multi-service teams.',
+    'Explore Vero features for online booking, staff scheduling, calendar management, customer management, reminders, and multi-service teams.',
 };
 
 const features = [
@@ -54,7 +54,7 @@ const features = [
   {
     icon: Layers,
     title: 'Multi-staff and multi-service support',
-    body: 'Support businesses with more than one service provider or service category. BookEasy keeps capacity, service fit, and staff assignments together.',
+    body: 'Support businesses with more than one service provider or service category. Vero keeps capacity, service fit, and staff assignments together.',
     bullets: ['Multiple services per business', 'Staff-to-service assignment', 'Operational dashboard for growing teams'],
   },
 ];
@@ -74,7 +74,7 @@ export default function FeaturesPage() {
                 Everything your service business needs to take bookings seriously
               </h1>
               <p className="mt-5 text-[17px] leading-relaxed text-gray-600">
-                BookEasy brings online booking, staff schedules, appointment operations,
+                Vero brings online booking, staff schedules, appointment operations,
                 and reminder workflows into one professional workspace.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
@@ -133,7 +133,7 @@ export default function FeaturesPage() {
                 Less back-and-forth, more booked time
               </h2>
               <p className="mt-4 max-w-2xl text-[16px] leading-relaxed text-gray-300">
-                BookEasy is built to reduce the daily admin that slows service businesses
+                Vero is built to reduce the daily admin that slows service businesses
                 down: calls, schedule checks, missed reminders, and scattered appointment details.
               </p>
             </div>
